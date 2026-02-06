@@ -23,7 +23,7 @@ public record TaskDescription
         return task.Value;
     }
 
-    public static implicit operator TaskDescription(string value) => FromString(value);
+    public static explicit operator TaskDescription(string value) => FromString(value);
 
     public static TaskDescription FromString(string value) => new(value);
     public override string ToString() => Value;
