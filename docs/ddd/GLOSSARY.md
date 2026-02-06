@@ -20,3 +20,9 @@ The "Refinement Loop." A stream of conversation between the Developer and Jules.
 
 ### Patch
 The "Solution." The resulting code changes produced by Jules. Instead of just a branch, the developer thinks of this as the tangible answer to their **Task**.
+
+### Identity
+The "Persona." Represents the developer's authentication to the Jules API via their **API Key**.
+
+### Vault
+The "Secret Memory." The secure, OS-native storage (Keyring) where Cleo keeps the **Identity** safe.
