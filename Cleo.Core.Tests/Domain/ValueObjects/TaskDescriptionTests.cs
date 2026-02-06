@@ -22,12 +22,13 @@ public class TaskDescriptionTests
         Assert.Throws<ArgumentException>(() => new TaskDescription(invalidValue!));
     }
 
-    [Fact(DisplayName = "A TaskDescription should support implicit conversion to and from string.")]
-    public void ImplicitConversionShouldWorkBothWays()
+    [Fact(DisplayName = "A TaskDescription should support explicit conversion from string and implicit conversion to string.")]
+    public void ConversionShouldWork()
     {
-        TaskDescription task = "Build Feature X";
-        string value = task;
-        Assert.Equal("Build Feature X", value);
+        var originalValue = "Build Feature X";
+        var task = (TaskDescription)originalValue; // Explicit cast
+        string value = task; // Still implicit string conversion
+        Assert.Equal(originalValue, value);
     }
 
     [Fact(DisplayName = "A TaskDescription can be created using the static FromString factory method.")]
