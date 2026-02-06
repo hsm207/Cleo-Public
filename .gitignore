@@ -1,0 +1,23 @@
+## [Standard .NET Ignore Patterns]
+bin/
+obj/
+[internal metadata: TestResults scrubbed]/
+*.user
+*.userosscache
+*.sln.docstates
+
+## [User-specific files]
+.vs/
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## [Build results]
+[Aa]p[Pp][Hh][Oo][Ss][Tt].exe
+
+## [Cleo Specific]
+[internal metadata: labs scrubbed]/
+[internal metadata: .gemini scrubbed]/tmp/

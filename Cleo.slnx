@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/[internal metadata: labs scrubbed]/">
+    <Project Path="[internal metadata: labs scrubbed]/Cleo.Lab/Cleo.Lab.csproj" />
+  </Folder>
+  <Project Path="Cleo.Cli/Cleo.Cli.csproj" />
+  <Project Path="Cleo.Core.Tests/Cleo.Core.Tests.csproj" />
+  <Project Path="Cleo.Core/Cleo.Core.csproj" />
+  <Project Path="Cleo.Infrastructure/Cleo.Infrastructure.csproj" />
+</Solution>
