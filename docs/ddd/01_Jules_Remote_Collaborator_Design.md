@@ -1,36 +1,35 @@
 # 🏛️ 01: Jules Remote Collaborator Design
 > Architecture for an intuitive, developer-centric Jules CLI.
 
-## 🎯 The Mission
+## 🎯 The Goal
 To bridge the gap between a developer's local workflow and Jules's remote autonomous execution. By providing granular control over the source context and session lifecycle, this design enables Jules to act as a seamless, high-fidelity extension of the developer's own environment.
 
 ## 🏗️ The Model (Deep Model)
 
-### The RemoteSession Object
-The central authority for managing the lifecycle of an autonomous task.
+### The Session Object
+The central authority for managing the lifecycle of an autonomous collaboration.
 
 **Attributes:**
-*   `session_id`: String (Official API identifier).
-*   `repository_url`: String (The target repo).
-*   `base_branch`: String (The starting point).
-*   `session_branch`: String (The work-in-progress branch).
-*   `task_goal`: String (The instructions).
+*   **`TaskId`**: The unique handle for this session.
+*   **`Task`**: The mission or goal Jules is currently working on.
+*   **`Source`**: The repository and branch Jules is operating in.
+*   **`State`**: The current heartbeat (Starting Up, In Progress, Complete, Failed).
+*   **`Conversation`**: The history of "Talk" messages between the developer and Jules.
 
 **Key Behaviors:**
-1.  **`Assign`**: Initialize the session with a specific **Base Branch** and **Task**.
-2.  **`Talk`**: Maintain a continuous feedback loop.
-3.  **`Pull`**: Synchronize the remote **Session Branch** to a local target.
+1.  **`Assign`**: Launch Jules on a **Task** at a specific **Source**.
+2.  **`Monitor`**: Check the **State** to see how Jules is progressing.
+3.  **`Talk`**: Exchange feedback and questions to refine the work.
+4.  **`Pull`**: Fetch the final **Patch** (the solution) to review locally.
 
 ## 💎 Design Principles
 
 ### 1. The "Single Model" Rule
-The CLI commands and the code implementation must reflect this model exactly. A user should be able to say `jules pull` and understand they are pulling a **Session Branch**.
+The CLI commands and the code implementation must reflect this model exactly. When a developer types `jules status`, they aren't looking for JSON; they are checking the **State** and **Task** of their collaborator.
 
-### 2. One Session, One Branch
-To ensure transactional integrity and avoid "Model Drift," each **Remote Session** handles exactly one branch. If a task requires multiple branches, it requires multiple sessions.
+### 2. Conversation over Command
+Interacting with Jules is not a series of one-off commands; it is a **Talk** stream. This allows for nuanced refinement of the **Patch**.
 
-### 3. Continuous Flow
-Talking to Jules is modeled as a single, append-only conversation history, making the feedback loop feel natural and high-bandwidth.
+### 3. Solution-Centric
+The goal of every session is a **Patch**. The model focuses on delivering a tangible solution that the developer can easily review and apply.
 
-### 4. Explicit Point of Origin
-The **Base Branch** is always explicit. We never "guess" where Jules started; we track it to ensure the **Handover** back to the developer is clean.
