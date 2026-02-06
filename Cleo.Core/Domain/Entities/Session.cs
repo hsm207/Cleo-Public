@@ -30,7 +30,7 @@ public class Session : AggregateRoot
         Source = source;
         Pulse = pulse;
 
-        RaiseDomainEvent(new SessionAssigned(id, task));
+        RecordDomainEvent(new SessionAssigned(id, task));
     }
 
     public void UpdatePulse(SessionPulse newPulse)
@@ -38,11 +38,11 @@ public class Session : AggregateRoot
         ArgumentNullException.ThrowIfNull(newPulse);
         Pulse = newPulse;
 
-        RaiseDomainEvent(new StatusHeartbeatReceived(Id, newPulse));
+        RecordDomainEvent(new StatusHeartbeatReceived(Id, newPulse));
 
         if (newPulse.Status == SessionStatus.AwaitingFeedback)
         {
-            RaiseDomainEvent(new FeedbackRequested(Id, newPulse.Detail));
+            RecordDomainEvent(new FeedbackRequested(Id, newPulse.Detail));
         }
     }
 
@@ -57,6 +57,6 @@ public class Session : AggregateRoot
         ArgumentNullException.ThrowIfNull(solution);
         Solution = solution;
 
-        RaiseDomainEvent(new SolutionReady(Id, solution));
+        RecordDomainEvent(new SolutionReady(Id, solution));
     }
 }
