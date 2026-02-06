@@ -15,10 +15,9 @@ public abstract class AggregateRoot
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     /// <summary>
-    /// Adds a domain event to the collection.
+    /// Records a domain event to the internal collection.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1030:UseEventsWhereAppropriate", Justification = "Standard DDD pattern for event sourcing/tracking within an aggregate root.")]
-    protected void RaiseDomainEvent(IDomainEvent domainEvent)
+    protected void RecordDomainEvent(IDomainEvent domainEvent)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         _domainEvents.Add(domainEvent);
