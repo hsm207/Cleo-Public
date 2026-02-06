@@ -1,3 +1,5 @@
+using Cleo.Core.Domain.Common;
+using Cleo.Core.Domain.Events;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.Domain.Entities;
@@ -5,7 +7,7 @@ namespace Cleo.Core.Domain.Entities;
 /// <summary>
 /// The central authority for an autonomous coding collaboration.
 /// </summary>
-public class Session
+public class Session : AggregateRoot
 {
     private readonly List<ChatMessage> _conversation = new();
 
@@ -27,12 +29,21 @@ public class Session
         Task = task;
         Source = source;
         Pulse = pulse;
+
+        RaiseDomainEvent(new SessionAssigned(id, task));
     }
 
     public void UpdatePulse(SessionPulse newPulse)
     {
         ArgumentNullException.ThrowIfNull(newPulse);
         Pulse = newPulse;
+
+        RaiseDomainEvent(new StatusHeartbeatReceived(Id, newPulse));
+
+        if (newPulse.Status == SessionStatus.AwaitingFeedback)
+        {
+            RaiseDomainEvent(new FeedbackRequested(Id, newPulse.Detail));
+        }
     }
 
     public void AddMessage(ChatMessage message)
@@ -45,5 +56,7 @@ public class Session
     {
         ArgumentNullException.ThrowIfNull(solution);
         Solution = solution;
+
+        RaiseDomainEvent(new SolutionReady(Id, solution));
     }
 }
