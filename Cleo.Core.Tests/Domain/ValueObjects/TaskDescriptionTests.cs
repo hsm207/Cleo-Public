@@ -31,6 +31,13 @@ public class TaskDescriptionTests
         Assert.Equal(originalValue, value);
     }
 
+    [Fact(DisplayName = "A TaskDescription should throw ArgumentNullException when implicitly converting a null TaskDescription to string.")]
+    public void ImplicitStringConversionShouldThrowOnNull()
+    {
+        TaskDescription? task = null;
+        Assert.Throws<ArgumentNullException>(() => (string)task!);
+    }
+
     [Fact(DisplayName = "A TaskDescription can be created using the static FromString factory method.")]
     public void FromStringShouldCreateValidTaskDescription()
     {
