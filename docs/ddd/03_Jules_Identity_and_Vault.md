@@ -13,6 +13,7 @@ Represents the developer's authenticated persona.
 
 ### The Vault (Interface: `IVault`)
 The secure "memory" of Cleo. It abstracts the OS-native keyring to keep the `ApiKey` safe from prying eyes.
+*   **Implementation Strategy**: We use the industry-standard `Microsoft.Identity.Client.Extensions.Msal` library to leverage platform-specific secure storage (DPAPI on Windows, Keychain on macOS, LibSecret on Linux).
 *   **`Store(Identity)`**: Securely save the credentials.
 *   **`Retrieve()`**: Fetch the saved identity.
 *   **`Clear()`**: Forget the identity (Logout).
