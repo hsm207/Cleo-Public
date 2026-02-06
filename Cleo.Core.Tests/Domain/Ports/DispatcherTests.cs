@@ -15,11 +15,11 @@ public class DispatcherTests
         var events = new List<IDomainEvent> { mockEvent.Object };
 
         // Verify Single Dispatch
-        await mockDispatcher.Object.DispatchAsync(mockEvent.Object);
+        await mockDispatcher.Object.DispatchAsync(mockEvent.Object, TestContext.Current.CancellationToken);
         mockDispatcher.Verify(d => d.DispatchAsync(mockEvent.Object, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify Collection Dispatch
-        await mockDispatcher.Object.DispatchAsync(events);
+        await mockDispatcher.Object.DispatchAsync(events, TestContext.Current.CancellationToken);
         mockDispatcher.Verify(d => d.DispatchAsync(events, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
