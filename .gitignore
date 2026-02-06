@@ -21,3 +21,4 @@ obj/
 ## [Cleo Specific]
 [internal metadata: labs scrubbed]/
 [internal metadata: .gemini scrubbed]/tmp/
+.playwright-mcp/
