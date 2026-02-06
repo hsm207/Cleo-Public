@@ -1,3 +1,4 @@
+using Cleo.Core.Domain.Common;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.Domain.Entities;
@@ -5,7 +6,7 @@ namespace Cleo.Core.Domain.Entities;
 /// <summary>
 /// Represents the authenticated developer persona.
 /// </summary>
-public class Identity
+public class Identity : AggregateRoot
 {
     public ApiKey ApiKey { get; }
     public IdentityStatus Status { get; private set; }
