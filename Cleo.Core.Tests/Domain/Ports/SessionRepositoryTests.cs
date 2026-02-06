@@ -26,23 +26,23 @@ public class SessionRepositoryTests
         var mockRepo = new Mock<ISessionRepository>();
 
         // Verify Save
-        await mockRepo.Object.SaveAsync(_testSession);
+        await mockRepo.Object.SaveAsync(_testSession, TestContext.Current.CancellationToken);
         mockRepo.Verify(r => r.SaveAsync(_testSession, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify GetById
         mockRepo.Setup(r => r.GetByIdAsync(_testId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_testSession);
-        var retrieved = await mockRepo.Object.GetByIdAsync(_testId);
+        var retrieved = await mockRepo.Object.GetByIdAsync(_testId, TestContext.Current.CancellationToken);
         Assert.Equal(_testSession, retrieved);
 
         // Verify List
         mockRepo.Setup(r => r.ListAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new[] { _testSession });
-        var list = await mockRepo.Object.ListAsync();
+        var list = await mockRepo.Object.ListAsync(TestContext.Current.CancellationToken);
         Assert.Single(list);
 
         // Verify Delete
-        await mockRepo.Object.DeleteAsync(_testId);
+        await mockRepo.Object.DeleteAsync(_testId, TestContext.Current.CancellationToken);
         mockRepo.Verify(r => r.DeleteAsync(_testId, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
