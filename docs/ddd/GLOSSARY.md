@@ -16,7 +16,16 @@ The "Workspace." A live, remote environment where Jules is executing a **Task**.
 The "Pulse." The monitorable status of a session (e.g., Starting Up, In Progress, Complete, Failed). It tells the developer if Jules is still "on the job."
 
 ### Talk
-The "Refinement Loop." A stream of conversation between the Developer and Jules. Unlike a **Task**, a **Talk** is for questions, feedback, and refining the **Patch** without starting a new session.
+The "Refinement Loop." The collaborative stream of **Feedback** and **Messages** recorded in the **Session Log**.
+
+### Session Log
+The "Collaborative Ledger." A chronological, structured history of all **Activities** within a **Session**. It provides full observability into Jules's thoughts and actions.
+
+### Feedback
+The primary intent emitted by the developer to guide, correct, or approve Jules's progress. Recorded as a specific type of **Activity** in the **Session Log**.
+
+### Activity
+A single, observable event within a **Session**. Examples include generating a plan, running a shell command, or sending a message.
 
 ### Patch
 The "Solution." The resulting code changes produced by Jules. Instead of just a branch, the developer thinks of this as the tangible answer to their **Task**.
