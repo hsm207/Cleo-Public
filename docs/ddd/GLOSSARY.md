@@ -33,5 +33,11 @@ The "Solution." The resulting code changes produced by Jules. Instead of just a 
 ### Identity
 The "Persona." Represents the developer's authentication to the Jules API via their **API Key**.
 
+### Task Registry
+The "Global Ledger." A centralized, persistent record of all active **Sessions** initiated by the developer. It allows Cleo to remember missions across different projects and directories.
+
+### Handle
+The unique **Session ID** used to reference a specific entry in the **Task Registry**. In the CLI, the handle is the primary way to direct **Feedback** or check the **Pulse**.
+
 ### Vault
 The "Secret Memory." The secure, OS-native storage (Keyring) where Cleo keeps the **Identity** safe.
