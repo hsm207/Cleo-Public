@@ -1,29 +1,33 @@
-using System.Text.Json;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Infrastructure.Persistence.Internal;
 
 namespace Cleo.Infrastructure.Persistence;
 
 /// <summary>
-/// A global implementation of the task repository that persists all active missions
-/// to a central registry in the user's local application data directory.
+/// A S.O.L.I.D. implementation of the task repository that orchestrates persistence
+/// via interchangeable mapping, pathing, and serialization strategies.
 /// </summary>
 public sealed class RegistryTaskRepository : ISessionRepository
 {
-    private const string RegistryFileName = "tasks.json";
-    private readonly string _registryPath;
+    private readonly IRegistryPathProvider _pathProvider;
+    private readonly IRegistryTaskMapper _mapper;
+    private readonly IRegistrySerializer _serializer;
 
-    private static readonly JsonSerializerOptions Options = new() 
-    { 
-        WriteIndented = true 
-    };
+    public RegistryTaskRepository() : this(
+        new DefaultRegistryPathProvider(),
+        new RegistryTaskMapper(),
+        new JsonRegistrySerializer()) { }
 
-    public RegistryTaskRepository() : this(GetDefaultRegistryPath()) { }
-
-    internal RegistryTaskRepository(string registryPath)
+    internal RegistryTaskRepository(
+        IRegistryPathProvider pathProvider,
+        IRegistryTaskMapper mapper,
+        IRegistrySerializer serializer)
     {
-        _registryPath = registryPath ?? throw new ArgumentNullException(nameof(registryPath));
+        _pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
     }
 
     public async Task SaveAsync(Session session, CancellationToken cancellationToken = default)
@@ -31,9 +35,8 @@ public sealed class RegistryTaskRepository : ISessionRepository
         ArgumentNullException.ThrowIfNull(session);
 
         var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
-        var dto = RegisteredTaskDto.FromDomain(session);
+        var dto = _mapper.MapToDto(session);
 
-        // Update existing or add new
         var existing = tasks.FindIndex(t => t.SessionId == dto.SessionId);
         if (existing >= 0)
         {
@@ -54,13 +57,13 @@ public sealed class RegistryTaskRepository : ISessionRepository
         var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
         var dto = tasks.FirstOrDefault(t => t.SessionId == id.Value);
 
-        return dto?.ToDomain();
+        return dto != null ? _mapper.MapToDomain(dto) : null;
     }
 
     public async Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default)
     {
         var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
-        return tasks.Select(t => t.ToDomain()).ToList().AsReadOnly();
+        return tasks.Select(_mapper.MapToDomain).ToList().AsReadOnly();
     }
 
     public async Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)
@@ -78,55 +81,26 @@ public sealed class RegistryTaskRepository : ISessionRepository
 
     private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
     {
-        if (!File.Exists(_registryPath)) return new List<RegisteredTaskDto>();
+        var path = _pathProvider.GetRegistryPath();
+        if (!File.Exists(path)) return new List<RegisteredTaskDto>();
 
-        var json = await File.ReadAllTextAsync(_registryPath, ct).ConfigureAwait(false);
+        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
 
-        return JsonSerializer.Deserialize<List<RegisteredTaskDto>>(json) ?? new List<RegisteredTaskDto>();
+        return _serializer.Deserialize(json);
     }
 
     private async Task SaveRegistryAsync(List<RegisteredTaskDto> tasks, CancellationToken ct)
     {
-        var directory = Path.GetDirectoryName(_registryPath);
+        var path = _pathProvider.GetRegistryPath();
+        var directory = Path.GetDirectoryName(path);
+        
         if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
-        var json = JsonSerializer.Serialize(tasks, Options);
-        await File.WriteAllTextAsync(_registryPath, json, ct).ConfigureAwait(false);
+        var json = _serializer.Serialize(tasks);
+        await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
     }
-
-    private static string GetDefaultRegistryPath()
-    {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appData, "Cleo", RegistryFileName);
-    }
-}
-
-/// <summary>
-/// A DTO for serializing a mission in the global Task Registry.
-/// </summary>
-internal sealed record RegisteredTaskDto(
-    string SessionId,
-    string TaskDescription,
-    string Repository,
-    string Branch,
-    string Status,
-    string? Detail)
-{
-    public static RegisteredTaskDto FromDomain(Session session) => new(
-        session.Id.Value,
-        (string)session.Task,
-        session.Source.Repository,
-        session.Source.StartingBranch,
-        session.Pulse.Status.ToString(),
-        session.Pulse.Detail);
-
-    public Session ToDomain() => new(
-        new SessionId(SessionId),
-        (TaskDescription)TaskDescription,
-        new SourceContext(Repository, Branch),
-        new SessionPulse(Enum.Parse<SessionStatus>(Status), Detail));
 }
