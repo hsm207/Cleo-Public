@@ -3,6 +3,7 @@ using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Cleo.Infrastructure.Messaging;
 using Cleo.Infrastructure.Persistence;
+using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,9 +21,9 @@ public static class ServiceCollectionExtensions
 
         // Security & Persistence
         services.AddSingleton<IVault, NativeVault>();
-        services.AddSingleton<RegistryTaskRepository>();
-        services.AddSingleton<ISessionReader>(sp => sp.GetRequiredService<RegistryTaskRepository>());
-        services.AddSingleton<ISessionWriter>(sp => sp.GetRequiredService<RegistryTaskRepository>());
+        services.AddSingleton<IFileSystem, PhysicalFileSystem>();
+        services.AddSingleton<ISessionReader, RegistrySessionReader>();
+        services.AddSingleton<ISessionWriter, RegistrySessionWriter>();
         
         // Messaging
         services.AddSingleton<IDispatcher, MediatRDispatcher>();
@@ -40,17 +41,23 @@ public static class ServiceCollectionExtensions
         services.AddTransient<JulesAuthHandler>();
         services.AddTransient<JulesLoggingHandler>();
 
-        services.AddHttpClient<RestJulesClient>(client =>
+        void ConfigureJulesClient(HttpClient client)
         {
             client.BaseAddress = julesBaseUrl;
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-        })
-        .AddHttpMessageHandler<JulesAuthHandler>()
-        .AddHttpMessageHandler<JulesLoggingHandler>();
+        }
 
-        services.AddTransient<IJulesSessionClient>(sp => sp.GetRequiredService<RestJulesClient>());
-        services.AddTransient<IJulesSourceClient>(sp => sp.GetRequiredService<RestJulesClient>());
-        services.AddTransient<IJulesActivityClient>(sp => sp.GetRequiredService<RestJulesClient>());
+        services.AddHttpClient<IJulesSessionClient, RestJulesSessionClient>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddHttpClient<IJulesSourceClient, RestJulesSourceClient>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddHttpClient<IJulesActivityClient, RestJulesActivityClient>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
 
         return services;
     }
