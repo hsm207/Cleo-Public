@@ -8,7 +8,8 @@ using Cleo.Infrastructure.Clients.Jules.Mapping;
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// A S.O.L.I.D., high-performance REST implementation of the Jules API client.
+/// A REST-based implementation of the Jules API client, providing methods for session 
+/// lifecycle management and collaborative interaction.
 /// </summary>
 public sealed class RestJulesClient : IJulesClient
 {

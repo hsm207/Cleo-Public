@@ -6,7 +6,8 @@ using Cleo.Infrastructure.Clients.Jules.Mapping;
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// A high-signal mapper for static Jules DTO mapping.
+/// Provides utility methods for mapping between Jules API Data Transfer Objects (DTOs) 
+/// and core domain entities and value objects.
 /// </summary>
 internal static class JulesMapper
 {
