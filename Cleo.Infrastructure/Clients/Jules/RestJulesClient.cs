@@ -3,19 +3,22 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// A high-performance REST implementation of the Jules API client.
+/// A S.O.L.I.D., high-performance REST implementation of the Jules API client.
 /// </summary>
 public sealed class RestJulesClient : IJulesClient
 {
     private readonly HttpClient _httpClient;
+    private readonly IEnumerable<IJulesActivityMapper> _mappers;
 
-    public RestJulesClient(HttpClient httpClient)
+    internal RestJulesClient(HttpClient httpClient, IEnumerable<IJulesActivityMapper> mappers)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
     }
 
     public async Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default)
@@ -36,16 +39,10 @@ public sealed class RestJulesClient : IJulesClient
             }
         };
 
-        var response = await _httpClient.PostAsJsonAsync(
-            "v1alpha/sessions", 
-            request, 
-            cancellationToken).ConfigureAwait(false);
-
+        var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
+        var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
         return JulesMapper.Map(dto!, task);
     }
 
@@ -53,14 +50,10 @@ public sealed class RestJulesClient : IJulesClient
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>(
-            $"v1alpha/{id.Value}", 
-            cancellationToken).ConfigureAwait(false);
-
+        var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>($"v1alpha/{id.Value}", cancellationToken).ConfigureAwait(false);
         if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
-        var status = JulesMapper.MapStatus(dto.State);
-        return new SessionPulse(status, $"Session is {dto.State}");
+        return new SessionPulse(JulesMapper.MapStatus(dto.State), $"Session is {dto.State}");
     }
 
     public async Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)
@@ -69,12 +62,7 @@ public sealed class RestJulesClient : IJulesClient
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
 
         var request = new { messageText = feedback };
-
-        var response = await _httpClient.PostAsJsonAsync(
-            $"v1alpha/{id.Value}:sendMessage", 
-            request, 
-            cancellationToken).ConfigureAwait(false);
-
+        var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
 
@@ -82,19 +70,12 @@ public sealed class RestJulesClient : IJulesClient
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        // API Path: v1alpha/sessions/{id}/activities
-        // Note: The id already contains the 'sessions/' prefix! 🏷️
-        var response = await _httpClient.GetFromJsonAsync<ListActivitiesResponse>(
-            $"v1alpha/{id.Value}/activities", 
-            cancellationToken).ConfigureAwait(false);
-
-        if (response?.Activities == null)
-        {
-            return Array.Empty<SessionActivity>();
-        }
+        var response = await _httpClient.GetFromJsonAsync<ListActivitiesResponse>($"v1alpha/{id.Value}/activities", cancellationToken).ConfigureAwait(false);
+        if (response?.Activities == null) return Array.Empty<SessionActivity>();
 
         return response.Activities
-            .Select(JulesMapper.Map)
+            .Select(dto => _mappers.FirstOrDefault(m => m.CanMap(dto))?.Map(dto) 
+                ?? throw new InvalidOperationException($"No suitable mapping pattern found for activity {dto.Id}."))
             .ToList()
             .AsReadOnly();
     }
