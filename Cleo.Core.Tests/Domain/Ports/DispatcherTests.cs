@@ -7,19 +7,35 @@ namespace Cleo.Core.Tests.Domain.Ports;
 
 public class DispatcherTests
 {
-    [Fact(DisplayName = "The IDispatcher port should define a clear contract for broadcasting single and multiple domain events.")]
-    public async Task DispatcherPortShouldDefineStandardOperations()
+    [Fact(DisplayName = "The dispatcher port should facilitate publication of domain events.")]
+    public async Task DispatcherShouldPublishEvents()
     {
+        // Arrange
         var mockDispatcher = new Mock<IDispatcher>();
-        var mockEvent = new Mock<IDomainEvent>();
-        var events = new List<IDomainEvent> { mockEvent.Object };
+        var @event = new TestDomainEvent(DateTimeOffset.UtcNow);
+        var ct = TestContext.Current.CancellationToken;
 
-        // Verify Single Dispatch
-        await mockDispatcher.Object.DispatchAsync(mockEvent.Object, TestContext.Current.CancellationToken);
-        mockDispatcher.Verify(d => d.DispatchAsync(mockEvent.Object, It.IsAny<CancellationToken>()), Times.Once);
+        // Act
+        await mockDispatcher.Object.DispatchAsync(@event, ct);
 
-        // Verify Collection Dispatch
-        await mockDispatcher.Object.DispatchAsync(events, TestContext.Current.CancellationToken);
-        mockDispatcher.Verify(d => d.DispatchAsync(events, It.IsAny<CancellationToken>()), Times.Once);
+        // Assert
+        mockDispatcher.Verify(d => d.DispatchAsync(@event, ct), Times.Once);
     }
+
+    [Fact(DisplayName = "The dispatcher port should support bulk publication.")]
+    public async Task DispatcherShouldSupportBulk()
+    {
+        // Arrange
+        var mockDispatcher = new Mock<IDispatcher>();
+        var events = new[] { new TestDomainEvent(DateTimeOffset.UtcNow) };
+        var ct = TestContext.Current.CancellationToken;
+
+        // Act
+        await mockDispatcher.Object.DispatchAsync(events, ct);
+
+        // Assert
+        mockDispatcher.Verify(d => d.DispatchAsync(events, ct), Times.Once);
+    }
+
+    private sealed record TestDomainEvent(DateTimeOffset OccurredOn) : IDomainEvent;
 }

@@ -13,14 +13,14 @@ The central authority for managing the lifecycle of an autonomous collaboration.
 *   **`TaskId`**: The unique handle for this session.
 *   **`Task`**: The mission or goal Jules is currently working on.
 *   **`Source`**: The repository and branch Jules is operating in.
-*   **`State`**: The current heartbeat (Starting Up, In Progress, Complete, Failed).
-*   **`Conversation`**: The history of "Talk" messages between the developer and Jules.
+*   **`Pulse`**: The current heartbeat (Starting Up, In Progress, Complete, Failed).
+*   **`SessionLog`**: A chronological ledger of all structured **Activities** (Messages, Plans, Actions).
 
 **Key Behaviors:**
-1.  **`Assign`**: Launch Jules on a **Task** at a specific **Source**.
-2.  **`Monitor`**: Check the **State** to see how Jules is progressing.
-3.  **`Talk`**: Exchange feedback and questions to refine the work.
-4.  **`Pull`**: Fetch the final **Patch** (the solution) to review locally.
+1.  **`Assign`**: Launch Jules on a **Task** at a specific **Source**. Recorded in the global **Task Registry**.
+2.  **`Monitor`**: Use a **Handle** to check the fresh **Pulse** from the remote API.
+3.  **`AddFeedback`**: Send guidance to Jules using her **Handle**, recorded in the remote **SessionLog**.
+4.  **`Pull`**: Fetch the final **Patch** using the **Handle** to review locally.
 
 ## 💎 Design Principles
 
