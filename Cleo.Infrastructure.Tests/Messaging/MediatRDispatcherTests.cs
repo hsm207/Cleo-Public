@@ -20,16 +20,15 @@ public sealed class MediatRDispatcherTests
     public async Task DispatchAsync_Single_ShouldPublishToMediator()
     {
         // Arrange
-        var mockEvent = new TestDomainEvent(DateTimeOffset.UtcNow);
+        var @event = new TestDomainEvent(DateTimeOffset.UtcNow);
         var ct = TestContext.Current.CancellationToken;
 
         // Act
-        await _sut.DispatchAsync(mockEvent, ct);
+        await _sut.DispatchAsync(@event, ct);
 
         // Assert
-        // We verify that Publish was called with an INotification that wraps our event
         _mockMediator.Verify(m => m.Publish(
-            It.Is<INotification>(n => n is DomainEventNotification<TestDomainEvent> && ((DomainEventNotification<TestDomainEvent>)n).Event == mockEvent), 
+            It.Is<INotification>(n => n is DomainEventNotification<TestDomainEvent> && ((DomainEventNotification<TestDomainEvent>)n).Event == @event), 
             ct), Times.Once);
     }
 
@@ -66,6 +65,6 @@ public sealed class MediatRDispatcherTests
         Assert.Throws<ArgumentNullException>(() => new MediatRDispatcher(null!));
     }
 
-    // Concrete event for testing the wrapper logic
-    private record TestDomainEvent(DateTimeOffset OccurredOn) : IDomainEvent;
+    // REAL VIBE: Concrete event record
+    private sealed record TestDomainEvent(DateTimeOffset OccurredOn) : IDomainEvent;
 }

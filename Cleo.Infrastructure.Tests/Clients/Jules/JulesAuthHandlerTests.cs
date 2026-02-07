@@ -1,74 +1,88 @@
-using System.Net;
 using Cleo.Core.Domain.Entities;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
+using Cleo.Infrastructure.Security;
 using Moq;
 using Moq.Protected;
+using Xunit;
 
 namespace Cleo.Infrastructure.Tests.Clients.Jules;
 
-public class JulesAuthHandlerTests
+public class JulesAuthHandlerTests : IDisposable
 {
-    private readonly Mock<IVault> _vaultMock = new();
+    private readonly string _tempFile = Path.GetTempFileName();
+    private readonly NativeVault _vault;
     private readonly Mock<HttpMessageHandler> _innerHandlerMock = new();
-    private readonly JulesAuthHandler _handler;
 
     public JulesAuthHandlerTests()
     {
-        _handler = new JulesAuthHandler(_vaultMock.Object)
+        // REAL VIBES: Use real vault with real encryption
+        _vault = new NativeVault(_tempFile, new AesGcmEncryptionStrategy());
+    }
+
+    [Fact(DisplayName = "JulesAuthHandler should add the x-goog-api-key header from the real vault.")]
+    public async Task SendAsync_ShouldAddApiKeyHeader()
+    {
+        // Arrange: Store a real key in the vault
+        var identity = new Identity(new ApiKey("real-secret-key"));
+        await _vault.StoreAsync(identity, TestContext.Current.CancellationToken);
+
+        var handler = new JulesAuthHandler(_vault)
         {
             InnerHandler = _innerHandlerMock.Object
         };
-    }
-
-    [Fact(DisplayName = "SendAsync should add the API key header when identity is found in the vault.")]
-    public async Task SendAsync_ShouldAddApiKeyHeader_WhenIdentityFound()
-    {
-        // Arrange
-        var apiKey = new ApiKey("test-api-key");
-        var identity = new Identity(apiKey);
-        identity.UpdateStatus(IdentityStatus.Valid);
-        _vaultMock.Setup(v => v.RetrieveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(identity);
 
         _innerHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+            .ReturnsAsync(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
 
-        var client = new HttpClient(_handler);
+        var client = new HttpClient(handler);
         var request = new HttpRequestMessage(HttpMethod.Get, "https://example.com");
 
         // Act
         await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.True(request.Headers.Contains("x-goog-api-key"));
-        Assert.Equal("test-api-key", request.Headers.GetValues("x-goog-api-key").First());
+        _innerHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => 
+                req.Headers.Contains("x-goog-api-key") && 
+                req.Headers.GetValues("x-goog-api-key").First() == "real-secret-key"),
+            ItExpr.IsAny<CancellationToken>());
     }
 
-    [Fact(DisplayName = "SendAsync should not add the API key header when no identity is found.")]
-    public async Task SendAsync_ShouldNotAddHeader_WhenNoIdentityFound()
+    [Fact(DisplayName = "JulesAuthHandler should not add the header if the vault is empty.")]
+    public async Task SendAsync_ShouldNotAddHeaderIfVaultEmpty()
     {
-        // Arrange
-        _vaultMock.Setup(v => v.RetrieveAsync(It.IsAny<CancellationToken>())).ReturnsAsync((Identity?)null);
+        // Arrange: Vault is empty (ensure file is gone)
+        if (File.Exists(_tempFile)) File.Delete(_tempFile);
+        
+        var handler = new JulesAuthHandler(_vault)
+        {
+            InnerHandler = _innerHandlerMock.Object
+        };
 
         _innerHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+            .ReturnsAsync(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
 
-        var client = new HttpClient(_handler);
+        var client = new HttpClient(handler);
         var request = new HttpRequestMessage(HttpMethod.Get, "https://example.com");
 
         // Act
         await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.False(request.Headers.Contains("x-goog-api-key"));
+        _innerHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => !req.Headers.Contains("x-goog-api-key")),
+            ItExpr.IsAny<CancellationToken>());
     }
 
-    [Fact(DisplayName = "Constructor should throw when vault is null.")]
-    public void Constructor_ShouldThrow_WhenVaultIsNull()
+    public void Dispose()
     {
-        Assert.Throws<ArgumentNullException>(() => new JulesAuthHandler(null!));
+        if (File.Exists(_tempFile)) File.Delete(_tempFile);
     }
 }

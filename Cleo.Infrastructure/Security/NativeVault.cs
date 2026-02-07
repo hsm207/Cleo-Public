@@ -60,11 +60,11 @@ public class NativeVault : IVault
             var identity = new Identity((ApiKey)decrypted);
             return identity;
         }
-        catch (System.Security.Cryptography.CryptographicException ex)
+        catch (Exception ex) when (ex is System.Security.Cryptography.CryptographicException or ArgumentException)
         {
             throw new InvalidOperationException(
                 $"❌ Critical Error: Unable to decrypt your Jules API Key. " +
-                $"This usually happens if your machine configuration changed. " +
+                $"This usually happens if your machine configuration changed or the storage file was corrupted. " +
                 $"Please re-authenticate by running 'cleo auth login'. " +
                 $"Details: {ex.Message}", ex);
         }
