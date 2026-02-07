@@ -21,16 +21,10 @@ public interface IJulesClient
     /// <summary>
     /// Sends a feedback message to Jules within an active session.
     /// </summary>
-    Task SendMessageAsync(SessionId id, string content, CancellationToken cancellationToken = default);
+    Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Fetches the latest code solution (patch) produced in a session.
+    /// Lists the rich chronological history of activities in a session.
     /// </summary>
-    /// <returns>The latest patch, or null if no solution is ready.</returns>
-    Task<SolutionPatch?> GetLatestSolutionAsync(SessionId id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Lists the chronological history of messages in a session.
-    /// </summary>
-    Task<IReadOnlyCollection<ChatMessage>> GetConversationAsync(SessionId id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default);
 }
