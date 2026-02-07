@@ -14,15 +14,10 @@ public class NativeVault : IVault
     private readonly string _storagePath;
     private readonly IEncryptionStrategy _strategy;
 
-    public NativeVault() : this(GetDefaultStoragePath(), SelectStrategy())
+    public NativeVault(string storagePath, IEncryptionStrategy strategy)
     {
-    }
-
-    // Internal constructor for testing 🧪
-    internal NativeVault(string storagePath, IEncryptionStrategy strategy)
-    {
-        _storagePath = storagePath;
-        _strategy = strategy;
+        _storagePath = storagePath ?? throw new ArgumentNullException(nameof(storagePath));
+        _strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
 
         // Ensure directory exists for whichever path we are using
         var directory = Path.GetDirectoryName(_storagePath);
@@ -60,7 +55,7 @@ public class NativeVault : IVault
             var identity = new Identity((ApiKey)decrypted);
             return identity;
         }
-        catch (Exception ex) when (ex is System.Security.Cryptography.CryptographicException or ArgumentException)
+        catch (VaultSecurityException ex)
         {
             throw new InvalidOperationException(
                 $"❌ Critical Error: Unable to decrypt your Jules API Key. " +
@@ -77,22 +72,5 @@ public class NativeVault : IVault
             File.Delete(_storagePath);
         }
         return Task.CompletedTask;
-    }
-
-    private static string GetDefaultStoragePath()
-    {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appData, "Cleo", "identity.dat");
-    }
-
-    [ExcludeFromCodeCoverage]
-    private static IEncryptionStrategy SelectStrategy()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return new DpapiEncryptionStrategy();
-        }
-        
-        return new AesGcmEncryptionStrategy();
     }
 }

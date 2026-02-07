@@ -5,7 +5,7 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Infrastructure.Persistence.Internal;
 
 // 1. The Path Provider (Where is the data?) 📍
-internal interface IRegistryPathProvider
+public interface IRegistryPathProvider
 {
     string GetRegistryPath();
 }
@@ -21,7 +21,7 @@ internal sealed class DefaultRegistryPathProvider : IRegistryPathProvider
 }
 
 // 2. The Task Mapper (What are we saving?) 🔄
-internal interface IRegistryTaskMapper
+public interface IRegistryTaskMapper
 {
     RegisteredTaskDto MapToDto(Session session);
     Session MapToDomain(RegisteredTaskDto dto);
@@ -45,24 +45,24 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 }
 
 // 3. The Serializer (How do we format it?) 🔓
-internal interface IRegistrySerializer
+public interface IRegistrySerializer
 {
-    string Serialize(List<RegisteredTaskDto> tasks);
-    List<RegisteredTaskDto> Deserialize(string content);
+    string Serialize(IEnumerable<RegisteredTaskDto> tasks);
+    IEnumerable<RegisteredTaskDto> Deserialize(string content);
 }
 
 internal sealed class JsonRegistrySerializer : IRegistrySerializer
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
-    public string Serialize(List<RegisteredTaskDto> tasks) => JsonSerializer.Serialize(tasks, Options);
-    public List<RegisteredTaskDto> Deserialize(string content) => 
+    public string Serialize(IEnumerable<RegisteredTaskDto> tasks) => JsonSerializer.Serialize(tasks, Options);
+    public IEnumerable<RegisteredTaskDto> Deserialize(string content) => 
         JsonSerializer.Deserialize<List<RegisteredTaskDto>>(content) ?? new List<RegisteredTaskDto>();
 }
 
 /// <summary>
 /// A passive DTO for serializing a mission in the global Task Registry.
 /// </summary>
-internal sealed record RegisteredTaskDto(
+public sealed record RegisteredTaskDto(
     string SessionId,
     string TaskDescription,
     string Repository,
