@@ -132,7 +132,7 @@ public class SessionTests
         var session = new Session(Id, Task, Source, InitialPulse);
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", now, new[] { new PlanStep(0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
         session.AddActivity(new ExecutionActivity("a2", now, "cmd", "out", 0));
         session.AddActivity(new ProgressActivity("a3", now, "working"));
         session.AddActivity(new FailureActivity("a4", now, "error"));

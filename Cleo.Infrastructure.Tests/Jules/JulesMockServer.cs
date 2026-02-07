@@ -118,6 +118,75 @@ public sealed class JulesMockServer : IDisposable
         return this;
     }
 
+    public JulesMockServer GivenSourcesExist()
+    {
+        var json = """
+            {
+              "sources": [
+                {
+                  "name": "GitHub Source",
+                  "id": "src-1",
+                  "githubRepo": {
+                    "owner": "cleo-inc",
+                    "repo": "cleo-core"
+                  }
+                }
+              ]
+            }
+            """;
+
+        _server
+            .Given(Request.Create()
+                .WithPath("/v1alpha/sources")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody(json));
+
+        return this;
+    }
+
+    public JulesMockServer GivenNoSourcesExist()
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath("/v1alpha/sources")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody("{}"));
+
+        return this;
+    }
+
+    public JulesMockServer GivenPartialSourcesExist()
+    {
+        var json = """
+            {
+              "sources": [
+                {
+                  "name": "Broken Source",
+                  "id": "src-2",
+                  "githubRepo": null
+                }
+              ]
+            }
+            """;
+
+        _server
+            .Given(Request.Create()
+                .WithPath("/v1alpha/sources")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody(json));
+
+        return this;
+    }
+
     public void Dispose()
     {
         _server.Stop();

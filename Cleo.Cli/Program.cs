@@ -50,6 +50,9 @@ internal static class Program
         rootCommand.AddCommand(Commands.ListCommand.Create(serviceProvider));
         rootCommand.AddCommand(Commands.StatusCommand.Create(serviceProvider));
         rootCommand.AddCommand(Commands.DeleteCommand.Create(serviceProvider));
+        rootCommand.AddCommand(Commands.ActivitiesCommand.Create(serviceProvider));
+        rootCommand.AddCommand(Commands.ApproveCommand.Create(serviceProvider));
+        rootCommand.AddCommand(Commands.TalkCommand.Create(serviceProvider));
         
         rootCommand.SetHandler(() => 
         {

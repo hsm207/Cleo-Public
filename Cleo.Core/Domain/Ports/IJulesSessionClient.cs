@@ -4,9 +4,9 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// A portal for communicating with the remote Jules API.
+/// A portal for managing the lifecycle of a remote Jules session.
 /// </summary>
-public interface IJulesClient
+public interface IJulesSessionClient
 {
     /// <summary>
     /// Launches a new remote session for a specific task and source.
@@ -22,14 +22,4 @@ public interface IJulesClient
     /// Sends a feedback message to Jules within an active session.
     /// </summary>
     Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Lists the chronological history of activities in a session.
-    /// </summary>
-    Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Lists the available sources in the Jules account.
-    /// </summary>
-    Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default);
 }

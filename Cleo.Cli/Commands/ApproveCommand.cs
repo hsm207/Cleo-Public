@@ -6,22 +6,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class StatusCommand
+internal static class ApproveCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
-        var command = new Command("status", "Fetch the fresh pulse and update the registry 💓");
+        var command = new Command("approve", "Approve a generated plan 👍");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
+        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve.");
         command.AddArgument(handleArgument);
+        command.AddArgument(planIdArgument);
 
-        command.SetHandler(async (handle) =>
+        command.SetHandler(async (handle, planId) =>
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("StatusCommand");
+            var logger = loggerFactory.CreateLogger("ApproveCommand");
             var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
             var reader = serviceProvider.GetRequiredService<ISessionReader>();
-            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
 
             try
             {
@@ -34,26 +35,21 @@ internal static class StatusCommand
                     return;
                 }
 
-                var pulse = await julesClient.GetSessionPulseAsync(sessionId).ConfigureAwait(false);
-                
-                // Update session pulse
-                session.UpdatePulse(pulse);
-                
-                await writer.SaveAsync(session).ConfigureAwait(false);
+                // Sending an approval message
+                await julesClient.SendMessageAsync(sessionId, $"Plan {planId} approved.").ConfigureAwait(false);
 
-                Console.WriteLine($"💓 Status for {handle}: {session.Pulse.Status}");
-                Console.WriteLine($"📝 {session.Pulse.Detail}");
+                Console.WriteLine($"✅ Plan {planId} approved for session {handle}! Let's go! 🚀");
             }
             #pragma warning disable CA1031
             catch (Exception ex)
             {
                 #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to fetch status.");
+                logger.LogError(ex, "❌ Failed to approve plan.");
                 #pragma warning restore CA1848
                 Console.WriteLine($"💔 Something went wrong: {ex.Message}");
             }
             #pragma warning restore CA1031
-        }, handleArgument);
+        }, handleArgument, planIdArgument);
 
         return command;
     }

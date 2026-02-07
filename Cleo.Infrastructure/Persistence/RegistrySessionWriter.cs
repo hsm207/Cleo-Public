@@ -6,21 +6,20 @@ using Cleo.Infrastructure.Persistence.Internal;
 namespace Cleo.Infrastructure.Persistence;
 
 /// <summary>
-/// Provides a file-based implementation of the task repository, persisting session
-/// data to a central registry using configurable pathing and serialization strategies.
+/// A file-based implementation of the session writer port.
 /// </summary>
-public sealed class RegistryTaskRepository : ISessionReader, ISessionWriter
+public sealed class RegistrySessionWriter : ISessionWriter
 {
     private readonly IRegistryPathProvider _pathProvider;
     private readonly IRegistryTaskMapper _mapper;
     private readonly IRegistrySerializer _serializer;
 
-    public RegistryTaskRepository() : this(
+    public RegistrySessionWriter() : this(
         new DefaultRegistryPathProvider(),
         new RegistryTaskMapper(),
         new JsonRegistrySerializer()) { }
 
-    internal RegistryTaskRepository(
+    internal RegistrySessionWriter(
         IRegistryPathProvider pathProvider,
         IRegistryTaskMapper mapper,
         IRegistrySerializer serializer)
@@ -48,22 +47,6 @@ public sealed class RegistryTaskRepository : ISessionReader, ISessionWriter
         }
 
         await SaveRegistryAsync(tasks, cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(id);
-
-        var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
-        var dto = tasks.FirstOrDefault(t => t.SessionId == id.Value);
-
-        return dto != null ? _mapper.MapToDomain(dto) : null;
-    }
-
-    public async Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default)
-    {
-        var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
-        return tasks.Select(_mapper.MapToDomain).ToList().AsReadOnly();
     }
 
     public async Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)

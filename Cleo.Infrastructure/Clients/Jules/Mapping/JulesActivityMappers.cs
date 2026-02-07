@@ -19,6 +19,7 @@ internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
     private static readonly Dictionary<string, SessionStatus> StatusMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["QUEUED"] = SessionStatus.StartingUp,
+        ["STARTING_UP"] = SessionStatus.StartingUp,
         ["PLANNING"] = SessionStatus.Planning,
         ["IN_PROGRESS"] = SessionStatus.InProgress,
         ["AWAITING_USER_FEEDBACK"] = SessionStatus.AwaitingFeedback,
@@ -37,6 +38,7 @@ internal sealed class PlanningActivityMapper : IJulesActivityMapper
     public bool CanMap(JulesActivityDto dto) => dto.PlanGenerated is not null;
     public SessionActivity Map(JulesActivityDto dto) => new PlanningActivity(
         dto.Id, dto.CreateTime, 
+        dto.PlanGenerated!.Plan.Id ?? "unknown",
         dto.PlanGenerated!.Plan.Steps.Select(s => new PlanStep(s.Index, s.Title, s.Description ?? string.Empty)).ToList());
 }
 
@@ -76,5 +78,16 @@ internal sealed class MessageActivityMapper : IJulesActivityMapper
         };
         var text = dto.MessageText ?? (dto.PlanApproved is not null ? $"Plan {dto.PlanApproved.PlanId} approved." : "Unknown activity.");
         return new MessageActivity(dto.Id, dto.CreateTime, originator, text);
+    }
+}
+
+internal sealed class UnknownActivityMapper : IJulesActivityMapper
+{
+    // The true fallback of last resort. 🛑
+    public bool CanMap(JulesActivityDto dto) => true;
+
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        return new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, "Unknown activity type received.");
     }
 }

@@ -28,8 +28,8 @@ internal static class NewCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("NewCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesClient>();
-            var repository = serviceProvider.GetRequiredService<ISessionRepository>();
+            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
+            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
 
             #pragma warning disable CA1848
             logger.LogInformation("💖 Creating new session for task: {Task}", task);
@@ -41,7 +41,7 @@ internal static class NewCommand
                 var sourceContext = new SourceContext(repo, branch);
 
                 var session = await julesClient.CreateSessionAsync(taskDescription, sourceContext).ConfigureAwait(false);
-                await repository.SaveAsync(session).ConfigureAwait(false);
+                await writer.SaveAsync(session).ConfigureAwait(false);
 
                 Console.WriteLine($"✅ Session created successfully, babe! 🚀");
                 Console.WriteLine($"🔗 Handle: {session.Id.Value}");

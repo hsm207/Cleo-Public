@@ -15,7 +15,7 @@ internal static class SourcesCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("SourcesCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesClient>();
+            var julesClient = serviceProvider.GetRequiredService<IJulesSourceClient>();
 
             try
             {
