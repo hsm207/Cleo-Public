@@ -6,6 +6,7 @@ using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.InteropServices;
 
 namespace Cleo.Infrastructure;
 
@@ -20,8 +21,24 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(julesBaseUrl);
 
         // Security & Persistence
-        services.AddSingleton<IVault, NativeVault>();
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var identityPath = Path.Combine(appData, "Cleo", "identity.dat");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            services.AddSingleton<IEncryptionStrategy, DpapiEncryptionStrategy>();
+        }
+        else
+        {
+            services.AddSingleton<IEncryptionStrategy, AesGcmEncryptionStrategy>();
+        }
+
+        services.AddSingleton<IVault>(sp => new NativeVault(identityPath, sp.GetRequiredService<IEncryptionStrategy>()));
+        
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
+        services.AddSingleton<IRegistryPathProvider, DefaultRegistryPathProvider>();
+        services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
+        services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
         services.AddSingleton<ISessionReader, RegistrySessionReader>();
         services.AddSingleton<ISessionWriter, RegistrySessionWriter>();
         

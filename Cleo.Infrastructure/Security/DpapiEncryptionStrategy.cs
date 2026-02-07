@@ -21,7 +21,14 @@ internal sealed class DpapiEncryptionStrategy : IEncryptionStrategy
     public string Decrypt(byte[] cipherText)
     {
         ArgumentNullException.ThrowIfNull(cipherText);
-        var data = ProtectedData.Unprotect(cipherText, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
-        return Encoding.UTF8.GetString(data);
+        try
+        {
+            var data = ProtectedData.Unprotect(cipherText, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(data);
+        }
+        catch (Exception ex)
+        {
+            throw new VaultSecurityException("DPAPI unprotection failed.", ex);
+        }
     }
 }

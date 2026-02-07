@@ -26,11 +26,11 @@ public class AesGcmEncryptionStrategyTests
         Assert.Throws<ArgumentNullException>(() => strategy.Decrypt(null!));
     }
 
-    [Fact(DisplayName = "AesGcmEncryptionStrategy should throw ArgumentException for invalid data length during decryption.")]
+    [Fact(DisplayName = "AesGcmEncryptionStrategy should throw VaultSecurityException for invalid data length during decryption.")]
     public void DecryptShouldThrowOnInvalidLength()
     {
         var strategy = new AesGcmEncryptionStrategy();
         var invalidData = new byte[5]; // Less than Nonce + Tag size
-        Assert.Throws<ArgumentException>(() => strategy.Decrypt(invalidData));
+        Assert.Throws<VaultSecurityException>(() => strategy.Decrypt(invalidData));
     }
 }

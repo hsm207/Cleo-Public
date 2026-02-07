@@ -84,13 +84,6 @@ public class NativeVaultTests : IDisposable
         Assert.False(File.Exists(_tempFile));
     }
 
-    [Fact(DisplayName = "NativeVault public constructor should initialize correctly on the current platform.")]
-    public void PublicConstructorShouldInitialize()
-    {
-        var vault = new NativeVault();
-        Assert.NotNull(vault);
-    }
-
     [Fact(DisplayName = "NativeVault should create the storage directory if it does not exist.")]
     public void ConstructorShouldCreateDirectory()
     {

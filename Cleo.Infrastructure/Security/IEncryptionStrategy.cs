@@ -3,7 +3,7 @@ namespace Cleo.Infrastructure.Security;
 /// <summary>
 /// Defines a strategy for encrypting and decrypting sensitive domain data.
 /// </summary>
-internal interface IEncryptionStrategy
+public interface IEncryptionStrategy
 {
     /// <summary>
     /// Encrypts the provided plain text.

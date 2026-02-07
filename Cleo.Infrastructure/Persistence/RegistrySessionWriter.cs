@@ -15,13 +15,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
     private readonly IRegistrySerializer _serializer;
     private readonly IFileSystem _fileSystem;
 
-    public RegistrySessionWriter() : this(
-        new DefaultRegistryPathProvider(),
-        new RegistryTaskMapper(),
-        new JsonRegistrySerializer(),
-        new PhysicalFileSystem()) { }
-
-    internal RegistrySessionWriter(
+    public RegistrySessionWriter(
         IRegistryPathProvider pathProvider,
         IRegistryTaskMapper mapper,
         IRegistrySerializer serializer,
@@ -74,10 +68,10 @@ public sealed class RegistrySessionWriter : ISessionWriter
         var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
 
-        return _serializer.Deserialize(json);
+        return _serializer.Deserialize(json).ToList();
     }
 
-    private async Task SaveRegistryAsync(List<RegisteredTaskDto> tasks, CancellationToken ct)
+    private async Task SaveRegistryAsync(IEnumerable<RegisteredTaskDto> tasks, CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
         var directory = Path.GetDirectoryName(path);

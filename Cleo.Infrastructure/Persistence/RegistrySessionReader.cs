@@ -15,13 +15,7 @@ public sealed class RegistrySessionReader : ISessionReader
     private readonly IRegistrySerializer _serializer;
     private readonly IFileSystem _fileSystem;
 
-    public RegistrySessionReader() : this(
-        new DefaultRegistryPathProvider(),
-        new RegistryTaskMapper(),
-        new JsonRegistrySerializer(),
-        new PhysicalFileSystem()) { }
-
-    internal RegistrySessionReader(
+    public RegistrySessionReader(
         IRegistryPathProvider pathProvider,
         IRegistryTaskMapper mapper,
         IRegistrySerializer serializer,
@@ -49,13 +43,13 @@ public sealed class RegistrySessionReader : ISessionReader
         return tasks.Select(_mapper.MapToDomain).ToList().AsReadOnly();
     }
 
-    private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
+    private async Task<IEnumerable<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!_fileSystem.FileExists(path)) return new List<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return Array.Empty<RegisteredTaskDto>();
 
         var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
+        if (string.IsNullOrWhiteSpace(json)) return Array.Empty<RegisteredTaskDto>();
 
         return _serializer.Deserialize(json);
     }

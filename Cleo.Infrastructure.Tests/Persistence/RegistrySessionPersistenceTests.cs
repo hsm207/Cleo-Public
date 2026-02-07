@@ -131,10 +131,15 @@ public class RegistrySessionPersistenceTests : IDisposable
         }
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should have a working parameterless constructor.")]
-    public void DefaultConstructor_ShouldWork()
+    [Fact(DisplayName = "RegistrySessionWriter should have a working DI-compatible constructor.")]
+    public void DIConstructor_ShouldWork()
     {
-        var writer = new RegistrySessionWriter();
+        var mapper = new RegistryTaskMapper();
+        var serializer = new JsonRegistrySerializer();
+        var fileSystem = new PhysicalFileSystem();
+        var pathProvider = new DefaultRegistryPathProvider();
+
+        var writer = new RegistrySessionWriter(pathProvider, mapper, serializer, fileSystem);
         Assert.NotNull(writer);
     }
 

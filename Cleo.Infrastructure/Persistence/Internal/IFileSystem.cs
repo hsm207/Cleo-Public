@@ -3,7 +3,7 @@ namespace Cleo.Infrastructure.Persistence.Internal;
 /// <summary>
 /// A thin abstraction over the physical file system to enable deterministic testing.
 /// </summary>
-internal interface IFileSystem
+public interface IFileSystem
 {
     bool FileExists(string path);
     bool DirectoryExists(string path);
