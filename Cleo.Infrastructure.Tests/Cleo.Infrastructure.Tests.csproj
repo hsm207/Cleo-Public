@@ -24,6 +24,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- [internal metadata: [internal metadata: TestData scrubbed] scrubbed] -->
+
   <ItemGroup>
     <ProjectReference Include="..\Cleo.Infrastructure\Cleo.Infrastructure.csproj" />
     <ProjectReference Include="..\Cleo.Core\Cleo.Core.csproj" />
