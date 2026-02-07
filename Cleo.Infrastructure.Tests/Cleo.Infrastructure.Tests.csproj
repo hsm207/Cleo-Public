@@ -25,6 +25,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestData\Jules\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Cleo.Infrastructure\Cleo.Infrastructure.csproj" />
     <ProjectReference Include="..\Cleo.Core\Cleo.Core.csproj" />
   </ItemGroup>
