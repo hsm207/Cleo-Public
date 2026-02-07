@@ -9,14 +9,18 @@ namespace Cleo.Core.Domain.Entities;
 /// </summary>
 public class Session : AggregateRoot
 {
-    private readonly List<ChatMessage> _conversation = new();
+    private readonly List<SessionActivity> _sessionLog = new();
 
     public SessionId Id { get; }
     public TaskDescription Task { get; }
     public SourceContext Source { get; }
     public SessionPulse Pulse { get; private set; }
     public SolutionPatch? Solution { get; private set; }
-    public IReadOnlyCollection<ChatMessage> Conversation => _conversation.AsReadOnly();
+    
+    /// <summary>
+    /// The authoritative, chronological ledger of everything that happened in this session.
+    /// </summary>
+    public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
     public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse)
     {
@@ -46,17 +50,36 @@ public class Session : AggregateRoot
         }
     }
 
-    public void AddMessage(ChatMessage message)
+    /// <summary>
+    /// Records a new collaborative activity in the session log.
+    /// </summary>
+    public void AddActivity(SessionActivity activity)
     {
-        ArgumentNullException.ThrowIfNull(message);
-        _conversation.Add(message);
+        ArgumentNullException.ThrowIfNull(activity);
+        
+        // Ensure activities are added in chronological order if possible
+        // (In a distributed system we'd handle re-ordering, but here we keep it simple).
+        _sessionLog.Add(activity);
+
+        // Side Effect: If the activity is a Result, update the solution.
+        if (activity is ResultActivity result)
+        {
+            SetSolution(result.Patch);
+        }
     }
 
-    public void SetSolution(SolutionPatch solution)
+    /// <summary>
+    /// Convenience method for adding user feedback to the log.
+    /// </summary>
+    public void AddFeedback(string feedback, string activityId)
     {
-        ArgumentNullException.ThrowIfNull(solution);
-        Solution = solution;
+        ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
+        AddActivity(new MessageActivity(activityId, DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
+    }
 
+    private void SetSolution(SolutionPatch solution)
+    {
+        Solution = solution;
         RecordDomainEvent(new SolutionReady(Id, solution));
     }
 }
