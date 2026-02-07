@@ -52,7 +52,8 @@ internal sealed class FailureActivityMapper : IJulesActivityMapper
 
 internal sealed class MessageActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => true; // Catch-all for messages/unknowns
+    public bool CanMap(JulesActivityDto dto) => 
+        dto.MessageText != null || dto.PlanApproved != null || dto.Originator == "user";
 
     public SessionActivity Map(JulesActivityDto dto)
     {

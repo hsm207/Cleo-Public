@@ -70,6 +70,30 @@ public sealed class JulesMapperTests
         JulesMapper.Map(systemDto).Originator.Should().Be(ActivityOriginator.System);
     }
 
+    [Fact(DisplayName = "JulesMapper should map Result activity correctly.")]
+    public void Map_Result_ShouldReturnResultActivity()
+    {
+        var dto = CreateBaseDto() with {
+            Artifacts = new[] {
+                new ArtifactDto(new ChangeSetDto(new GitPatchDto("diff", "base")))
+            }
+        };
+
+        var result = JulesMapper.Map(dto);
+
+        result.Should().BeOfType<ResultActivity>();
+        var act = (ResultActivity)result;
+        act.Patch.UniDiff.Should().Be("diff");
+        
+        // Exercise the 'false' branch of ResultActivityMapper.CanMap
+        // (Ensure it falls back to MessageActivityMapper correctly!)
+        var fallbackDto = CreateBaseDto() with { 
+            Artifacts = new[] { new ArtifactDto(null) },
+            Originator = "user" 
+        };
+        JulesMapper.Map(fallbackDto).Should().BeOfType<MessageActivity>();
+    }
+
     [Fact(DisplayName = "JulesMapper should throw ArgumentNullException if DTO is null.")]
     public void Map_ShouldThrowOnNull()
     {
