@@ -17,10 +17,10 @@ The central authority for managing the lifecycle of an autonomous collaboration.
 *   **`SessionLog`**: A chronological ledger of all structured **Activities** (Messages, Plans, Actions).
 
 **Key Behaviors:**
-1.  **`Assign`**: Launch Jules on a **Task** at a specific **Source**.
-2.  **`Monitor`**: Check the **Pulse** to see how Jules is progressing.
-3.  **`AddFeedback`**: Send guidance to Jules, recorded in the **SessionLog**.
-4.  **`Pull`**: Fetch the final **Patch** (the solution) to review locally.
+1.  **`Assign`**: Launch Jules on a **Task** at a specific **Source**. Recorded in the global **Task Registry**.
+2.  **`Monitor`**: Use a **Handle** to check the fresh **Pulse** from the remote API.
+3.  **`AddFeedback`**: Send guidance to Jules using her **Handle**, recorded in the remote **SessionLog**.
+4.  **`Pull`**: Fetch the final **Patch** using the **Handle** to review locally.
 
 ## 💎 Design Principles
 
