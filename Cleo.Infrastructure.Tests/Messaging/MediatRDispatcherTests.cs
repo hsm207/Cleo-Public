@@ -16,25 +16,28 @@ public sealed class MediatRDispatcherTests
         _sut = new MediatRDispatcher(_mockMediator.Object);
     }
 
-    [Fact(DisplayName = "MediatRDispatcher should publish single events to the mediator.")]
+    [Fact(DisplayName = "MediatRDispatcher should wrap domain events in an envelope and publish to mediator.")]
     public async Task DispatchAsync_Single_ShouldPublishToMediator()
     {
         // Arrange
-        var mockEvent = new Mock<IDomainEvent>();
+        var mockEvent = new TestDomainEvent(DateTimeOffset.UtcNow);
         var ct = TestContext.Current.CancellationToken;
 
         // Act
-        await _sut.DispatchAsync(mockEvent.Object, ct);
+        await _sut.DispatchAsync(mockEvent, ct);
 
         // Assert
-        _mockMediator.Verify(m => m.Publish(mockEvent.Object, ct), Times.Once);
+        // We verify that Publish was called with an INotification that wraps our event
+        _mockMediator.Verify(m => m.Publish(
+            It.Is<INotification>(n => n is DomainEventNotification<TestDomainEvent> && ((DomainEventNotification<TestDomainEvent>)n).Event == mockEvent), 
+            ct), Times.Once);
     }
 
-    [Fact(DisplayName = "MediatRDispatcher should publish collections of events.")]
+    [Fact(DisplayName = "MediatRDispatcher should publish collections of wrapped events.")]
     public async Task DispatchAsync_Collection_ShouldPublishAllToMediator()
     {
         // Arrange
-        var events = new[] { new Mock<IDomainEvent>().Object, new Mock<IDomainEvent>().Object };
+        var events = new[] { new TestDomainEvent(DateTimeOffset.UtcNow), new TestDomainEvent(DateTimeOffset.UtcNow) };
         var ct = TestContext.Current.CancellationToken;
 
         // Act
@@ -43,7 +46,9 @@ public sealed class MediatRDispatcherTests
         // Assert
         foreach (var @event in events)
         {
-            _mockMediator.Verify(m => m.Publish(@event, ct), Times.Once);
+            _mockMediator.Verify(m => m.Publish(
+                It.Is<INotification>(n => n is DomainEventNotification<TestDomainEvent> && ((DomainEventNotification<TestDomainEvent>)n).Event == @event), 
+                ct), Times.Once);
         }
     }
 
@@ -60,4 +65,7 @@ public sealed class MediatRDispatcherTests
     {
         Assert.Throws<ArgumentNullException>(() => new MediatRDispatcher(null!));
     }
+
+    // Concrete event for testing the wrapper logic
+    private record TestDomainEvent(DateTimeOffset OccurredOn) : IDomainEvent;
 }
