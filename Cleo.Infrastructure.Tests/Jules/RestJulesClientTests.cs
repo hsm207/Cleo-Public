@@ -37,6 +37,24 @@ public sealed class RestJulesClientTests : IDisposable
         plan.Steps.First().Title.Should().Be("Analyze the dough density.");
     }
 
+    [Fact(DisplayName = "RestJulesClient should launch a new session and map it to a Domain Session entity.")]
+    public async Task CreateSessionAsync_ShouldReturnMappedSession()
+    {
+        // Arrange
+        _julesMock.GivenSessionIsCreated();
+        var task = (TaskDescription)"Optimize cookies";
+        var source = new SourceContext("sources/github/repo", "main");
+
+        // Act
+        var session = await _sut.CreateSessionAsync(task, source, TestContext.Current.CancellationToken);
+
+        // Assert
+        session.Id.Value.Should().Be("sessions/cute-session-69");
+        session.Task.Should().Be(task);
+        session.Source.Repository.Should().Be("sources/github/cleo-lover/cookie-bakery");
+        session.Pulse.Status.Should().Be(SessionStatus.StartingUp);
+    }
+
     public void Dispose()
     {
         _julesMock.Dispose();
