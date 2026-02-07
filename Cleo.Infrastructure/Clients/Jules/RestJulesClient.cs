@@ -17,7 +17,7 @@ public sealed class RestJulesClient : IJulesClient
     private readonly IEnumerable<IJulesActivityMapper> _mappers;
     private readonly ISessionStatusMapper _statusMapper;
 
-    internal RestJulesClient(
+    public RestJulesClient(
         HttpClient httpClient, 
         IEnumerable<IJulesActivityMapper> mappers,
         ISessionStatusMapper statusMapper)
@@ -35,6 +35,7 @@ public sealed class RestJulesClient : IJulesClient
         var request = new
         {
             prompt = (string)task,
+            title = ((string)task).Length > 50 ? ((string)task)[..47] + "..." : (string)task,
             sourceContext = new
             {
                 source = source.Repository,
@@ -42,7 +43,8 @@ public sealed class RestJulesClient : IJulesClient
                 {
                     startingBranch = source.StartingBranch
                 }
-            }
+            },
+            requirePlanApproval = true
         };
 
         var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
@@ -82,6 +84,17 @@ public sealed class RestJulesClient : IJulesClient
         return response.Activities
             .Select(dto => _mappers.FirstOrDefault(m => m.CanMap(dto))?.Map(dto) 
                 ?? throw new InvalidOperationException($"No suitable mapping pattern found for activity {dto.Id}."))
+            .ToList()
+            .AsReadOnly();
+    }
+
+    public async Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ListSourcesResponse>("v1alpha/sources", cancellationToken).ConfigureAwait(false);
+        if (response?.Sources == null) return Array.Empty<SessionSource>();
+
+        return response.Sources
+            .Select(dto => new SessionSource(dto.Name, dto.GithubRepo?.Owner ?? "unknown", dto.GithubRepo?.Repo ?? "unknown"))
             .ToList()
             .AsReadOnly();
     }
