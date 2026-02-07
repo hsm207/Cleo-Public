@@ -6,124 +6,140 @@ using Moq;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
 
-public class RegistrySessionPersistenceTests
+public class RegistrySessionPersistenceTests : IDisposable
 {
+    private readonly string _tempFile;
     private readonly Mock<IRegistryPathProvider> _pathProviderMock = new();
-    private readonly Mock<IRegistryTaskMapper> _mapperMock = new();
-    private readonly Mock<IRegistrySerializer> _serializerMock = new();
-    private readonly Mock<IFileSystem> _fileSystemMock = new();
-    private readonly string _registryPath = "/path/to/registry.json";
+    private readonly RegistrySessionReader _reader;
+    private readonly RegistrySessionWriter _writer;
 
     public RegistrySessionPersistenceTests()
     {
-        _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_registryPath);
+        _tempFile = Path.Combine(Path.GetTempPath(), $"Cleo_Test_Registry_{Guid.NewGuid():N}.json");
+        _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_tempFile);
+
+        // REAL VIBES: Use real logic and real FileSystem
+        var mapper = new RegistryTaskMapper();
+        var serializer = new JsonRegistrySerializer();
+        var fileSystem = new PhysicalFileSystem();
+
+        _reader = new RegistrySessionReader(_pathProviderMock.Object, mapper, serializer, fileSystem);
+        _writer = new RegistrySessionWriter(_pathProviderMock.Object, mapper, serializer, fileSystem);
     }
 
-    [Fact(DisplayName = "RegistrySessionReader should retrieve a session by ID.")]
-    public async Task Reader_ShouldGetById()
+    [Fact(DisplayName = "RegistrySessionWriter should save a session and Reader should retrieve it.")]
+    public async Task Writer_ShouldSave_AndReader_ShouldLoad()
     {
         // Arrange
-        var id = new SessionId("sessions/123");
-        var dto = new RegisteredTaskDto(id.Value, "task", "repo", "branch", "QUEUED", "detail");
-        var session = new Session(id, new TaskDescription("task"), new SourceContext("repo", "branch"), new SessionPulse(SessionStatus.StartingUp));
-        
-        _fileSystemMock.Setup(f => f.FileExists(_registryPath)).Returns(true);
-        _fileSystemMock.Setup(f => f.ReadAllTextAsync(_registryPath, It.IsAny<CancellationToken>())).ReturnsAsync("[]");
-        _serializerMock.Setup(s => s.Deserialize(It.IsAny<string>())).Returns(new List<RegisteredTaskDto> { dto });
-        _mapperMock.Setup(m => m.MapToDomain(dto)).Returns(session);
-
-        var reader = new RegistrySessionReader(_pathProviderMock.Object, _mapperMock.Object, _serializerMock.Object, _fileSystemMock.Object);
+        var id = new SessionId("sessions/real-vibes-1");
+        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning));
 
         // Act
-        var result = await reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
+        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(session, result);
+        Assert.NotNull(result);
+        Assert.Equal(session.Id, result!.Id);
+        Assert.Equal(session.Task, result.Task);
+        Assert.Equal(session.Pulse.Status, result.Pulse.Status);
+        
+        // Verify file actually exists and has content
+        Assert.True(File.Exists(_tempFile));
+        var json = File.ReadAllText(_tempFile);
+        Assert.Contains("Real world testing", json);
     }
 
-    [Fact(DisplayName = "RegistrySessionReader should return empty list when file does not exist.")]
-    public async Task Reader_ShouldReturnEmpty_WhenFileMissing()
+    [Fact(DisplayName = "RegistrySessionWriter should handle updates to existing sessions.")]
+    public async Task Writer_ShouldUpdate_ExistingSession()
     {
         // Arrange
-        _fileSystemMock.Setup(f => f.FileExists(_registryPath)).Returns(false);
-        var reader = new RegistrySessionReader(_pathProviderMock.Object, _mapperMock.Object, _serializerMock.Object, _fileSystemMock.Object);
+        var id = new SessionId("sessions/update-test");
+        var initial = new Session(id, new TaskDescription("Initial"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
+        var updated = new Session(id, new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed));
 
         // Act
-        var result = await reader.ListAsync(TestContext.Current.CancellationToken);
+        await _writer.SaveAsync(initial, TestContext.Current.CancellationToken);
+        await _writer.SaveAsync(updated, TestContext.Current.CancellationToken);
+        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
+        Assert.Equal((TaskDescription)"Updated", result.Task);
+    }
+
+    [Fact(DisplayName = "RegistrySessionWriter should delete sessions correctly.")]
+    public async Task Writer_ShouldDelete_Session()
+    {
+        // Arrange
+        var id = new SessionId("sessions/delete-me");
+        var session = new Session(id, new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
+
+        // Act
+        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
+        await _writer.DeleteAsync(id, TestContext.Current.CancellationToken);
+        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact(DisplayName = "Reader should return empty when registry file is missing or empty.")]
+    public async Task Reader_ShouldHandleMissingFile()
+    {
+        // Act
+        var result = await _reader.ListAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
-    }
-
-    [Fact(DisplayName = "RegistrySessionReader should handle empty or whitespace JSON gracefully.")]
-    public async Task Reader_ShouldReturnEmpty_WhenJsonEmpty()
-    {
-        // Arrange
-        _fileSystemMock.Setup(f => f.FileExists(_registryPath)).Returns(true);
-        _fileSystemMock.Setup(f => f.ReadAllTextAsync(_registryPath, It.IsAny<CancellationToken>())).ReturnsAsync("   ");
-        var reader = new RegistrySessionReader(_pathProviderMock.Object, _mapperMock.Object, _serializerMock.Object, _fileSystemMock.Object);
-
-        // Act
-        var result = await reader.ListAsync(TestContext.Current.CancellationToken);
-
-        // Assert
+        
+        // Now test empty file
+        File.WriteAllText(_tempFile, "[]");
+        result = await _reader.ListAsync(TestContext.Current.CancellationToken);
+        Assert.Empty(result);
+        
+        // Now test whitespace
+        File.WriteAllText(_tempFile, "   ");
+        result = await _reader.ListAsync(TestContext.Current.CancellationToken);
         Assert.Empty(result);
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should save a session and create directory if missing.")]
-    public async Task Writer_ShouldSaveSession_AndCreateDirectory()
+    [Fact(DisplayName = "RegistrySessionWriter should create directory if it does not exist.")]
+    public async Task Writer_ShouldCreateDirectory()
     {
         // Arrange
-        var id = new SessionId("sessions/123");
-        var session = new Session(id, new TaskDescription("task"), new SourceContext("repo", "branch"), new SessionPulse(SessionStatus.StartingUp));
-        var dto = new RegisteredTaskDto(id.Value, "task", "repo", "branch", "QUEUED", "detail");
-        var directory = Path.GetDirectoryName(_registryPath)!;
+        var nestedDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var nestedFile = Path.Combine(nestedDir, "registry.json");
+        var mockPath = new Mock<IRegistryPathProvider>();
+        mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
 
-        _fileSystemMock.Setup(f => f.FileExists(_registryPath)).Returns(false);
-        _fileSystemMock.Setup(f => f.DirectoryExists(directory)).Returns(false);
-        _mapperMock.Setup(m => m.MapToDto(session)).Returns(dto);
-        _serializerMock.Setup(s => s.Serialize(It.IsAny<List<RegisteredTaskDto>>())).Returns("[]");
+        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(), new JsonRegistrySerializer(), new PhysicalFileSystem());
+        var session = new Session(new SessionId("s"), new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
 
-        var writer = new RegistrySessionWriter(_pathProviderMock.Object, _mapperMock.Object, _serializerMock.Object, _fileSystemMock.Object);
+        try
+        {
+            // Act
+            await writer.SaveAsync(session, TestContext.Current.CancellationToken);
 
-        // Act
-        await writer.SaveAsync(session, TestContext.Current.CancellationToken);
-
-        // Assert
-        _fileSystemMock.Verify(f => f.CreateDirectory(directory), Times.Once);
-        _fileSystemMock.Verify(f => f.WriteAllTextAsync(_registryPath, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            // Assert
+            Assert.True(Directory.Exists(nestedDir));
+            Assert.True(File.Exists(nestedFile));
+        }
+        finally
+        {
+            if (Directory.Exists(nestedDir)) Directory.Delete(nestedDir, true);
+        }
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should delete a session and only save if changes occurred.")]
-    public async Task Writer_ShouldDeleteSession_OnlyIfFound()
+    [Fact(DisplayName = "RegistrySessionWriter should have a working parameterless constructor.")]
+    public void DefaultConstructor_ShouldWork()
     {
-        // Arrange
-        var id = new SessionId("sessions/123");
-        var dto = new RegisteredTaskDto(id.Value, "task", "repo", "branch", "QUEUED", "detail");
+        var writer = new RegistrySessionWriter();
+        Assert.NotNull(writer);
+    }
 
-        // First Case: Found
-        _fileSystemMock.Setup(f => f.FileExists(_registryPath)).Returns(true);
-        _fileSystemMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
-        _fileSystemMock.Setup(f => f.ReadAllTextAsync(_registryPath, It.IsAny<CancellationToken>())).ReturnsAsync("[]");
-        _serializerMock.Setup(s => s.Deserialize(It.IsAny<string>())).Returns(new List<RegisteredTaskDto> { dto });
-        _serializerMock.Setup(s => s.Serialize(It.IsAny<List<RegisteredTaskDto>>())).Returns("[]");
-
-        var writer = new RegistrySessionWriter(_pathProviderMock.Object, _mapperMock.Object, _serializerMock.Object, _fileSystemMock.Object);
-
-        // Act
-        await writer.DeleteAsync(id, TestContext.Current.CancellationToken);
-
-        // Assert
-        _fileSystemMock.Verify(f => f.WriteAllTextAsync(_registryPath, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-
-        // Second Case: Not Found
-        _fileSystemMock.Invocations.Clear();
-        _serializerMock.Setup(s => s.Deserialize(It.IsAny<string>())).Returns(new List<RegisteredTaskDto>());
-        
-        // Act
-        await writer.DeleteAsync(id, TestContext.Current.CancellationToken);
-
-        // Assert
-        _fileSystemMock.Verify(f => f.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    public void Dispose()
+    {
+        if (File.Exists(_tempFile)) File.Delete(_tempFile);
     }
 }

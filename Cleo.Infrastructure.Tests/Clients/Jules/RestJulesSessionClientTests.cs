@@ -13,7 +13,7 @@ namespace Cleo.Infrastructure.Tests.Clients.Jules;
 public class RestJulesSessionClientTests
 {
     private readonly Mock<HttpMessageHandler> _handlerMock = new();
-    private readonly Mock<ISessionStatusMapper> _statusMapperMock = new();
+    private readonly ISessionStatusMapper _statusMapper = new DefaultSessionStatusMapper();
     private readonly RestJulesSessionClient _client;
     private readonly SessionId _testId = new("sessions/123");
 
@@ -23,7 +23,7 @@ public class RestJulesSessionClientTests
         {
             BaseAddress = new Uri("https://jules.googleapis.com/")
         };
-        _client = new RestJulesSessionClient(httpClient, _statusMapperMock.Object);
+        _client = new RestJulesSessionClient(httpClient, _statusMapper);
     }
 
     [Fact(DisplayName = "CreateSessionAsync should post a session request and return a mapped session.")]
@@ -41,8 +41,6 @@ public class RestJulesSessionClientTests
                 StatusCode = HttpStatusCode.OK,
                 Content = JsonContent.Create(dto)
             });
-
-        _statusMapperMock.Setup(m => m.Map("QUEUED")).Returns(SessionStatus.StartingUp);
 
         // Act
         var result = await _client.CreateSessionAsync(task, source, TestContext.Current.CancellationToken);
@@ -65,8 +63,6 @@ public class RestJulesSessionClientTests
                 StatusCode = HttpStatusCode.OK,
                 Content = JsonContent.Create(dto)
             });
-
-        _statusMapperMock.Setup(m => m.Map("PLANNING")).Returns(SessionStatus.Planning);
 
         // Act
         var result = await _client.GetSessionPulseAsync(_testId, TestContext.Current.CancellationToken);
