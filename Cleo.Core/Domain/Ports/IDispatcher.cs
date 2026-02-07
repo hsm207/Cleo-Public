@@ -3,7 +3,7 @@ using Cleo.Core.Domain.Common;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// A purely abstract portal for broadcasting domain events to the outside world.
+/// Defines the contract for broadcasting domain events to subscribers.
 /// </summary>
 public interface IDispatcher
 {
