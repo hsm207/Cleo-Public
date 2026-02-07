@@ -18,9 +18,6 @@ public sealed class JulesMockServer : IDisposable
         _server = WireMockServer.Start();
     }
 
-    /// <summary>
-    /// Configures the mock to return a successful session creation response.
-    /// </summary>
     public JulesMockServer GivenSessionIsCreated()
     {
         var json = File.ReadAllText(Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "session_created.json"));
@@ -37,9 +34,6 @@ public sealed class JulesMockServer : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Configures the mock to return the rich activity list for a specific session.
-    /// </summary>
     public JulesMockServer GivenActivitiesExist(string sessionId)
     {
         var json = File.ReadAllText(Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "activities_list.json"));
@@ -56,9 +50,63 @@ public sealed class JulesMockServer : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Configures the mock to return a 401 Unauthorized error (Simulation of bad key).
-    /// </summary>
+    public JulesMockServer GivenActivitiesAreEmpty(string sessionId)
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath($"/v1alpha/sessions/{sessionId}/activities")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody("{}"));
+
+        return this;
+    }
+
+    public JulesMockServer GivenSessionPulseExists(string sessionId, string state)
+    {
+        var json = $$"""{ "state": "{{state}}", "name": "sessions/{{sessionId}}" }""";
+
+        _server
+            .Given(Request.Create()
+                .WithPath($"/v1alpha/sessions/{sessionId}")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody(json));
+
+        return this;
+    }
+
+    public JulesMockServer GivenSessionPulseReturnsNull(string sessionId)
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath($"/v1alpha/sessions/{sessionId}")
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody("null"));
+
+        return this;
+    }
+
+    public JulesMockServer GivenMessageCanBeSent(string sessionId)
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath($"/v1alpha/sessions/{sessionId}:sendMessage")
+                .UsingPost())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithBody("{}"));
+
+        return this;
+    }
+
     public JulesMockServer GivenUnauthenticated()
     {
         _server

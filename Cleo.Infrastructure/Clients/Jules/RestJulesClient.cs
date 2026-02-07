@@ -49,16 +49,33 @@ public sealed class RestJulesClient : IJulesClient
         return JulesMapper.Map(dto!, task);
     }
 
-    public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        // To be implemented in the next step! 💓
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(id);
+
+        var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>(
+            $"v1alpha/{id.Value}", 
+            cancellationToken).ConfigureAwait(false);
+
+        if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
+
+        var status = JulesMapper.MapStatus(dto.State);
+        return new SessionPulse(status, $"Session is {dto.State}");
     }
 
-    public Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)
+    public async Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)
     {
-        // To be implemented in the next step! 💬
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
+
+        var request = new { messageText = feedback };
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"v1alpha/{id.Value}:sendMessage", 
+            request, 
+            cancellationToken).ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
     }
 
     public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)

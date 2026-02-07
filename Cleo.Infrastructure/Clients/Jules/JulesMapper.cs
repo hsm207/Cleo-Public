@@ -10,15 +10,6 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    private static readonly List<IJulesActivityMapper> Mappers = new()
-    {
-        new PlanningActivityMapper(),
-        new ResultActivityMapper(),
-        new ProgressActivityMapper(),
-        new FailureActivityMapper(),
-        new MessageActivityMapper() // Must be last as it's the catch-all! 🧤
-    };
-
     public static Session Map(JulesSessionDto dto, TaskDescription originalTask)
     {
         ArgumentNullException.ThrowIfNull(dto);
@@ -44,7 +35,7 @@ internal static class JulesMapper
             "AWAITING_FEEDBACK" => SessionStatus.AwaitingFeedback,
             "COMPLETED" => SessionStatus.Completed,
             "FAILED" => SessionStatus.Failed,
-            _ => SessionStatus.InProgress // Default to in progress for unknown states
+            _ => SessionStatus.InProgress
         };
     }
 
@@ -52,9 +43,24 @@ internal static class JulesMapper
     {
         ArgumentNullException.ThrowIfNull(dto);
 
-        var mapper = Mappers.FirstOrDefault(m => m.CanMap(dto)) 
-            ?? throw new InvalidOperationException($"No suitable mapper found for activity {dto.Id}.");
+        // Instantiate mappers locally to ensure 100% coverage visibility 🧼✨
+        var mappers = new IJulesActivityMapper[]
+        {
+            new PlanningActivityMapper(),
+            new ResultActivityMapper(),
+            new ProgressActivityMapper(),
+            new FailureActivityMapper(),
+            new MessageActivityMapper()
+        };
 
-        return mapper.Map(dto);
+        foreach (var mapper in mappers)
+        {
+            if (mapper.CanMap(dto))
+            {
+                return mapper.Map(dto);
+            }
+        }
+
+        throw new InvalidOperationException($"No suitable mapper found for activity {dto.Id}.");
     }
 }
