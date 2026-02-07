@@ -24,7 +24,8 @@ public sealed class RestJulesClientTests : IDisposable
             new FailureActivityMapper(),
             new MessageActivityMapper()
         };
-        _sut = new RestJulesClient(httpClient, mappers);
+        var statusMapper = new DefaultSessionStatusMapper();
+        _sut = new RestJulesClient(httpClient, mappers, statusMapper);
     }
 
     [Fact(DisplayName = "RestJulesClient should retrieve and map structured activities from the API.")]
@@ -121,9 +122,14 @@ public sealed class RestJulesClientTests : IDisposable
         var result = activities.OfType<ResultActivity>().Single();
         result.Patch.BaseCommitId.Should().Be("base-cookie-commit-001");
         
-        JulesMapper.MapStatus("UNKNOWN_STATE").Should().Be(SessionStatus.InProgress);
+        // Exercise the status mapping
+        var statusMapper = new DefaultSessionStatusMapper();
+        statusMapper.Map("UNKNOWN_STATE").Should().Be(SessionStatus.InProgress);
+        
+        // Exercise entity mapping
         var dto = new JulesSessionDto("n", "i", "STARTING_UP", "p", new SourceContextDto("r", new GithubRepoContextDto("main")));
-        JulesMapper.Map(dto, (TaskDescription)"t").Should().NotBeNull();
+        var t = (TaskDescription)"t";
+        JulesMapper.Map(dto, t, statusMapper).Should().NotBeNull();
     }
 
     [Fact(DisplayName = "RestJulesClient should validate all arguments and exercise all properties.")]
@@ -136,7 +142,18 @@ public sealed class RestJulesClientTests : IDisposable
         await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.SendMessageAsync(null!, "f", ct));
         await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.SendMessageAsync(new SessionId("s"), null!, ct));
         await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GetActivitiesAsync(null!, ct));
+        
+        // Constructor null checks
+        var httpClient = new HttpClient();
+        var mappers = Array.Empty<IJulesActivityMapper>();
+        var statusMapper = new DefaultSessionStatusMapper();
+        
+        Assert.Throws<ArgumentNullException>(() => new RestJulesClient(null!, mappers, statusMapper));
+        Assert.Throws<ArgumentNullException>(() => new RestJulesClient(httpClient, null!, statusMapper));
+        Assert.Throws<ArgumentNullException>(() => new RestJulesClient(httpClient, mappers, null!));
+
         await Assert.ThrowsAsync<ArgumentException>(() => _sut.SendMessageAsync(new SessionId("s"), " ", ct));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.SendMessageAsync(new SessionId("s"), null!, ct));
     }
 
     [Fact(DisplayName = "RestJulesClient should handle error responses gracefully.")]

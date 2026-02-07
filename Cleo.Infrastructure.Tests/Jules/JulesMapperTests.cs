@@ -105,7 +105,8 @@ public sealed class JulesMapperTests
     [Fact(DisplayName = "JulesMapper.Map should throw ArgumentNullException if DTO is null.")]
     public void Map_ShouldThrowOnNull()
     {
-        Action act = () => JulesMapper.Map(null!, (TaskDescription)"t");
+        var statusMapper = new DefaultSessionStatusMapper();
+        Action act = () => JulesMapper.Map(null!, (TaskDescription)"t", statusMapper);
         act.Should().Throw<ArgumentNullException>();
     }
 

@@ -9,6 +9,27 @@ internal interface IJulesActivityMapper
     SessionActivity Map(JulesActivityDto dto);
 }
 
+internal interface ISessionStatusMapper
+{
+    SessionStatus Map(string state);
+}
+
+internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
+{
+    private static readonly Dictionary<string, SessionStatus> StatusMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["STARTING_UP"] = SessionStatus.StartingUp,
+        ["PLANNING"] = SessionStatus.Planning,
+        ["IN_PROGRESS"] = SessionStatus.InProgress,
+        ["AWAITING_FEEDBACK"] = SessionStatus.AwaitingFeedback,
+        ["COMPLETED"] = SessionStatus.Completed,
+        ["FAILED"] = SessionStatus.Failed
+    };
+
+    public SessionStatus Map(string state) => 
+        StatusMap.TryGetValue(state, out var status) ? status : SessionStatus.InProgress;
+}
+
 internal sealed class PlanningActivityMapper : IJulesActivityMapper
 {
     public bool CanMap(JulesActivityDto dto) => dto.PlanGenerated is not null;

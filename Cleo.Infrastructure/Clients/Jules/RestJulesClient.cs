@@ -14,11 +14,16 @@ public sealed class RestJulesClient : IJulesClient
 {
     private readonly HttpClient _httpClient;
     private readonly IEnumerable<IJulesActivityMapper> _mappers;
+    private readonly ISessionStatusMapper _statusMapper;
 
-    internal RestJulesClient(HttpClient httpClient, IEnumerable<IJulesActivityMapper> mappers)
+    internal RestJulesClient(
+        HttpClient httpClient, 
+        IEnumerable<IJulesActivityMapper> mappers,
+        ISessionStatusMapper statusMapper)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+        _statusMapper = statusMapper ?? throw new ArgumentNullException(nameof(statusMapper));
     }
 
     public async Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default)
@@ -43,7 +48,7 @@ public sealed class RestJulesClient : IJulesClient
         response.EnsureSuccessStatusCode();
 
         var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
-        return JulesMapper.Map(dto!, task);
+        return JulesMapper.Map(dto!, task, _statusMapper);
     }
 
     public async Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
@@ -53,7 +58,7 @@ public sealed class RestJulesClient : IJulesClient
         var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>($"v1alpha/{id.Value}", cancellationToken).ConfigureAwait(false);
         if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
-        return new SessionPulse(JulesMapper.MapStatus(dto.State), $"Session is {dto.State}");
+        return new SessionPulse(_statusMapper.Map(dto.State), $"Session is {dto.State}");
     }
 
     public async Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)

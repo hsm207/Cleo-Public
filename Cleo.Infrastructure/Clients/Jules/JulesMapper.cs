@@ -1,6 +1,7 @@
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
 
@@ -9,26 +10,18 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    public static Session Map(JulesSessionDto dto, TaskDescription originalTask)
+    public static Session Map(JulesSessionDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
     {
         ArgumentNullException.ThrowIfNull(dto);
+        ArgumentNullException.ThrowIfNull(statusMapper);
 
+        var status = statusMapper.Map(dto.State);
+        
         return new Session(
             new SessionId(dto.Name),
             originalTask,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
-            new SessionPulse(MapStatus(dto.State), $"Session is {dto.State}")
+            new SessionPulse(status, $"Session is {dto.State}")
         );
     }
-
-    public static SessionStatus MapStatus(string state) => state.ToUpperInvariant() switch
-    {
-        "STARTING_UP" => SessionStatus.StartingUp,
-        "PLANNING" => SessionStatus.Planning,
-        "IN_PROGRESS" => SessionStatus.InProgress,
-        "AWAITING_FEEDBACK" => SessionStatus.AwaitingFeedback,
-        "COMPLETED" => SessionStatus.Completed,
-        "FAILED" => SessionStatus.Failed,
-        _ => SessionStatus.InProgress
-    };
 }
