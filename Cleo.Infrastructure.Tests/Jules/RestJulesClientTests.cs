@@ -184,7 +184,7 @@ public sealed class RestJulesClientTests : IDisposable
         var dto = new JulesActivityDto("n", "i", DateTimeOffset.UtcNow, "agent", null, null, null, null, null, null);
         
         Action act = () => JulesMapper.Map(dto);
-        act.Should().Throw<InvalidOperationException>().WithMessage("*No suitable mapper*");
+        act.Should().Throw<InvalidOperationException>().WithMessage("*No suitable mapping pattern*");
     }
 
     [Fact(DisplayName = "RestJulesClient should return empty list when API returns no activities.")]

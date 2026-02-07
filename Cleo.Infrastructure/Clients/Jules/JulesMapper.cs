@@ -1,12 +1,11 @@
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
-using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// A S.O.L.I.D. composite mapper that hydrates domain activities from Jules DTOs.
+/// A high-signal mapper using modern C# patterns to hydrate domain activities from Jules DTOs.
 /// </summary>
 internal static class JulesMapper
 {
@@ -14,53 +13,67 @@ internal static class JulesMapper
     {
         ArgumentNullException.ThrowIfNull(dto);
 
-        var id = new SessionId(dto.Name);
-        var source = new SourceContext(
-            dto.SourceContext.Source, 
-            dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty);
-        
-        var status = MapStatus(dto.State);
-        var pulse = new SessionPulse(status, $"Session is {dto.State}");
-
-        return new Session(id, originalTask, source, pulse);
+        return new Session(
+            new SessionId(dto.Name),
+            originalTask,
+            new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
+            new SessionPulse(MapStatus(dto.State), $"Session is {dto.State}")
+        );
     }
 
-    public static SessionStatus MapStatus(string state)
+    public static SessionStatus MapStatus(string state) => state.ToUpperInvariant() switch
     {
-        return state.ToUpperInvariant() switch
-        {
-            "STARTING_UP" => SessionStatus.StartingUp,
-            "PLANNING" => SessionStatus.Planning,
-            "IN_PROGRESS" => SessionStatus.InProgress,
-            "AWAITING_FEEDBACK" => SessionStatus.AwaitingFeedback,
-            "COMPLETED" => SessionStatus.Completed,
-            "FAILED" => SessionStatus.Failed,
-            _ => SessionStatus.InProgress
-        };
-    }
+        "STARTING_UP" => SessionStatus.StartingUp,
+        "PLANNING" => SessionStatus.Planning,
+        "IN_PROGRESS" => SessionStatus.InProgress,
+        "AWAITING_FEEDBACK" => SessionStatus.AwaitingFeedback,
+        "COMPLETED" => SessionStatus.Completed,
+        "FAILED" => SessionStatus.Failed,
+        _ => SessionStatus.InProgress
+    };
 
     public static SessionActivity Map(JulesActivityDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
-        // Instantiate mappers locally to ensure 100% coverage visibility 🧼✨
-        var mappers = new IJulesActivityMapper[]
+        return dto switch
         {
-            new PlanningActivityMapper(),
-            new ResultActivityMapper(),
-            new ProgressActivityMapper(),
-            new FailureActivityMapper(),
-            new MessageActivityMapper()
+            // 1. Planning Activity 🗺️
+            { PlanGenerated: not null } => new PlanningActivity(
+                dto.Id, 
+                dto.CreateTime, 
+                dto.PlanGenerated.Plan.Steps.Select(s => new PlanStep(s.Index, s.Title, s.Description ?? string.Empty)).ToList()),
+
+            // 2. Result Activity (Patch) 🏹
+            { Artifacts: not null } when dto.Artifacts.FirstOrDefault(a => a.ChangeSet?.GitPatch != null) is { } art => new ResultActivity(
+                dto.Id, 
+                dto.CreateTime, 
+                new SolutionPatch(art.ChangeSet!.GitPatch!.UnidiffPatch, art.ChangeSet.GitPatch.BaseCommitId)),
+
+            // 3. Progress Activity 💓
+            { ProgressUpdated: not null } => new ProgressActivity(dto.Id, dto.CreateTime, "Activity update received."),
+
+            // 4. Failure Activity 🛑
+            { SessionFailed: not null } => new FailureActivity(dto.Id, dto.CreateTime, dto.SessionFailed.Reason),
+
+            // 5. Message Activity (Dialogue/Feedback) 💬
+            _ when dto.MessageText != null || dto.PlanApproved != null || string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase) 
+                => MapMessage(dto),
+
+            _ => throw new InvalidOperationException($"No suitable mapping pattern found for activity {dto.Id}.")
+        };
+    }
+
+    private static MessageActivity MapMessage(JulesActivityDto dto)
+    {
+        var originator = dto.Originator switch
+        {
+            _ when string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase) => ActivityOriginator.User,
+            _ when string.Equals(dto.Originator, "AGENT", StringComparison.OrdinalIgnoreCase) => ActivityOriginator.Agent,
+            _ => ActivityOriginator.System
         };
 
-        foreach (var mapper in mappers)
-        {
-            if (mapper.CanMap(dto))
-            {
-                return mapper.Map(dto);
-            }
-        }
-
-        throw new InvalidOperationException($"No suitable mapper found for activity {dto.Id}.");
+        var text = dto.MessageText ?? (dto.PlanApproved != null ? $"Plan {dto.PlanApproved.PlanId} approved." : "Unknown activity.");
+        return new MessageActivity(dto.Id, dto.CreateTime, originator, text);
     }
 }
