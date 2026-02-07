@@ -24,7 +24,12 @@ public interface IJulesClient
     Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Lists the rich chronological history of activities in a session.
+    /// Lists the chronological history of activities in a session.
     /// </summary>
     Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists the available sources in the Jules account.
+    /// </summary>
+    Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default);
 }

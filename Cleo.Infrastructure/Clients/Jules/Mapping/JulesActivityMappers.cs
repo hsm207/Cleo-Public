@@ -3,31 +3,33 @@ using Cleo.Infrastructure.Clients.Jules.Dtos;
 
 namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
-internal interface IJulesActivityMapper
+public interface IJulesActivityMapper
 {
     bool CanMap(JulesActivityDto dto);
     SessionActivity Map(JulesActivityDto dto);
 }
 
-internal interface ISessionStatusMapper
+public interface ISessionStatusMapper
 {
-    SessionStatus Map(string state);
+    SessionStatus Map(string? state);
 }
 
 internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
 {
     private static readonly Dictionary<string, SessionStatus> StatusMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["STARTING_UP"] = SessionStatus.StartingUp,
+        ["QUEUED"] = SessionStatus.StartingUp,
         ["PLANNING"] = SessionStatus.Planning,
         ["IN_PROGRESS"] = SessionStatus.InProgress,
-        ["AWAITING_FEEDBACK"] = SessionStatus.AwaitingFeedback,
+        ["AWAITING_USER_FEEDBACK"] = SessionStatus.AwaitingFeedback,
+        ["AWAITING_PLAN_APPROVAL"] = SessionStatus.AwaitingFeedback,
+        ["PAUSED"] = SessionStatus.InProgress,
         ["COMPLETED"] = SessionStatus.Completed,
         ["FAILED"] = SessionStatus.Failed
     };
 
-    public SessionStatus Map(string state) => 
-        StatusMap.TryGetValue(state, out var status) ? status : SessionStatus.InProgress;
+    public SessionStatus Map(string? state) => 
+        (state != null && StatusMap.TryGetValue(state, out var status)) ? status : SessionStatus.InProgress;
 }
 
 internal sealed class PlanningActivityMapper : IJulesActivityMapper
