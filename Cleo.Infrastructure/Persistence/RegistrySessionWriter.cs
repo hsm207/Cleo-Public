@@ -13,20 +13,24 @@ public sealed class RegistrySessionWriter : ISessionWriter
     private readonly IRegistryPathProvider _pathProvider;
     private readonly IRegistryTaskMapper _mapper;
     private readonly IRegistrySerializer _serializer;
+    private readonly IFileSystem _fileSystem;
 
     public RegistrySessionWriter() : this(
         new DefaultRegistryPathProvider(),
         new RegistryTaskMapper(),
-        new JsonRegistrySerializer()) { }
+        new JsonRegistrySerializer(),
+        new PhysicalFileSystem()) { }
 
     internal RegistrySessionWriter(
         IRegistryPathProvider pathProvider,
         IRegistryTaskMapper mapper,
-        IRegistrySerializer serializer)
+        IRegistrySerializer serializer,
+        IFileSystem fileSystem)
     {
         _pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public async Task SaveAsync(Session session, CancellationToken cancellationToken = default)
@@ -65,9 +69,9 @@ public sealed class RegistrySessionWriter : ISessionWriter
     private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!File.Exists(path)) return new List<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return new List<RegisteredTaskDto>();
 
-        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+        var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
 
         return _serializer.Deserialize(json);
@@ -78,12 +82,12 @@ public sealed class RegistrySessionWriter : ISessionWriter
         var path = _pathProvider.GetRegistryPath();
         var directory = Path.GetDirectoryName(path);
         
-        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+        if (!string.IsNullOrWhiteSpace(directory) && !_fileSystem.DirectoryExists(directory))
         {
-            Directory.CreateDirectory(directory);
+            _fileSystem.CreateDirectory(directory);
         }
 
         var json = _serializer.Serialize(tasks);
-        await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
+        await _fileSystem.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
     }
 }

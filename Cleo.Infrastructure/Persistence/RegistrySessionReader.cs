@@ -13,20 +13,24 @@ public sealed class RegistrySessionReader : ISessionReader
     private readonly IRegistryPathProvider _pathProvider;
     private readonly IRegistryTaskMapper _mapper;
     private readonly IRegistrySerializer _serializer;
+    private readonly IFileSystem _fileSystem;
 
     public RegistrySessionReader() : this(
         new DefaultRegistryPathProvider(),
         new RegistryTaskMapper(),
-        new JsonRegistrySerializer()) { }
+        new JsonRegistrySerializer(),
+        new PhysicalFileSystem()) { }
 
     internal RegistrySessionReader(
         IRegistryPathProvider pathProvider,
         IRegistryTaskMapper mapper,
-        IRegistrySerializer serializer)
+        IRegistrySerializer serializer,
+        IFileSystem fileSystem)
     {
         _pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public async Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
@@ -48,9 +52,9 @@ public sealed class RegistrySessionReader : ISessionReader
     private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!File.Exists(path)) return new List<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return new List<RegisteredTaskDto>();
 
-        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+        var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
 
         return _serializer.Deserialize(json);
