@@ -21,7 +21,7 @@ public sealed class MediatRDispatcher : IDispatcher
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
 
-        // Wrap the pure domain event in an infrastructure notification envelope ✉️✨
+        // Wrap the domain event in an infrastructure-specific notification envelope.
         var envelopeType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
         var envelope = Activator.CreateInstance(envelopeType, domainEvent);
 

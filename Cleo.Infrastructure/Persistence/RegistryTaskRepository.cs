@@ -6,8 +6,8 @@ using Cleo.Infrastructure.Persistence.Internal;
 namespace Cleo.Infrastructure.Persistence;
 
 /// <summary>
-/// A S.O.L.I.D. implementation of the task repository that orchestrates persistence
-/// via interchangeable mapping, pathing, and serialization strategies.
+/// Provides a file-based implementation of the task repository, persisting session
+/// data to a central registry using configurable pathing and serialization strategies.
 /// </summary>
 public sealed class RegistryTaskRepository : ISessionRepository
 {
