@@ -18,10 +18,35 @@ public sealed class RestJulesClient : IJulesClient
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     }
 
-    public Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default)
+    public async Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default)
     {
-        // To be implemented in the next step! 🚀
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(task);
+        ArgumentNullException.ThrowIfNull(source);
+
+        var request = new
+        {
+            prompt = (string)task,
+            sourceContext = new
+            {
+                source = source.Repository,
+                githubRepoContext = new
+                {
+                    startingBranch = source.StartingBranch
+                }
+            }
+        };
+
+        var response = await _httpClient.PostAsJsonAsync(
+            "v1alpha/sessions", 
+            request, 
+            cancellationToken).ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+
+        var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return JulesMapper.Map(dto!, task);
     }
 
     public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
