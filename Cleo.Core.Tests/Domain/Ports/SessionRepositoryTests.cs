@@ -20,29 +20,35 @@ public class SessionRepositoryTests
             new SessionPulse(SessionStatus.StartingUp));
     }
 
-    [Fact(DisplayName = "The ISessionRepository port should define a clear contract for CRUD operations on sessions.")]
-    public async Task SessionRepositoryPortShouldDefineStandardOperations()
+    [Fact(DisplayName = "The ISessionReader port should define a clear contract for reading operations on sessions.")]
+    public async Task SessionReaderPortShouldDefineStandardOperations()
     {
-        var mockRepo = new Mock<ISessionRepository>();
-
-        // Verify Save
-        await mockRepo.Object.SaveAsync(_testSession, TestContext.Current.CancellationToken);
-        mockRepo.Verify(r => r.SaveAsync(_testSession, It.IsAny<CancellationToken>()), Times.Once);
+        var mockReader = new Mock<ISessionReader>();
 
         // Verify GetById
-        mockRepo.Setup(r => r.GetByIdAsync(_testId, It.IsAny<CancellationToken>()))
+        mockReader.Setup(r => r.GetByIdAsync(_testId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_testSession);
-        var retrieved = await mockRepo.Object.GetByIdAsync(_testId, TestContext.Current.CancellationToken);
+        var retrieved = await mockReader.Object.GetByIdAsync(_testId, TestContext.Current.CancellationToken);
         Assert.Equal(_testSession, retrieved);
 
         // Verify List
-        mockRepo.Setup(r => r.ListAsync(It.IsAny<CancellationToken>()))
+        mockReader.Setup(r => r.ListAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new[] { _testSession });
-        var list = await mockRepo.Object.ListAsync(TestContext.Current.CancellationToken);
+        var list = await mockReader.Object.ListAsync(TestContext.Current.CancellationToken);
         Assert.Single(list);
+    }
+
+    [Fact(DisplayName = "The ISessionWriter port should define a clear contract for writing operations on sessions.")]
+    public async Task SessionWriterPortShouldDefineStandardOperations()
+    {
+        var mockWriter = new Mock<ISessionWriter>();
+
+        // Verify Save
+        await mockWriter.Object.SaveAsync(_testSession, TestContext.Current.CancellationToken);
+        mockWriter.Verify(r => r.SaveAsync(_testSession, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify Delete
-        await mockRepo.Object.DeleteAsync(_testId, TestContext.Current.CancellationToken);
-        mockRepo.Verify(r => r.DeleteAsync(_testId, It.IsAny<CancellationToken>()), Times.Once);
+        await mockWriter.Object.DeleteAsync(_testId, TestContext.Current.CancellationToken);
+        mockWriter.Verify(r => r.DeleteAsync(_testId, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

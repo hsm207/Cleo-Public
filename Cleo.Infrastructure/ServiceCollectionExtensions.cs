@@ -20,7 +20,9 @@ public static class ServiceCollectionExtensions
 
         // Security & Persistence
         services.AddSingleton<IVault, NativeVault>();
-        services.AddSingleton<ISessionRepository, RegistryTaskRepository>();
+        services.AddSingleton<RegistryTaskRepository>();
+        services.AddSingleton<ISessionReader>(sp => sp.GetRequiredService<RegistryTaskRepository>());
+        services.AddSingleton<ISessionWriter>(sp => sp.GetRequiredService<RegistryTaskRepository>());
         
         // Messaging
         services.AddSingleton<IDispatcher, MediatRDispatcher>();
@@ -33,17 +35,22 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IJulesActivityMapper, ProgressActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, FailureActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, MessageActivityMapper>();
+        services.AddSingleton<IJulesActivityMapper, UnknownActivityMapper>();
 
         services.AddTransient<JulesAuthHandler>();
         services.AddTransient<JulesLoggingHandler>();
 
-        services.AddHttpClient<IJulesClient, RestJulesClient>(client =>
+        services.AddHttpClient<RestJulesClient>(client =>
         {
             client.BaseAddress = julesBaseUrl;
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         })
         .AddHttpMessageHandler<JulesAuthHandler>()
         .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddTransient<IJulesSessionClient>(sp => sp.GetRequiredService<RestJulesClient>());
+        services.AddTransient<IJulesSourceClient>(sp => sp.GetRequiredService<RestJulesClient>());
+        services.AddTransient<IJulesActivityClient>(sp => sp.GetRequiredService<RestJulesClient>());
 
         return services;
     }

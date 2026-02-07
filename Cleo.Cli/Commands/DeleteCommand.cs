@@ -19,12 +19,12 @@ internal static class DeleteCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("DeleteCommand");
-            var repository = serviceProvider.GetRequiredService<ISessionRepository>();
+            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
 
             try
             {
                 var sessionId = new SessionId(handle);
-                await repository.DeleteAsync(sessionId).ConfigureAwait(false);
+                await writer.DeleteAsync(sessionId).ConfigureAwait(false);
 
                 Console.WriteLine($"🗑️ Session {handle} removed from registry. Goodbye, sweet prince! 🥀");
             }

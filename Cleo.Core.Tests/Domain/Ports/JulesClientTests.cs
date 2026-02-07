@@ -6,12 +6,16 @@ namespace Cleo.Core.Tests.Domain.Ports;
 
 public class JulesClientTests
 {
-    private readonly Mock<IJulesClient> _mockClient = new();
+    private readonly Mock<IJulesSessionClient> _mockSessionClient = new();
+    private readonly Mock<IJulesSourceClient> _mockSourceClient = new();
+    private readonly Mock<IJulesActivityClient> _mockActivityClient = new();
 
-    [Fact(DisplayName = "IJulesClient should define the contract for collaborative activities.")]
-    public void InterfaceShouldBeImplementable()
+    [Fact(DisplayName = "Jules interfaces should define segregated contracts for collaborative activities.")]
+    public void InterfacesShouldBeImplementable()
     {
-        // This test simply verifies the interface contract is stable and mocking works.
-        Assert.NotNull(_mockClient.Object);
+        // This test simply verifies the interface contracts are stable and mocking works.
+        Assert.NotNull(_mockSessionClient.Object);
+        Assert.NotNull(_mockSourceClient.Object);
+        Assert.NotNull(_mockActivityClient.Object);
     }
 }

@@ -8,22 +8,16 @@ using Cleo.Infrastructure.Clients.Jules.Mapping;
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// A REST-based implementation of the Jules API client, providing methods for session 
-/// lifecycle management and collaborative interaction.
+/// A REST-based implementation of the Jules session lifecycle client.
 /// </summary>
-public sealed class RestJulesClient : IJulesSessionClient, IJulesSourceClient, IJulesActivityClient
+public sealed class RestJulesSessionClient : IJulesSessionClient
 {
     private readonly HttpClient _httpClient;
-    private readonly IEnumerable<IJulesActivityMapper> _mappers;
     private readonly ISessionStatusMapper _statusMapper;
 
-    public RestJulesClient(
-        HttpClient httpClient, 
-        IEnumerable<IJulesActivityMapper> mappers,
-        ISessionStatusMapper statusMapper)
+    public RestJulesSessionClient(HttpClient httpClient, ISessionStatusMapper statusMapper)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
         _statusMapper = statusMapper ?? throw new ArgumentNullException(nameof(statusMapper));
     }
 
@@ -74,28 +68,11 @@ public sealed class RestJulesClient : IJulesSessionClient, IJulesSourceClient, I
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task ApprovePlanAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var response = await _httpClient.GetFromJsonAsync<ListActivitiesResponse>($"v1alpha/{id.Value}/activities", cancellationToken).ConfigureAwait(false);
-        if (response?.Activities == null) return Array.Empty<SessionActivity>();
-
-        return response.Activities
-            .Select(dto => _mappers.FirstOrDefault(m => m.CanMap(dto))?.Map(dto) 
-                ?? throw new InvalidOperationException($"No suitable mapping pattern found for activity {dto.Id}."))
-            .ToList()
-            .AsReadOnly();
-    }
-
-    public async Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default)
-    {
-        var response = await _httpClient.GetFromJsonAsync<ListSourcesResponse>("v1alpha/sources", cancellationToken).ConfigureAwait(false);
-        if (response?.Sources == null) return Array.Empty<SessionSource>();
-
-        return response.Sources
-            .Select(dto => new SessionSource(dto.Name, dto.GithubRepo?.Owner ?? "unknown", dto.GithubRepo?.Repo ?? "unknown"))
-            .ToList()
-            .AsReadOnly();
+        var response = await _httpClient.PostAsync(new Uri($"v1alpha/{id.Value}:approvePlan", UriKind.Relative), null, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
     }
 }

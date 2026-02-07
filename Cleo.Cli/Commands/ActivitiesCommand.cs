@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class StatusCommand
+internal static class ActivitiesCommand
 {
     public static Command Create(IServiceProvider serviceProvider)
     {
-        var command = new Command("status", "Fetch the fresh pulse and update the registry 💓");
+        var command = new Command("activities", "List recent activities for a session 📜");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
         command.AddArgument(handleArgument);
@@ -18,10 +18,9 @@ internal static class StatusCommand
         command.SetHandler(async (handle) =>
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("StatusCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
+            var logger = loggerFactory.CreateLogger("ActivitiesCommand");
+            var julesClient = serviceProvider.GetRequiredService<IJulesActivityClient>();
             var reader = serviceProvider.GetRequiredService<ISessionReader>();
-            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
 
             try
             {
@@ -34,21 +33,25 @@ internal static class StatusCommand
                     return;
                 }
 
-                var pulse = await julesClient.GetSessionPulseAsync(sessionId).ConfigureAwait(false);
-                
-                // Update session pulse
-                session.UpdatePulse(pulse);
-                
-                await writer.SaveAsync(session).ConfigureAwait(false);
+                var activities = await julesClient.GetActivitiesAsync(sessionId).ConfigureAwait(false);
 
-                Console.WriteLine($"💓 Status for {handle}: {session.Pulse.Status}");
-                Console.WriteLine($"📝 {session.Pulse.Detail}");
+                if (activities.Count == 0)
+                {
+                    Console.WriteLine("📭 No activities found yet. Stay tuned! 📻");
+                    return;
+                }
+
+                Console.WriteLine($"📜 Activities for {handle}:");
+                foreach (var activity in activities)
+                {
+                    Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetType().Name} ({activity.Id})");
+                }
             }
             #pragma warning disable CA1031
             catch (Exception ex)
             {
                 #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to fetch status.");
+                logger.LogError(ex, "❌ Failed to fetch activities.");
                 #pragma warning restore CA1848
                 Console.WriteLine($"💔 Something went wrong: {ex.Message}");
             }

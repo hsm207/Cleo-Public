@@ -15,11 +15,11 @@ internal static class ListCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("ListCommand");
-            var repository = serviceProvider.GetRequiredService<ISessionRepository>();
+            var reader = serviceProvider.GetRequiredService<ISessionReader>();
 
             try
             {
-                var sessions = await repository.ListAsync().ConfigureAwait(false);
+                var sessions = await reader.ListAsync().ConfigureAwait(false);
 
                 if (sessions.Count == 0)
                 {

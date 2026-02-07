@@ -21,9 +21,10 @@ public class SessionActivityTests
     public void PlanningActivityTest()
     {
         var steps = new[] { new PlanStep(0, "T1", "D1") };
-        var activity = new PlanningActivity("id2", Now, steps);
+        var activity = new PlanningActivity("id2", Now, "plan-1", steps);
         Assert.Equal(ActivityOriginator.Agent, activity.Originator);
         Assert.Single(activity.Steps);
+        Assert.Equal("plan-1", activity.PlanId);
         Assert.Equal("T1", activity.Steps.First().Title);
     }
 
