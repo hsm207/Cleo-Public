@@ -46,7 +46,7 @@ public sealed class JulesMockServer : IDisposable
 
         _server
             .Given(Request.Create()
-                .WithPath($"/v1alpha/{sessionId}/activities")
+                .WithPath($"/v1alpha/sessions/{sessionId}/activities")
                 .UsingGet())
             .RespondWith(Response.Create()
                 .WithStatusCode(200)
@@ -62,10 +62,10 @@ public sealed class JulesMockServer : IDisposable
     public JulesMockServer GivenUnauthenticated()
     {
         _server
-            .Given(Request.Create().Any())
+            .Given(Request.Create())
             .RespondWith(Response.Create()
                 .WithStatusCode(401)
-                .WithBody("{"error": "Invalid API Key"}"));
+                .WithBody("{\"error\": \"Invalid API Key\"}"));
 
         return this;
     }
