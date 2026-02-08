@@ -5,6 +5,7 @@ using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
@@ -52,7 +53,7 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
         try
         {
             var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
             var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             return JulesMapper.Map(dto!, task, _statusMapper);
@@ -69,7 +70,10 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
 
         try
         {
-            var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>($"v1alpha/{id.Value}", cancellationToken).ConfigureAwait(false);
+            var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
             return new SessionPulse(_statusMapper.Map(dto.State), $"Session is {dto.State}");
@@ -85,12 +89,12 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
 
-        var request = new { messageText = feedback };
+        var request = new { prompt = feedback };
         
         try
         {
             var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)
         {
@@ -115,7 +119,7 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
         try
         {
             var response = await _httpClient.PostAsync(new Uri($"v1alpha/{id.Value}:approvePlan", UriKind.Relative), null, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)
         {

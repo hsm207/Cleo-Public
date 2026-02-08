@@ -74,7 +74,7 @@ public class RestJulesSessionClientTests
         Assert.Equal(SessionStatus.Planning, result.Status);
     }
 
-    [Fact(DisplayName = "SendMessageAsync should post a message request.")]
+    [Fact(DisplayName = "SendMessageAsync should post a message request with the correct 'prompt' field.")]
     public async Task SendMessageAsync_ShouldPostMessage()
     {
         // Arrange
@@ -86,14 +86,38 @@ public class RestJulesSessionClientTests
             });
 
         // Act
-        await _client.SendMessageAsync(_testId, "hello", TestContext.Current.CancellationToken);
+        await _client.SendMessageAsync(_testId, "hello world", TestContext.Current.CancellationToken);
 
         // Assert
         _handlerMock.Protected().Verify(
             "SendAsync",
             Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+            ItExpr.Is<HttpRequestMessage>(req => 
+                req.Method == HttpMethod.Post && 
+                req.Content != null && 
+                req.Content.ReadAsStringAsync().Result.Contains("\"prompt\":\"hello world\"")),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "The client should include status code and response body in the exception on failure.")]
+    public async Task ShouldIncludeResponseDetailsOnFailure()
+    {
+        // Arrange
+        var errorBody = "{\"error\": \"details\"}";
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent(errorBody)
+            });
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<RemoteCollaboratorUnavailableException>(() => 
+            _client.SendMessageAsync(_testId, "fail", TestContext.Current.CancellationToken));
+        
+        Assert.Contains("400", ex.Message);
+        Assert.Contains(errorBody, ex.Message);
     }
 
     [Fact(DisplayName = "ApprovePlanAsync should post an empty request to the approvePlan endpoint.")]
