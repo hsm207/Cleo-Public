@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Moq;
 using Moq.Protected;
@@ -27,7 +27,7 @@ public class RestPulseMonitorTests
     public async Task GetPulse_IsIsolatedAndCorrect()
     {
         // Arrange
-        var dto = new JulesSessionDto("session-123", "id", "IN_PROGRESS", "prompt", new SourceContextDto("repo", null), null, true, "NONE", null, null);
+        var dto = new JulesSessionResponse("session-123", "id", "IN_PROGRESS", "prompt", new SourceContextDto("repo", null), null, true, "NONE", null, null);
         
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
