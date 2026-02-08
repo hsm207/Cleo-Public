@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
-using Cleo.Core.UseCases.ListMissions;
+using Cleo.Core.UseCases.ListSessions;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
@@ -8,10 +8,10 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class ListCommand
 {
-    private readonly IListMissionsUseCase _useCase;
+    private readonly IListSessionsUseCase _useCase;
     private readonly ILogger<ListCommand> _logger;
 
-    public ListCommand(IListMissionsUseCase useCase, ILogger<ListCommand> logger)
+    public ListCommand(IListSessionsUseCase useCase, ILogger<ListCommand> logger)
     {
         _useCase = useCase;
         _logger = logger;
@@ -19,7 +19,7 @@ internal sealed class ListCommand
 
     public Command Build()
     {
-        var command = new Command("list", "List all active missions from the global registry 🌍");
+        var command = new Command("list", "List all active sessions from the global registry 🌍");
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -30,16 +30,16 @@ internal sealed class ListCommand
     {
         try
         {
-            var response = await _useCase.ExecuteAsync(new ListMissionsRequest()).ConfigureAwait(false);
+            var response = await _useCase.ExecuteAsync(new ListSessionsRequest()).ConfigureAwait(false);
 
-            if (response.Missions.Count == 0)
+            if (response.Sessions.Count == 0)
             {
-                Console.WriteLine("📭 No active missions found. Time to start something new? 💖");
+                Console.WriteLine("📭 No active sessions found. Time to start something new? 💖");
                 return;
             }
 
-            Console.WriteLine("📋 Current Missions:");
-            foreach (var session in response.Missions)
+            Console.WriteLine("📋 Current Sessions:");
+            foreach (var session in response.Sessions)
             {
                 Console.WriteLine($"- [{session.Id.Value}] {session.Task} ({session.Pulse.Status})");
             }

@@ -15,7 +15,7 @@ public sealed class AbandonSessionUseCaseTests
         _sut = new AbandonSessionUseCase(_writer);
     }
 
-    [Fact(DisplayName = "When abandoning a mission, the Session should be removed from the Task Registry.")]
+    [Fact(DisplayName = "When abandoning a session, the Session should be removed from the Task Registry.")]
     public async Task ShouldAbandonSession()
     {
         // Arrange
@@ -33,8 +33,8 @@ public sealed class AbandonSessionUseCaseTests
     private sealed class FakeSessionWriter : ISessionWriter
     {
         public SessionId? DeletedId { get; private set; }
-        public Task SaveAsync(Cleo.Core.Domain.Entities.Session session, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)
+        public Task RememberAsync(Cleo.Core.Domain.Entities.Session session, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             DeletedId = id;
             return Task.CompletedTask;

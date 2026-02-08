@@ -27,7 +27,7 @@ public sealed class RegistrySessionReader : ISessionReader
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public async Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 

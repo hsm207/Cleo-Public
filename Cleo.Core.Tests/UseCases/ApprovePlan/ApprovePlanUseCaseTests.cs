@@ -19,7 +19,7 @@ public sealed class ApprovePlanUseCaseTests
     public async Task ShouldTransmitApprovalSignal()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
+        var sessionId = new SessionId("sessions/active-session");
         var planId = "plan-abc";
         var request = new ApprovePlanRequest(sessionId, planId);
 

@@ -10,7 +10,7 @@ using Cleo.Infrastructure.Clients.Jules.Mapping;
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// Specialized client for monitoring the state and heartbeat of a remote mission.
+/// Specialized client for monitoring the state and heartbeat of a remote session.
 /// </summary>
 public sealed class RestPulseMonitor : IPulseMonitor
 {

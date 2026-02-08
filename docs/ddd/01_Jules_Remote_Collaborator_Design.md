@@ -11,7 +11,7 @@ The central authority for managing the lifecycle of an autonomous collaboration.
 
 **Attributes:**
 *   **`TaskId`**: The unique handle for this session.
-*   **`Task`**: The description and title of the mission.
+*   **`Task`**: The description and title of the session.
 *   **`Source`**: The repository and branch Jules is operating in.
 *   **`History`**: A persisted, chronological ledger of all structured **Activities** (Messages, Plans, Actions).
 *   **`DashboardUri`**: The link to the session's web interface.

@@ -14,7 +14,7 @@ public class AbandonSessionUseCase : IAbandonSessionUseCase
     public async Task<AbandonSessionResponse> ExecuteAsync(AbandonSessionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await _writer.DeleteAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        await _writer.ForgetAsync(request.Id, cancellationToken).ConfigureAwait(false);
         return new AbandonSessionResponse(request.Id);
     }
 }

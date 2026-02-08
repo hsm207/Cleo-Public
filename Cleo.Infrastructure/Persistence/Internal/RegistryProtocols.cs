@@ -60,7 +60,7 @@ internal sealed class JsonRegistrySerializer : IRegistrySerializer
 }
 
 /// <summary>
-/// A passive DTO for serializing a mission in the global Task Registry.
+/// A passive DTO for serializing a session in the global Task Registry.
 /// </summary>
 public sealed record RegisteredTaskDto(
     string SessionId,

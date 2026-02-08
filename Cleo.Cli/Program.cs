@@ -8,7 +8,7 @@ using Cleo.Core.UseCases.BrowseHistory;
 using Cleo.Core.UseCases.BrowseSources;
 using Cleo.Core.UseCases.Correspond;
 using Cleo.Core.UseCases.InitiateSession;
-using Cleo.Core.UseCases.ListMissions;
+using Cleo.Core.UseCases.ListSessions;
 using Cleo.Core.UseCases.RefreshPulse;
 using Cleo.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,7 +52,7 @@ internal static class Program
         services.AddScoped<IBrowseHistoryUseCase, BrowseHistoryUseCase>();
         services.AddScoped<IApprovePlanUseCase, ApprovePlanUseCase>();
         services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
-        services.AddScoped<IListMissionsUseCase, ListMissionsUseCase>();
+        services.AddScoped<IListSessionsUseCase, ListSessionsUseCase>();
         services.AddScoped<IBrowseSourcesUseCase, BrowseSourcesUseCase>();
         services.AddScoped<IAbandonSessionUseCase, AbandonSessionUseCase>();
         services.AddScoped<ICorrespondUseCase, CorrespondUseCase>();

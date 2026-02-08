@@ -4,7 +4,7 @@
 ## Core Concepts
 
 ### Task
-The "What." A specific mission or goal assigned to Jules (e.g., "Fix the login bug"). It represents the developer's initial intent.
+The "What." A specific session or goal assigned to Jules (e.g., "Fix the login bug"). It represents the developer's initial intent.
 
 ### Source
 The "Where." The repository and the **Base Branch** where Jules should begin her work.
@@ -34,7 +34,7 @@ The "Solution." The resulting code changes produced by Jules. Instead of just a 
 The "Persona." Represents the developer's authentication to the Jules API via their **API Key**.
 
 ### Session Registry
-The "Workbench Memory." A centralized, persistent record of all **Sessions** initiated by the developer. It stores the **Task**, the **History**, and the **Dashboard URI** so the developer can manage missions across different projects.
+The "Workbench Memory." A centralized, persistent record of all **Sessions** initiated by the developer. It stores the **Task**, the **History**, and the **Dashboard URI** so the developer can manage sessions across different projects.
 
 ### Handle
 The unique **Session ID** used to reference a specific entry in the **Session Registry**. In the CLI, the handle is the primary way to direct **Feedback** or check the **Pulse**.

@@ -1,7 +1,7 @@
 # 🛡️ 03: Jules Identity & Vault Design
 > Architecture for secure credential management and error transparency.
 
-## 🎯 The Mission
+## 🎯 The Session
 To provide a "Zero Friction" authentication experience. Cleo should securely remember who you are and, when things break, explain *why* in plain English (no technical vomit! 🧼).
 
 ## 🏗️ The Model (Deep Model)

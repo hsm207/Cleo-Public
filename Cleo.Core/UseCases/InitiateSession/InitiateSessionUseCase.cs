@@ -18,7 +18,7 @@ public record InitiateSessionResponse(
 );
 
 /// <summary>
-/// The orchestrator for launching a new engineering mission.
+/// The orchestrator for launching a new engineering session.
 /// Implements session initiation policies.
 /// </summary>
 public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateSessionResponse>
@@ -56,7 +56,7 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
             cancellationToken).ConfigureAwait(false);
 
         // 4. Persistence (Task Registry)
-        await _sessionWriter.SaveAsync(session, cancellationToken).ConfigureAwait(false);
+        await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
 
         // 5. Return the Response Model
         return new InitiateSessionResponse(

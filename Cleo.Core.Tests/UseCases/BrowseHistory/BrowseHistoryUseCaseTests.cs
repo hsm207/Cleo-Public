@@ -19,7 +19,7 @@ public sealed class BrowseHistoryUseCaseTests
     public async Task ShouldReturnChronologicalHistory()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
+        var sessionId = new SessionId("sessions/active-session");
         var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Did a thing");
         _archivist.History[sessionId] = new List<SessionActivity> { activity };
 
