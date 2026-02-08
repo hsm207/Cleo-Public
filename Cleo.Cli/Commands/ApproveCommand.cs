@@ -42,7 +42,6 @@ internal sealed class ApproveCommand
 
             Console.WriteLine($"✅ Plan {response.PlanId} approved for session {handle} at {response.ApprovedAt:t}! Let's go! 🚀");
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -50,6 +49,5 @@ internal sealed class ApproveCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Something went wrong: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

@@ -57,7 +57,6 @@ internal sealed class AuthCommand
                 Console.WriteLine($"❌ {response.Message}");
             }
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -65,7 +64,6 @@ internal sealed class AuthCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Something went wrong: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 
     private async Task ExecuteLogoutAsync()

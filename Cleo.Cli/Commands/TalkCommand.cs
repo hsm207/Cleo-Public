@@ -47,7 +47,6 @@ internal sealed class TalkCommand
 
             Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -55,6 +54,5 @@ internal sealed class TalkCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Something went wrong: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

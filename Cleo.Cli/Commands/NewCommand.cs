@@ -68,7 +68,6 @@ internal sealed class NewCommand
 
             Console.WriteLine("\nTime to make some magic happen! 🪄✨");
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -76,6 +75,5 @@ internal sealed class NewCommand
             #pragma warning restore CA1848
             Console.WriteLine($"Error: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }
