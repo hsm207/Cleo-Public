@@ -28,14 +28,25 @@ public sealed record GithubRepoDto(
 public sealed record JulesActivityDto(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("description")] string? Description,
     [property: JsonPropertyName("createTime")] DateTimeOffset CreateTime,
     [property: JsonPropertyName("originator")] string Originator,
+    [property: JsonPropertyName("artifacts")] ArtifactDto[]? Artifacts,
     [property: JsonPropertyName("planGenerated")] PlanGeneratedDto? PlanGenerated,
     [property: JsonPropertyName("planApproved")] PlanApprovedDto? PlanApproved,
-    [property: JsonPropertyName("messageText")] string? MessageText,
-    [property: JsonPropertyName("artifacts")] ArtifactDto[]? Artifacts,
-    [property: JsonPropertyName("progressUpdated")] object? ProgressUpdated,
+    [property: JsonPropertyName("userMessaged")] UserMessagedDto? UserMessaged,
+    [property: JsonPropertyName("agentMessaged")] AgentMessagedDto? AgentMessaged,
+    [property: JsonPropertyName("progressUpdated")] ProgressUpdatedDto? ProgressUpdated,
+    [property: JsonPropertyName("sessionCompleted")] SessionCompletedDto? SessionCompleted,
     [property: JsonPropertyName("sessionFailed")] SessionFailedDto? SessionFailed
+);
+
+public sealed record UserMessagedDto(
+    [property: JsonPropertyName("userMessage")] string UserMessage
+);
+
+public sealed record AgentMessagedDto(
+    [property: JsonPropertyName("agentMessage")] string AgentMessage
 );
 
 public sealed record PlanGeneratedDto(
@@ -44,7 +55,8 @@ public sealed record PlanGeneratedDto(
 
 public sealed record PlanDto(
     [property: JsonPropertyName("id")] string Id,
-    [property: JsonPropertyName("steps")] PlanStepDto[] Steps
+    [property: JsonPropertyName("steps")] PlanStepDto[] Steps,
+    [property: JsonPropertyName("createTime")] DateTimeOffset CreateTime
 );
 
 public sealed record PlanStepDto(
@@ -58,17 +70,39 @@ public sealed record PlanApprovedDto(
     [property: JsonPropertyName("planId")] string PlanId
 );
 
+public sealed record ProgressUpdatedDto(
+    [property: JsonPropertyName("title")] string Title,
+    [property: JsonPropertyName("description")] string? Description
+);
+
+public sealed record SessionCompletedDto();
+
 public sealed record ArtifactDto(
-    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet
+    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet,
+    [property: JsonPropertyName("media")] MediaDto? Media,
+    [property: JsonPropertyName("bashOutput")] BashOutputDto? BashOutput
+);
+
+public sealed record MediaDto(
+    [property: JsonPropertyName("data")] string Data,
+    [property: JsonPropertyName("mimeType")] string MimeType
+);
+
+public sealed record BashOutputDto(
+    [property: JsonPropertyName("command")] string Command,
+    [property: JsonPropertyName("output")] string Output,
+    [property: JsonPropertyName("exitCode")] int ExitCode
 );
 
 public sealed record ChangeSetDto(
+    [property: JsonPropertyName("source")] string Source,
     [property: JsonPropertyName("gitPatch")] GitPatchDto? GitPatch
 );
 
 public sealed record GitPatchDto(
     [property: JsonPropertyName("unidiffPatch")] string UnidiffPatch,
-    [property: JsonPropertyName("baseCommitId")] string BaseCommitId
+    [property: JsonPropertyName("baseCommitId")] string BaseCommitId,
+    [property: JsonPropertyName("suggestedCommitMessage")] string? SuggestedCommitMessage
 );
 
 public sealed record SessionFailedDto(
@@ -81,7 +115,11 @@ public sealed record JulesSessionDto(
     [property: JsonPropertyName("state")] string State,
     [property: JsonPropertyName("prompt")] string Prompt,
     [property: JsonPropertyName("sourceContext")] SourceContextDto SourceContext,
-    [property: JsonPropertyName("url")] Uri? Url
+    [property: JsonPropertyName("url")] Uri? Url,
+    [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval,
+    [property: JsonPropertyName("automationMode")] string? AutomationMode,
+    [property: JsonPropertyName("createTime")] DateTimeOffset? CreateTime,
+    [property: JsonPropertyName("updateTime")] DateTimeOffset? UpdateTime
 );
 
 public sealed record SourceContextDto(
