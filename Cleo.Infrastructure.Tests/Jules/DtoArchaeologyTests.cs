@@ -65,11 +65,12 @@ public sealed class DtoArchaeologyTests
         source.Source.Should().Be("repo");
         source.GithubRepoContext.Should().Be(github);
 
-        var session = new JulesSessionDto("sn", "si", "state", "prompt", source);
+        var session = new JulesSessionDto("sn", "si", "state", "prompt", source, new Uri("https://jules.com"));
         session.Name.Should().Be("sn");
         session.Id.Should().Be("si");
         session.State.Should().Be("state");
         session.Prompt.Should().Be("prompt");
         session.SourceContext.Should().Be(source);
+        session.Url.Should().Be(new Uri("https://jules.com"));
     }
 }

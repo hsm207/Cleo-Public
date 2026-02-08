@@ -30,7 +30,7 @@ internal static class AuthCommand
             
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                Console.WriteLine("❌ API Key cannot be empty, babe.");
+                Console.WriteLine("❌ API Key cannot be empty.");
                 return;
             }
 
@@ -39,7 +39,7 @@ internal static class AuthCommand
                 var identity = new Identity(new ApiKey(apiKey));
                 await vault.StoreAsync(identity).ConfigureAwait(false);
                 
-                Console.WriteLine("✅ API Key saved securely in your vault! We're ready to go! 🚀💖");
+                Console.WriteLine("✅ API Key saved securely! Systems ready for launch! 🚀✨");
             }
             #pragma warning disable CA1031
             catch (Exception ex)
