@@ -10,7 +10,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// <summary>
 /// A REST-based implementation of the Jules session lifecycle client.
 /// </summary>
-public sealed class RestJulesSessionClient : IJulesSessionClient
+public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessenger, IPulseMonitor
 {
     private readonly HttpClient _httpClient;
     private readonly ISessionStatusMapper _statusMapper;
@@ -72,6 +72,16 @@ public sealed class RestJulesSessionClient : IJulesSessionClient
         var request = new { messageText = feedback };
         var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
+    }
+
+    async Task<SessionPulse> IPulseMonitor.GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken)
+    {
+        return await GetSessionPulseAsync(id, cancellationToken).ConfigureAwait(false);
+    }
+
+    async Task ISessionMessenger.SendMessageAsync(SessionId id, string message, CancellationToken cancellationToken)
+    {
+        await SendMessageAsync(id, message, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task ApprovePlanAsync(SessionId id, CancellationToken cancellationToken = default)

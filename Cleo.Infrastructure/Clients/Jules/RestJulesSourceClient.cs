@@ -8,7 +8,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// <summary>
 /// A REST-based implementation of the Jules source discovery client.
 /// </summary>
-public sealed class RestJulesSourceClient : IJulesSourceClient
+public sealed class RestJulesSourceClient : IJulesSourceClient, ISourceCatalog
 {
     private readonly HttpClient _httpClient;
 
@@ -26,5 +26,11 @@ public sealed class RestJulesSourceClient : IJulesSourceClient
             .Select(dto => new SessionSource(dto.Name, dto.GithubRepo?.Owner ?? "unknown", dto.GithubRepo?.Repo ?? "unknown"))
             .ToList()
             .AsReadOnly();
+    }
+
+    async Task<IReadOnlyList<SessionSource>> ISourceCatalog.GetAvailableSourcesAsync(CancellationToken cancellationToken)
+    {
+        var sources = await ListSourcesAsync(cancellationToken).ConfigureAwait(false);
+        return sources.ToList().AsReadOnly();
     }
 }
