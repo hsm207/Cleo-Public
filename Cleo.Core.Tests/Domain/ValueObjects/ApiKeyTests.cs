@@ -8,7 +8,7 @@ public class ApiKeyTests
     [Fact(DisplayName = "An ApiKey should store its value correctly when valid.")]
     public void ConstructorShouldSetValueWhenValid()
     {
-        var keyValue = "my-secret-jules-key";
+        var keyValue = "AQ.RealApiKey";
         var apiKey = new ApiKey(keyValue);
         Assert.Equal(keyValue, apiKey.Value);
     }

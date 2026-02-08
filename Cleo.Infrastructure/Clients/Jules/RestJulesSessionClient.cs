@@ -21,15 +21,20 @@ public sealed class RestJulesSessionClient : IJulesSessionClient
         _statusMapper = statusMapper ?? throw new ArgumentNullException(nameof(statusMapper));
     }
 
-    public async Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default)
+    public async Task<Session> CreateSessionAsync(
+        TaskDescription task, 
+        SourceContext source, 
+        SessionCreationOptions options, 
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(task);
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(options);
 
         var request = new
         {
             prompt = (string)task,
-            title = ((string)task).Length > 50 ? ((string)task)[..47] + "..." : (string)task,
+            title = options.Title,
             sourceContext = new
             {
                 source = source.Repository,
@@ -38,7 +43,8 @@ public sealed class RestJulesSessionClient : IJulesSessionClient
                     startingBranch = source.StartingBranch
                 }
             },
-            requirePlanApproval = true
+            requirePlanApproval = options.Mode != AutomationMode.AutoCreatePullRequest,
+            automationMode = options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "NONE"
         };
 
         var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);

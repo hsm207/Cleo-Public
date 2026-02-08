@@ -24,7 +24,8 @@ public class JulesAuthHandlerTests : IDisposable
     public async Task SendAsync_ShouldAddApiKeyHeader()
     {
         // Arrange: Store a real key in the vault
-        var identity = new Identity(new ApiKey("real-secret-key"));
+        var apiKey = "real-secret-key";
+        var identity = new Identity(new ApiKey(apiKey));
         await _vault.StoreAsync(identity, TestContext.Current.CancellationToken);
 
         var handler = new JulesAuthHandler(_vault)
@@ -48,7 +49,7 @@ public class JulesAuthHandlerTests : IDisposable
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req => 
                 req.Headers.Contains("x-goog-api-key") && 
-                req.Headers.GetValues("x-goog-api-key").First() == "real-secret-key"),
+                req.Headers.GetValues("x-goog-api-key").First() == apiKey),
             ItExpr.IsAny<CancellationToken>());
     }
 

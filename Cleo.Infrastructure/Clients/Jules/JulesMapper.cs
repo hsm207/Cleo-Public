@@ -22,7 +22,8 @@ internal static class JulesMapper
             new SessionId(dto.Name),
             originalTask,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
-            new SessionPulse(status, $"Session is {dto.State}")
+            new SessionPulse(status, $"Session is {dto.State}"),
+            dto.Url
         );
     }
 }
