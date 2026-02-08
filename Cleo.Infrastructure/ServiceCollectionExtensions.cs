@@ -57,7 +57,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISessionStatusMapper, DefaultSessionStatusMapper>();
         services.AddSingleton<IJulesActivityMapper, PlanningActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, ResultActivityMapper>();
+        services.AddSingleton<IJulesActivityMapper, ExecutionActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, ProgressActivityMapper>();
+        services.AddSingleton<IJulesActivityMapper, CompletionActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, FailureActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, MessageActivityMapper>();
         services.AddSingleton<IJulesActivityMapper, UnknownActivityMapper>();
