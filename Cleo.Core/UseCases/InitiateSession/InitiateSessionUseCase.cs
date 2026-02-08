@@ -36,13 +36,14 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        // 1. Apply Business Policy: Automated Pull Request
+        // 1. Apply Business Policy: Every session must result in a PR and require explicit developer approval.
         var mode = AutomationMode.AutoCreatePullRequest;
+        const bool RequireApproval = true;
 
         // 2. Apply Business Policy: Title Generation / Fallback
         var title = request.UserProvidedTitle ?? TruncateTaskToTitle(request.TaskDescription);
 
-        var options = new SessionCreationOptions(mode, title);
+        var options = new SessionCreationOptions(mode, title, RequireApproval);
 
         // 3. Coordinate with Infrastructure via Ports
         var taskDescription = new TaskDescription(request.TaskDescription);
