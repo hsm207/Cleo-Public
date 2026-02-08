@@ -1,10 +1,12 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.AbandonSession;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
+[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class DeleteCommand
 {
     private readonly IAbandonSessionUseCase _useCase;
