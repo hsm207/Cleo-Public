@@ -80,7 +80,8 @@ public sealed record JulesSessionDto(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("state")] string State,
     [property: JsonPropertyName("prompt")] string Prompt,
-    [property: JsonPropertyName("sourceContext")] SourceContextDto SourceContext
+    [property: JsonPropertyName("sourceContext")] SourceContextDto SourceContext,
+    [property: JsonPropertyName("url")] Uri? Url
 );
 
 public sealed record SourceContextDto(

@@ -32,7 +32,8 @@ public class RestJulesSessionClientTests
         // Arrange
         var task = new TaskDescription("task");
         var source = new SourceContext("repo", "branch");
-        var dto = new JulesSessionDto("name", "id", "QUEUED", "prompt", new SourceContextDto("repo", new GithubRepoContextDto("branch")));
+        var options = new SessionCreationOptions();
+        var dto = new JulesSessionDto("name", "id", "QUEUED", "prompt", new SourceContextDto("repo", new GithubRepoContextDto("branch")), null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -43,7 +44,7 @@ public class RestJulesSessionClientTests
             });
 
         // Act
-        var result = await _client.CreateSessionAsync(task, source, TestContext.Current.CancellationToken);
+        var result = await _client.CreateSessionAsync(task, source, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("name", result.Id.Value);
@@ -54,7 +55,7 @@ public class RestJulesSessionClientTests
     public async Task GetSessionPulseAsync_ShouldReturnPulse()
     {
         // Arrange
-        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null));
+        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

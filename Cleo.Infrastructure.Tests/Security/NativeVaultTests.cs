@@ -38,10 +38,11 @@ public class NativeVaultTests : IDisposable
     public async Task RetrieveAsyncShouldDecryptAndReturn()
     {
         var vault = new NativeVault(_tempFile, _strategy);
-        var identity = new Identity(new ApiKey("real-vibes-only"));
+        var identityValue = "real-vibes-only";
+        var identity = new Identity(new ApiKey(identityValue));
         
         // Arrange: Store real encrypted data
-        var encrypted = _strategy.Encrypt("real-vibes-only");
+        var encrypted = _strategy.Encrypt(identityValue);
         await File.WriteAllBytesAsync(_tempFile, encrypted, TestContext.Current.CancellationToken);
 
         // Act
@@ -49,7 +50,7 @@ public class NativeVaultTests : IDisposable
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("real-vibes-only", (string)result.ApiKey);
+        Assert.Equal(identityValue, (string)result.ApiKey);
     }
 
     [Fact(DisplayName = "NativeVault should throw InvalidOperationException with a helpful message if decryption fails.")]
