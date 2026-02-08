@@ -35,7 +35,7 @@ public class RestJulesSessionClientTests
         var task = new TaskDescription("task");
         var source = new SourceContext("repo", "branch");
         var options = new SessionCreationOptions();
-        var dto = new JulesSessionDto("name", "id", "QUEUED", "prompt", new SourceContextDto("repo", new GithubRepoContextDto("branch")), null);
+        var dto = new JulesSessionDto("name", "id", "QUEUED", "prompt", new SourceContextDto("repo", new GithubRepoContextDto("branch")), null, true, "AUTO_CREATE_PR", null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -57,7 +57,7 @@ public class RestJulesSessionClientTests
     public async Task GetSessionPulseAsync_ShouldReturnPulse()
     {
         // Arrange
-        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null);
+        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null, true, "NONE", null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -215,7 +215,7 @@ public class RestJulesSessionClientTests
         // Arrange
         var messenger = (ISessionMessenger)_client;
         var monitor = (IPulseMonitor)_client;
-        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null);
+        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null, true, "NONE", null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
