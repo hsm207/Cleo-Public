@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
@@ -32,7 +32,7 @@ public sealed class RestPulseMonitor : IPulseMonitor
             var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
             return new SessionPulse(_statusMapper.Map(dto.State), $"Session is {dto.State}");

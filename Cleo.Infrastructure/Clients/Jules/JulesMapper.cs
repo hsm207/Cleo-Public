@@ -1,6 +1,6 @@
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
@@ -11,7 +11,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    public static Session Map(JulesSessionDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
+    public static Session Map(JulesSessionResponse dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
     {
         ArgumentNullException.ThrowIfNull(dto);
         ArgumentNullException.ThrowIfNull(statusMapper);

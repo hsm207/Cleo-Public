@@ -1,5 +1,5 @@
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
 namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
