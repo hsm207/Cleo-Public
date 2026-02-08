@@ -1,3 +1,4 @@
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 
@@ -23,7 +24,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
         var session = await _sessionReader.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
         if (session == null)
         {
-            throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry, babe. 🥀");
+            throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry. 🥀");
         }
 
         try
@@ -37,9 +38,9 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             
             return new RefreshPulseResponse(request.Id, pulse);
         }
-        catch (Exception ex) when (ex is HttpRequestException or System.Net.Sockets.SocketException)
+        catch (RemoteCollaboratorUnavailableException)
         {
-            // 2. Connectivity Fallback: Business Policy logic lives here, babe! 🧠✨
+            // 2. Connectivity Fallback: Business Policy logic lives here. 🧠✨
             return new RefreshPulseResponse(
                 request.Id,
                 session.Pulse,
