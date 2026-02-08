@@ -53,10 +53,34 @@ internal sealed class ResultActivityMapper : IJulesActivityMapper
     }
 }
 
+internal sealed class ExecutionActivityMapper : IJulesActivityMapper
+{
+    public bool CanMap(JulesActivityDto dto) => dto.Artifacts?.Any(a => a.BashOutput is not null) ?? false;
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        var bash = dto.Artifacts!.First(a => a.BashOutput is not null).BashOutput!;
+        return new ExecutionActivity(dto.Id, dto.CreateTime, bash.Command, bash.Output, bash.ExitCode);
+    }
+}
+
 internal sealed class ProgressActivityMapper : IJulesActivityMapper
 {
     public bool CanMap(JulesActivityDto dto) => dto.ProgressUpdated is not null;
-    public SessionActivity Map(JulesActivityDto dto) => new ProgressActivity(dto.Id, dto.CreateTime, "Activity update received.");
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        var detail = dto.ProgressUpdated!.Title;
+        if (!string.IsNullOrWhiteSpace(dto.ProgressUpdated.Description))
+        {
+            detail += $": {dto.ProgressUpdated.Description}";
+        }
+        return new ProgressActivity(dto.Id, dto.CreateTime, detail);
+    }
+}
+
+internal sealed class CompletionActivityMapper : IJulesActivityMapper
+{
+    public bool CanMap(JulesActivityDto dto) => dto.SessionCompleted is not null;
+    public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(dto.Id, dto.CreateTime);
 }
 
 internal sealed class FailureActivityMapper : IJulesActivityMapper
@@ -68,7 +92,12 @@ internal sealed class FailureActivityMapper : IJulesActivityMapper
 internal sealed class MessageActivityMapper : IJulesActivityMapper
 {
     // The "Fallback" strategy - handles messages and unknowns safely. 🧤
-    public bool CanMap(JulesActivityDto dto) => dto.MessageText is not null || dto.PlanApproved is not null || string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase);
+    public bool CanMap(JulesActivityDto dto) => 
+        dto.UserMessaged is not null || 
+        dto.AgentMessaged is not null || 
+        dto.PlanApproved is not null || 
+        string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase);
+
     public SessionActivity Map(JulesActivityDto dto)
     {
         var originator = dto.Originator switch {
@@ -76,7 +105,11 @@ internal sealed class MessageActivityMapper : IJulesActivityMapper
             _ when string.Equals(dto.Originator, "AGENT", StringComparison.OrdinalIgnoreCase) => ActivityOriginator.Agent,
             _ => ActivityOriginator.System
         };
-        var text = dto.MessageText ?? (dto.PlanApproved is not null ? $"Plan {dto.PlanApproved.PlanId} approved." : "Unknown activity.");
+
+        var text = dto.UserMessaged?.UserMessage 
+            ?? dto.AgentMessaged?.AgentMessage 
+            ?? (dto.PlanApproved is not null ? $"Plan {dto.PlanApproved.PlanId} approved." : "Unknown activity.");
+
         return new MessageActivity(dto.Id, dto.CreateTime, originator, text);
     }
 }
@@ -88,6 +121,6 @@ internal sealed class UnknownActivityMapper : IJulesActivityMapper
 
     public SessionActivity Map(JulesActivityDto dto)
     {
-        return new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, "Unknown activity type received.");
+        return new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, $"Unknown activity type received: {dto.Description}");
     }
 }
