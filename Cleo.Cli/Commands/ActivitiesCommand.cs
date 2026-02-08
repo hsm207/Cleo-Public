@@ -47,7 +47,7 @@ internal sealed class ActivitiesCommand
             Console.WriteLine($"📜 Activities for {handle}:");
             foreach (var activity in response.History)
             {
-                Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetType().Name} ({activity.Id})");
+                Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
             }
         }
         #pragma warning disable CA1031
