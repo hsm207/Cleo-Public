@@ -1,4 +1,6 @@
 using System.CommandLine;
+using Cleo.Core.UseCases;
+using Cleo.Core.UseCases.InitiateSession;
 using Cleo.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,6 +36,9 @@ internal static class Program
         // Infrastructure 🏗️
         var julesBaseUrl = new Uri("https://jules.googleapis.com/");
         services.AddCleoInfrastructure(julesBaseUrl);
+
+        // Use Cases 🧠
+        services.AddScoped<IUseCase<InitiateSessionRequest, InitiateSessionResponse>, InitiateSessionUseCase>();
     }
 
     private static RootCommand CreateRootCommand(IServiceProvider serviceProvider)
@@ -57,7 +62,7 @@ internal static class Program
         rootCommand.SetHandler(() => 
         {
             Console.WriteLine("🚀 Cleo .NET 10 System Online!");
-            Console.WriteLine("Use --help to see available commands, babe! 💖");
+            Console.WriteLine("Use --help to see available commands! ✨");
         });
 
         return rootCommand;
