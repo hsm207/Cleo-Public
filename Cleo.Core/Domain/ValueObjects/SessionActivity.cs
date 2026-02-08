@@ -48,6 +48,12 @@ public record ResultActivity(string Id, DateTimeOffset Timestamp, SolutionPatch 
     : SessionActivity(Id, Timestamp, ActivityOriginator.Agent);
 
 /// <summary>
+/// An activity representing the successful completion of the session.
+/// </summary>
+public record CompletionActivity(string Id, DateTimeOffset Timestamp) 
+    : SessionActivity(Id, Timestamp, ActivityOriginator.System);
+
+/// <summary>
 /// An activity representing a terminal failure of the session.
 /// </summary>
 public record FailureActivity(string Id, DateTimeOffset Timestamp, string Reason) 
