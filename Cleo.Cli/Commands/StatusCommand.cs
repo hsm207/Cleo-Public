@@ -1,6 +1,6 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -19,30 +19,21 @@ internal static class StatusCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("StatusCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
-            var reader = serviceProvider.GetRequiredService<ISessionReader>();
-            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
+            var useCase = serviceProvider.GetRequiredService<IRefreshPulseUseCase>();
 
             try
             {
                 var sessionId = new SessionId(handle);
-                var session = await reader.GetByIdAsync(sessionId).ConfigureAwait(false);
+                var request = new RefreshPulseRequest(sessionId);
+                var response = await useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-                if (session == null)
+                if (response.IsCached)
                 {
-                    Console.WriteLine($"🔍 Handle {handle} not found in the registry, babe. 🥀");
-                    return;
+                    Console.WriteLine(response.Warning);
                 }
 
-                var pulse = await julesClient.GetSessionPulseAsync(sessionId).ConfigureAwait(false);
-                
-                // Update session pulse
-                session.UpdatePulse(pulse);
-                
-                await writer.SaveAsync(session).ConfigureAwait(false);
-
-                Console.WriteLine($"💓 Status for {handle}: {session.Pulse.Status}");
-                Console.WriteLine($"📝 {session.Pulse.Detail}");
+                Console.WriteLine($"💓 Status for {handle}: {response.Pulse.Status}");
+                Console.WriteLine($"📝 {response.Pulse.Detail}");
             }
             #pragma warning disable CA1031
             catch (Exception ex)

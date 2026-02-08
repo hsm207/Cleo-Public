@@ -1,7 +1,6 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
-using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.AuthenticateUser;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +18,7 @@ internal static class AuthCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("AuthCommand");
-            var vault = serviceProvider.GetRequiredService<IVault>();
+            var useCase = serviceProvider.GetRequiredService<IAuthenticateUserUseCase>();
 
             Console.WriteLine("🔐 Login to Jules");
             Console.WriteLine("Please get your API key from the Jules console.");
@@ -28,18 +27,19 @@ internal static class AuthCommand
             // Mask the input (simple version)
             var apiKey = ReadMaskedLine();
             
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                Console.WriteLine("❌ API Key cannot be empty.");
-                return;
-            }
-
             try
             {
-                var identity = new Identity(new ApiKey(apiKey));
-                await vault.StoreAsync(identity).ConfigureAwait(false);
+                var request = new AuthenticateUserRequest(apiKey);
+                var response = await useCase.ExecuteAsync(request).ConfigureAwait(false);
                 
-                Console.WriteLine("✅ API Key saved securely! Systems ready for launch! 🚀✨");
+                if (response.Success)
+                {
+                    Console.WriteLine($"✅ {response.Message}");
+                }
+                else
+                {
+                    Console.WriteLine($"❌ {response.Message}");
+                }
             }
             #pragma warning disable CA1031
             catch (Exception ex)
@@ -57,8 +57,8 @@ internal static class AuthCommand
         var logoutCommand = new Command("logout", "Clear your stored credentials.");
         logoutCommand.SetHandler(async () => 
         {
-            var vault = serviceProvider.GetRequiredService<IVault>();
-            await vault.ClearAsync().ConfigureAwait(false);
+            var credentialStore = serviceProvider.GetRequiredService<ICredentialStore>();
+            await credentialStore.ClearIdentityAsync().ConfigureAwait(false);
             Console.WriteLine("🗑️ Credentials cleared. See you later! 👋🥀");
         });
         

@@ -1,6 +1,6 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.ApprovePlan;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -21,24 +21,15 @@ internal static class ApproveCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("ApproveCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
-            var reader = serviceProvider.GetRequiredService<ISessionReader>();
+            var useCase = serviceProvider.GetRequiredService<IApprovePlanUseCase>();
 
             try
             {
                 var sessionId = new SessionId(handle);
-                var session = await reader.GetByIdAsync(sessionId).ConfigureAwait(false);
+                var request = new ApprovePlanRequest(sessionId, planId);
+                var response = await useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-                if (session == null)
-                {
-                    Console.WriteLine($"🔍 Handle {handle} not found in the registry, babe. 🥀");
-                    return;
-                }
-
-                // Sending an approval message
-                await julesClient.SendMessageAsync(sessionId, $"Plan {planId} approved.").ConfigureAwait(false);
-
-                Console.WriteLine($"✅ Plan {planId} approved for session {handle}! Let's go! 🚀");
+                Console.WriteLine($"✅ Plan {response.PlanId} approved for session {handle} at {response.ApprovedAt:t}! Let's go! 🚀");
             }
             #pragma warning disable CA1031
             catch (Exception ex)

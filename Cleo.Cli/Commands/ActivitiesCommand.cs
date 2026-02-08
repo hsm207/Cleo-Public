@@ -1,6 +1,6 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.BrowseHistory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -19,30 +19,22 @@ internal static class ActivitiesCommand
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("ActivitiesCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesActivityClient>();
-            var reader = serviceProvider.GetRequiredService<ISessionReader>();
+            var useCase = serviceProvider.GetRequiredService<IBrowseHistoryUseCase>();
 
             try
             {
                 var sessionId = new SessionId(handle);
-                var session = await reader.GetByIdAsync(sessionId).ConfigureAwait(false);
+                var request = new BrowseHistoryRequest(sessionId);
+                var response = await useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-                if (session == null)
-                {
-                    Console.WriteLine($"🔍 Handle {handle} not found in the registry, babe. 🥀");
-                    return;
-                }
-
-                var activities = await julesClient.GetActivitiesAsync(sessionId).ConfigureAwait(false);
-
-                if (activities.Count == 0)
+                if (response.History.Count == 0)
                 {
                     Console.WriteLine("📭 No activities found yet. Stay tuned! 📻");
                     return;
                 }
 
                 Console.WriteLine($"📜 Activities for {handle}:");
-                foreach (var activity in activities)
+                foreach (var activity in response.History)
                 {
                     Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetType().Name} ({activity.Id})");
                 }
