@@ -16,13 +16,14 @@ public class Session : AggregateRoot
     public SourceContext Source { get; }
     public SessionPulse Pulse { get; private set; }
     public SolutionPatch? Solution { get; private set; }
+    public Uri? DashboardUri { get; }
     
     /// <summary>
     /// The authoritative, chronological ledger of everything that happened in this session.
     /// </summary>
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
-    public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse)
+    public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse, Uri? dashboardUri = null)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(task);
@@ -33,6 +34,7 @@ public class Session : AggregateRoot
         Task = task;
         Source = source;
         Pulse = pulse;
+        DashboardUri = dashboardUri;
 
         RecordDomainEvent(new SessionAssigned(id, task));
     }

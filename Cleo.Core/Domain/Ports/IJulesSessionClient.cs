@@ -11,7 +11,11 @@ public interface IJulesSessionClient
     /// <summary>
     /// Launches a new remote session for a specific task and source.
     /// </summary>
-    Task<Session> CreateSessionAsync(TaskDescription task, SourceContext source, CancellationToken cancellationToken = default);
+    Task<Session> CreateSessionAsync(
+        TaskDescription task, 
+        SourceContext source, 
+        SessionCreationOptions options,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves the current state and heartbeat of a remote session.
