@@ -4,20 +4,19 @@ namespace Cleo.Core.UseCases.ApprovePlan;
 
 public class ApprovePlanUseCase : IApprovePlanUseCase
 {
-    private readonly ISessionMessenger _messenger;
+    private readonly ISessionController _controller;
 
-    public ApprovePlanUseCase(ISessionMessenger messenger)
+    public ApprovePlanUseCase(ISessionController controller)
     {
-        _messenger = messenger;
+        _controller = controller;
     }
 
     public async Task<ApprovePlanResponse> ExecuteAsync(ApprovePlanRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        // Record a formal approval message
-        var message = $"Plan {request.PlanId} approved.";
-        await _messenger.SendMessageAsync(request.Id, message, cancellationToken).ConfigureAwait(false);
+        // Formally approve the plan via the controller port
+        await _controller.ApprovePlanAsync(request.Id, cancellationToken).ConfigureAwait(false);
 
         return new ApprovePlanResponse(request.Id, request.PlanId, DateTimeOffset.UtcNow);
     }

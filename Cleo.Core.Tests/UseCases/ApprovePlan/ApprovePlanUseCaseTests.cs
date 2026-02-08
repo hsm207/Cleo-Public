@@ -7,16 +7,16 @@ namespace Cleo.Core.Tests.UseCases.ApprovePlan;
 
 public sealed class ApprovePlanUseCaseTests
 {
-    private readonly FakeMessenger _messenger = new();
+    private readonly FakeController _controller = new();
     private readonly ApprovePlanUseCase _sut;
 
     public ApprovePlanUseCaseTests()
     {
-        _sut = new ApprovePlanUseCase(_messenger);
+        _sut = new ApprovePlanUseCase(_controller);
     }
 
-    [Fact(DisplayName = "Given a specific Plan ID, when approving the Plan, then a formal 'Approval' Feedback should be transmitted to the Session.")]
-    public async Task ShouldTransmitApprovalFeedback()
+    [Fact(DisplayName = "Given a specific Plan ID, when approving the Plan, then a formal 'Approval' signal should be transmitted via the Controller Port.")]
+    public async Task ShouldTransmitApprovalSignal()
     {
         // Arrange
         var sessionId = new SessionId("sessions/active-mission");
@@ -30,16 +30,16 @@ public sealed class ApprovePlanUseCaseTests
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(planId, result.PlanId);
         Assert.NotEqual(default, result.ApprovedAt);
-        Assert.Contains(planId, _messenger.LastMessage, StringComparison.Ordinal);
-        Assert.Contains("approved", _messenger.LastMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.True(_controller.WasApproved, "The approval signal was not sent to the controller.");
     }
 
-    private sealed class FakeMessenger : ISessionMessenger
+    private sealed class FakeController : ISessionController
     {
-        public string LastMessage { get; private set; } = string.Empty;
-        public Task SendMessageAsync(SessionId id, string message, CancellationToken cancellationToken = default)
+        public bool WasApproved { get; private set; }
+        
+        public Task ApprovePlanAsync(SessionId id, CancellationToken cancellationToken = default)
         {
-            LastMessage = message;
+            WasApproved = true;
             return Task.CompletedTask;
         }
     }
