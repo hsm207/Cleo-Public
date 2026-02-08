@@ -1,7 +1,7 @@
 using System.CommandLine;
 using Cleo.Cli.Commands;
 using Cleo.Core.UseCases;
-using Cleo.Core.UseCases.AbandonSession;
+using Cleo.Core.UseCases.ForgetSession;
 using Cleo.Core.UseCases.ApprovePlan;
 using Cleo.Core.UseCases.AuthenticateUser;
 using Cleo.Core.UseCases.BrowseHistory;
@@ -54,7 +54,7 @@ internal static class Program
         services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
         services.AddScoped<IListSessionsUseCase, ListSessionsUseCase>();
         services.AddScoped<IBrowseSourcesUseCase, BrowseSourcesUseCase>();
-        services.AddScoped<IAbandonSessionUseCase, AbandonSessionUseCase>();
+        services.AddScoped<IForgetSessionUseCase, ForgetSessionUseCase>();
         services.AddScoped<ICorrespondUseCase, CorrespondUseCase>();
 
         // CLI Commands (View Layer) 🖥️
@@ -63,7 +63,7 @@ internal static class Program
         services.AddTransient<NewCommand>();
         services.AddTransient<ListCommand>();
         services.AddTransient<StatusCommand>();
-        services.AddTransient<DeleteCommand>();
+        services.AddTransient<ForgetCommand>();
         services.AddTransient<ActivitiesCommand>();
         services.AddTransient<ApproveCommand>();
         services.AddTransient<TalkCommand>();
@@ -82,7 +82,7 @@ internal static class Program
         rootCommand.AddCommand(serviceProvider.GetRequiredService<NewCommand>().Build());
         rootCommand.AddCommand(serviceProvider.GetRequiredService<ListCommand>().Build());
         rootCommand.AddCommand(serviceProvider.GetRequiredService<StatusCommand>().Build());
-        rootCommand.AddCommand(serviceProvider.GetRequiredService<DeleteCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<ForgetCommand>().Build());
         rootCommand.AddCommand(serviceProvider.GetRequiredService<ActivitiesCommand>().Build());
         rootCommand.AddCommand(serviceProvider.GetRequiredService<ApproveCommand>().Build());
         rootCommand.AddCommand(serviceProvider.GetRequiredService<TalkCommand>().Build());
