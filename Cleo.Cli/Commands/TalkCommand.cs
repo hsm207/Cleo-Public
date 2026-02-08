@@ -1,16 +1,24 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Microsoft.Extensions.DependencyInjection;
+using Cleo.Core.UseCases.Correspond;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class TalkCommand
+internal sealed class TalkCommand
 {
+    private readonly ICorrespondUseCase _useCase;
+    private readonly ILogger<TalkCommand> _logger;
+
     private static readonly string[] MessageAliases = { "--message", "-m", "--prompt", "-p" };
 
-    public static Command Create(IServiceProvider serviceProvider)
+    public TalkCommand(ICorrespondUseCase useCase, ILogger<TalkCommand> logger)
+    {
+        _useCase = useCase;
+        _logger = logger;
+    }
+
+    public Command Build()
     {
         var command = new Command("talk", "Send a message or prompt to Jules 💬");
 
@@ -20,40 +28,31 @@ internal static class TalkCommand
         command.AddArgument(handleArgument);
         command.AddOption(messageOption);
 
-        command.SetHandler(async (handle, message) =>
-        {
-            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("TalkCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
-            var reader = serviceProvider.GetRequiredService<ISessionReader>();
-
-            try
-            {
-                var sessionId = new SessionId(handle);
-                var session = await reader.GetByIdAsync(sessionId).ConfigureAwait(false);
-
-                if (session == null)
-                {
-                    Console.WriteLine($"🔍 Handle {handle} not found in the registry, babe. 🥀");
-                    return;
-                }
-
-                Console.WriteLine($"💬 Sending message to {handle}...");
-                await julesClient.SendMessageAsync(sessionId, message).ConfigureAwait(false);
-
-                Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
-            }
-            #pragma warning disable CA1031
-            catch (Exception ex)
-            {
-                #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to send message.");
-                #pragma warning restore CA1848
-                Console.WriteLine($"💔 Something went wrong: {ex.Message}");
-            }
-            #pragma warning restore CA1031
-        }, handleArgument, messageOption);
+        command.SetHandler(async (handle, message) => await ExecuteAsync(handle, message), handleArgument, messageOption);
 
         return command;
+    }
+
+    private async Task ExecuteAsync(string handle, string message)
+    {
+        try
+        {
+            var sessionId = new SessionId(handle);
+            
+            Console.WriteLine($"💬 Sending message to {handle}...");
+            var request = new CorrespondRequest(sessionId, message);
+            await _useCase.ExecuteAsync(request).ConfigureAwait(false);
+
+            Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
+        }
+        #pragma warning disable CA1031
+        catch (Exception ex)
+        {
+            #pragma warning disable CA1848
+            _logger.LogError(ex, "❌ Failed to send message.");
+            #pragma warning restore CA1848
+            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+        }
+        #pragma warning restore CA1031
     }
 }

@@ -1,14 +1,22 @@
 using System.CommandLine;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ApprovePlan;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class ApproveCommand
+internal sealed class ApproveCommand
 {
-    public static Command Create(IServiceProvider serviceProvider)
+    private readonly IApprovePlanUseCase _useCase;
+    private readonly ILogger<ApproveCommand> _logger;
+
+    public ApproveCommand(IApprovePlanUseCase useCase, ILogger<ApproveCommand> logger)
+    {
+        _useCase = useCase;
+        _logger = logger;
+    }
+
+    public Command Build()
     {
         var command = new Command("approve", "Approve a generated plan 👍");
 
@@ -17,31 +25,29 @@ internal static class ApproveCommand
         command.AddArgument(handleArgument);
         command.AddArgument(planIdArgument);
 
-        command.SetHandler(async (handle, planId) =>
-        {
-            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("ApproveCommand");
-            var useCase = serviceProvider.GetRequiredService<IApprovePlanUseCase>();
-
-            try
-            {
-                var sessionId = new SessionId(handle);
-                var request = new ApprovePlanRequest(sessionId, planId);
-                var response = await useCase.ExecuteAsync(request).ConfigureAwait(false);
-
-                Console.WriteLine($"✅ Plan {response.PlanId} approved for session {handle} at {response.ApprovedAt:t}! Let's go! 🚀");
-            }
-            #pragma warning disable CA1031
-            catch (Exception ex)
-            {
-                #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to approve plan.");
-                #pragma warning restore CA1848
-                Console.WriteLine($"💔 Something went wrong: {ex.Message}");
-            }
-            #pragma warning restore CA1031
-        }, handleArgument, planIdArgument);
+        command.SetHandler(async (handle, planId) => await ExecuteAsync(handle, planId), handleArgument, planIdArgument);
 
         return command;
+    }
+
+    private async Task ExecuteAsync(string handle, string planId)
+    {
+        try
+        {
+            var sessionId = new SessionId(handle);
+            var request = new ApprovePlanRequest(sessionId, planId);
+            var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
+
+            Console.WriteLine($"✅ Plan {response.PlanId} approved for session {handle} at {response.ApprovedAt:t}! Let's go! 🚀");
+        }
+        #pragma warning disable CA1031
+        catch (Exception ex)
+        {
+            #pragma warning disable CA1848
+            _logger.LogError(ex, "❌ Failed to approve plan.");
+            #pragma warning restore CA1848
+            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+        }
+        #pragma warning restore CA1031
     }
 }
