@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
@@ -87,6 +88,28 @@ public class RestJulesActivityClientTests
 
         // Act
         var result = await _client.GetActivitiesAsync(_testId, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact(DisplayName = "The client should correctly implement ISessionArchivist port.")]
+    public async Task ShouldImplementPort()
+    {
+        // Arrange
+        var archivist = (ISessionArchivist)_client;
+        var response = new ListActivitiesResponse(Array.Empty<JulesActivityDto>(), null);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(response)
+            });
+
+        // Act
+        var result = await archivist.GetHistoryAsync(_testId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);

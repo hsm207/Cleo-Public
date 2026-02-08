@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
@@ -89,6 +90,28 @@ public class RestJulesSourceClientTests
 
         // Act
         var result = await _client.ListSourcesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact(DisplayName = "The client should correctly implement ISourceCatalog port.")]
+    public async Task ShouldImplementPort()
+    {
+        // Arrange
+        var catalog = (ISourceCatalog)_client;
+        var response = new ListSourcesResponse(Array.Empty<JulesSourceDto>(), null);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(response)
+            });
+
+        // Act
+        var result = await catalog.GetAvailableSourcesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
