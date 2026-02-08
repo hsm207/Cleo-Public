@@ -32,7 +32,10 @@ public class RegistrySessionPersistenceTests : IDisposable
     {
         // Arrange
         var id = new SessionId("sessions/real-vibes-1");
-        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning));
+        var dashboardUri = new Uri("https://jules.ai/sessions/1");
+        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), dashboardUri);
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Initial thought");
+        session.AddActivity(activity);
 
         // Act
         await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
@@ -42,12 +45,15 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.NotNull(result);
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
-        Assert.Equal(session.Pulse.Status, result.Pulse.Status);
+        Assert.Equal(dashboardUri, result.DashboardUri);
+        Assert.Equal(SessionStatus.StartingUp, result.Pulse.Status); // Status is ephemeral! 💓💨
+        Assert.Contains(result.SessionLog, a => a.Id == "act-1");
         
         // Verify file actually exists and has content
         Assert.True(File.Exists(_tempFile));
         var json = File.ReadAllText(_tempFile);
         Assert.Contains("Real world testing", json);
+        Assert.Contains("Initial thought", json);
     }
 
     [Fact(DisplayName = "RegistrySessionWriter should handle updates to existing sessions.")]
@@ -64,7 +70,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
+        Assert.Equal(SessionStatus.StartingUp, result!.Pulse.Status); // Ephemeral!
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 

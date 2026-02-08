@@ -11,22 +11,26 @@ namespace Cleo.Core.Tests.UseCases.RefreshPulse;
 public sealed class RefreshPulseUseCaseTests
 {
     private readonly FakePulseMonitor _pulseMonitor = new();
+    private readonly FakeActivityClient _activityClient = new();
     private readonly FakeSessionReader _sessionReader = new();
     private readonly FakeSessionWriter _sessionWriter = new();
     private readonly RefreshPulseUseCase _sut;
 
     public RefreshPulseUseCaseTests()
     {
-        _sut = new RefreshPulseUseCase(_pulseMonitor, _sessionReader, _sessionWriter);
+        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter);
     }
 
-    [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and update the Task Registry.")]
+    [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
     public async Task ShouldRetrieveLatestPulse()
     {
         // Arrange
         var sessionId = new SessionId("sessions/active-session");
         var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
+
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Remotely synchronized activity");
+        _activityClient.Activities.Add(activity);
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -38,6 +42,9 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
         Assert.False(result.IsCached);
         Assert.True(_sessionWriter.Saved);
+        
+        // Verify history synchronization 🔄📜
+        Assert.Contains(session.SessionLog, a => a.Id == "act-1");
     }
 
     [Fact(DisplayName = "Given the remote collaborator is unreachable, when the Use Case refreshes the Pulse, then it should retrieve the cached State from the local Registry and return it with a connectivity warning.")]
@@ -85,6 +92,15 @@ public sealed class RefreshPulseUseCaseTests
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
             return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
+        }
+    }
+
+    private sealed class FakeActivityClient : IJulesActivityClient
+    {
+        public List<SessionActivity> Activities { get; } = new();
+        public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<SessionActivity>>(Activities.AsReadOnly());
         }
     }
 

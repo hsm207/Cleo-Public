@@ -17,6 +17,6 @@ public class DefaultRegistryPathProviderTests
         // Assert
         Assert.Contains(expectedBase, result);
         Assert.Contains("Cleo", result);
-        Assert.Contains("tasks.json", result);
+        Assert.Contains("sessions.json", result);
     }
 }

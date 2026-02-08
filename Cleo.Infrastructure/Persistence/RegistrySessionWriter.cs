@@ -60,18 +60,18 @@ public sealed class RegistrySessionWriter : ISessionWriter
         }
     }
 
-    private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
+    private async Task<List<RegisteredSessionDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!_fileSystem.FileExists(path)) return new List<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return new List<RegisteredSessionDto>();
 
         var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
+        if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredSessionDto>();
 
         return _serializer.Deserialize(json).ToList();
     }
 
-    private async Task SaveRegistryAsync(IEnumerable<RegisteredTaskDto> tasks, CancellationToken ct)
+    private async Task SaveRegistryAsync(IEnumerable<RegisteredSessionDto> tasks, CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
         var directory = Path.GetDirectoryName(path);
