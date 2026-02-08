@@ -4,7 +4,8 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// A portal for managing the lifecycle of a remote Jules session.
+/// A portal for initializing new remote Jules sessions.
+/// Acts as an Abstract Factory for remote resources.
 /// </summary>
 public interface IJulesSessionClient
 {
@@ -16,14 +17,4 @@ public interface IJulesSessionClient
         SourceContext source, 
         SessionCreationOptions options,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieves the current state and heartbeat of a remote session.
-    /// </summary>
-    Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sends a feedback message to Jules within an active session.
-    /// </summary>
-    Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default);
 }
