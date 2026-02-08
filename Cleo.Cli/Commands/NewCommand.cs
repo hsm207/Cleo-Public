@@ -28,9 +28,9 @@ internal sealed class NewCommand
         var command = new Command("new", "Create a new engineering session.");
 
         var taskOption = new Option<string>(TaskAliases, "The description of the task to perform.") { IsRequired = true };
-        var repoOption = new Option<string>(RepoAliases, "The target repository path.") { IsRequired = true };
-        var branchOption = new Option<string>(BranchAliases, "The starting branch name.") { IsRequired = true };
-        var titleOption = new Option<string>(TitleAliases, "The title for the session.");
+        var repoOption = new Option<string>(RepoAliases, "The Jules source resource name (e.g., 'sources/github/owner/repo').") { IsRequired = true };
+        var branchOption = new Option<string>(BranchAliases, "The starting branch name (e.g., 'main').") { IsRequired = true };
+        var titleOption = new Option<string>(TitleAliases, "An optional title for the session.");
 
         command.AddOption(taskOption);
         command.AddOption(repoOption);
