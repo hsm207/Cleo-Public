@@ -82,7 +82,7 @@ public record ResultActivity(string Id, DateTimeOffset Timestamp, SolutionPatch 
 public record CompletionActivity(string Id, DateTimeOffset Timestamp) 
     : SessionActivity(Id, Timestamp, ActivityOriginator.System)
 {
-    public override string GetContentSummary() => "Mission Completed Successfully";
+    public override string GetContentSummary() => "Session Completed Successfully";
 }
 
 /// <summary>

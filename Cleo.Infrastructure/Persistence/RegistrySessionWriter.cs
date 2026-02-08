@@ -27,7 +27,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public async Task SaveAsync(Session session, CancellationToken cancellationToken = default)
+    public async Task RememberAsync(Session session, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(session);
 
@@ -47,7 +47,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
         await SaveRegistryAsync(tasks, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 

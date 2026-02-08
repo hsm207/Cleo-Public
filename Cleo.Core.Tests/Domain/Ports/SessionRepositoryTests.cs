@@ -26,9 +26,9 @@ public class SessionRepositoryTests
         var mockReader = new Mock<ISessionReader>();
 
         // Verify GetById
-        mockReader.Setup(r => r.GetByIdAsync(_testId, It.IsAny<CancellationToken>()))
+        mockReader.Setup(r => r.RecallAsync(_testId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_testSession);
-        var retrieved = await mockReader.Object.GetByIdAsync(_testId, TestContext.Current.CancellationToken);
+        var retrieved = await mockReader.Object.RecallAsync(_testId, TestContext.Current.CancellationToken);
         Assert.Equal(_testSession, retrieved);
 
         // Verify List
@@ -44,11 +44,11 @@ public class SessionRepositoryTests
         var mockWriter = new Mock<ISessionWriter>();
 
         // Verify Save
-        await mockWriter.Object.SaveAsync(_testSession, TestContext.Current.CancellationToken);
-        mockWriter.Verify(r => r.SaveAsync(_testSession, It.IsAny<CancellationToken>()), Times.Once);
+        await mockWriter.Object.RememberAsync(_testSession, TestContext.Current.CancellationToken);
+        mockWriter.Verify(r => r.RememberAsync(_testSession, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify Delete
-        await mockWriter.Object.DeleteAsync(_testId, TestContext.Current.CancellationToken);
-        mockWriter.Verify(r => r.DeleteAsync(_testId, It.IsAny<CancellationToken>()), Times.Once);
+        await mockWriter.Object.ForgetAsync(_testId, TestContext.Current.CancellationToken);
+        mockWriter.Verify(r => r.ForgetAsync(_testId, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

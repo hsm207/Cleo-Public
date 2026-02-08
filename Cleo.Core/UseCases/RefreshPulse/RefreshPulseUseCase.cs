@@ -21,7 +21,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var session = await _sessionReader.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        var session = await _sessionReader.RecallAsync(request.Id, cancellationToken).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry. 🥀");
@@ -34,7 +34,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             
             // Update and Save 📝
             session.UpdatePulse(pulse);
-            await _sessionWriter.SaveAsync(session, cancellationToken).ConfigureAwait(false);
+            await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
             
             return new RefreshPulseResponse(request.Id, pulse);
         }

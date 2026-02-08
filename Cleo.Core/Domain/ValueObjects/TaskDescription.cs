@@ -1,7 +1,7 @@
 namespace Cleo.Core.Domain.ValueObjects;
 
 /// <summary>
-/// Represents the developer's intent or mission for a Jules session.
+/// Represents the developer's intent or session for a Jules session.
 /// </summary>
 public record TaskDescription
 {

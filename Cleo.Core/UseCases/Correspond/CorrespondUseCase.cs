@@ -17,7 +17,7 @@ public class CorrespondUseCase : ICorrespondUseCase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var session = await _reader.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        var session = await _reader.RecallAsync(request.Id, cancellationToken).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry. 🥀");

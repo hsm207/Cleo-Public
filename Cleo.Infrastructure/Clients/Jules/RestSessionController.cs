@@ -7,7 +7,7 @@ using Cleo.Infrastructure.Clients.Jules.Internal;
 namespace Cleo.Infrastructure.Clients.Jules;
 
 /// <summary>
-/// Specialized client for directing and controlling the progress of a live mission.
+/// Specialized client for directing and controlling the progress of a live session.
 /// </summary>
 public sealed class RestSessionController : ISessionController
 {

@@ -3,7 +3,7 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// The observer of the mission. Responsible for checking the Pulse (state) of a remote Session.
+/// The observer of the session. Responsible for checking the Pulse (state) of a remote Session.
 /// </summary>
 public interface IPulseMonitor
 {

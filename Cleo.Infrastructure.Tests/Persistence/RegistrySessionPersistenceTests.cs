@@ -35,8 +35,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning));
 
         // Act
-        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -59,9 +59,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         var updated = new Session(id, new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed));
 
         // Act
-        await _writer.SaveAsync(initial, TestContext.Current.CancellationToken);
-        await _writer.SaveAsync(updated, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(initial, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(updated, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
@@ -76,9 +76,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         var session = new Session(id, new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
 
         // Act
-        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
-        await _writer.DeleteAsync(id, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        await _writer.ForgetAsync(id, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -119,7 +119,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         try
         {
             // Act
-            await writer.SaveAsync(session, TestContext.Current.CancellationToken);
+            await writer.RememberAsync(session, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.True(Directory.Exists(nestedDir));

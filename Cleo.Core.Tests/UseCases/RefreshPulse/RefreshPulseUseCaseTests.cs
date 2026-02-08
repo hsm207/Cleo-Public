@@ -24,8 +24,8 @@ public sealed class RefreshPulseUseCaseTests
     public async Task ShouldRetrieveLatestPulse()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
-        var session = new SessionBuilder().WithId("sessions/active-mission").Build();
+        var sessionId = new SessionId("sessions/active-session");
+        var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
 
         var request = new RefreshPulseRequest(sessionId);
@@ -44,9 +44,9 @@ public sealed class RefreshPulseUseCaseTests
     public async Task ShouldFallbackToCacheOnConnectivityFailure()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
+        var sessionId = new SessionId("sessions/active-session");
         var cachedSession = new SessionBuilder()
-            .WithId("sessions/active-mission")
+            .WithId("sessions/active-session")
             .WithPulse(SessionStatus.InProgress, "Cached Progress")
             .Build();
             
@@ -66,11 +66,11 @@ public sealed class RefreshPulseUseCaseTests
         Assert.NotNull(result.Warning);
     }
 
-    [Fact(DisplayName = "Given a Handle that does not exist in the Task Registry, when refreshing the Pulse, then it should notify that the mission is unknown.")]
+    [Fact(DisplayName = "Given a Handle that does not exist in the Task Registry, when refreshing the Pulse, then it should notify that the session is unknown.")]
     public async Task ShouldThrowWhenHandleNotFound()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/ghost-mission");
+        var sessionId = new SessionId("sessions/ghost-session");
         var request = new RefreshPulseRequest(sessionId);
 
         // Act & Assert
@@ -91,7 +91,7 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeSessionReader : ISessionReader
     {
         public Dictionary<SessionId, Session> Sessions { get; } = new();
-        public Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
+        public Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Sessions.GetValueOrDefault(id));
         }
@@ -104,11 +104,11 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeSessionWriter : ISessionWriter
     {
         public bool Saved { get; private set; }
-        public Task SaveAsync(Session session, CancellationToken cancellationToken = default)
+        public Task RememberAsync(Session session, CancellationToken cancellationToken = default)
         {
             Saved = true;
             return Task.CompletedTask;
         }
-        public Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }
