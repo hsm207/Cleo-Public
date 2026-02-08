@@ -28,7 +28,9 @@ public class RestJulesActivityClientTests
         {
             new PlanningActivityMapper(),
             new ResultActivityMapper(),
+            new ExecutionActivityMapper(),
             new ProgressActivityMapper(),
+            new CompletionActivityMapper(),
             new FailureActivityMapper(),
             new MessageActivityMapper(),
             new UnknownActivityMapper()
@@ -41,15 +43,30 @@ public class RestJulesActivityClientTests
     public async Task GetActivitiesAsync_ShouldMapAllActivityTypes()
     {
         // Arrange
-        // Order: Name, Id, CreateTime, Originator, PlanGenerated, PlanApproved, MessageText, Artifacts, ProgressUpdated, SessionFailed
-        var planningDto = new JulesActivityDto("p", "1", DateTimeOffset.UtcNow, "agent", new PlanGeneratedDto(new PlanDto("pid", new[] { new PlanStepDto("s1", "Step 1", "Desc", 0) })), null, null, null, null, null);
-        var messageDto = new JulesActivityDto("m", "2", DateTimeOffset.UtcNow, "agent", null, null, "Hello!", null, null, null);
-        var resultDto = new JulesActivityDto("r", "3", DateTimeOffset.UtcNow, "agent", null, null, null, new[] { new ArtifactDto(new ChangeSetDto(new GitPatchDto("patch", "base"))) }, null, null);
-        var failureDto = new JulesActivityDto("f", "4", DateTimeOffset.UtcNow, "agent", null, null, null, null, null, new SessionFailedDto("Broke!"));
-        var progressDto = new JulesActivityDto("prog", "5", DateTimeOffset.UtcNow, "agent", null, null, null, null, new object(), null);
-        var unknownDto = new JulesActivityDto("u", "6", DateTimeOffset.UtcNow, "agent", null, null, null, null, null, null);
+        var now = DateTimeOffset.UtcNow;
+        
+        var planningDto = new JulesActivityDto("p", "1", null, now, "agent", null, 
+            new PlanGeneratedDto(new PlanDto("pid", new[] { new PlanStepDto("s1", "Step 1", "Desc", 0) }, now)), 
+            null, null, null, null, null, null);
+            
+        var messageDto = new JulesActivityDto("m", "2", null, now, "user", null, null, null, 
+            new UserMessagedDto("Hello!"), null, null, null, null);
+            
+        var resultDto = new JulesActivityDto("r", "3", null, now, "agent", 
+            new[] { new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("patch", "base", null)), null, null) }, 
+            null, null, null, null, null, null, null);
+            
+        var failureDto = new JulesActivityDto("f", "4", null, now, "system", null, null, null, null, null, null, null, 
+            new SessionFailedDto("Broke!"));
+            
+        var progressDto = new JulesActivityDto("prog", "5", null, now, "agent", null, null, null, null, null, 
+            new ProgressUpdatedDto("Title", "Detail"), null, null);
+            
+        var execDto = new JulesActivityDto("exec", "6", null, now, "agent", 
+            new[] { new ArtifactDto(null, null, new BashOutputDto("ls", "files", 0)) }, 
+            null, null, null, null, null, null, null);
 
-        var response = new ListActivitiesResponse(new[] { planningDto, messageDto, resultDto, failureDto, progressDto, unknownDto }, null);
+        var response = new ListActivitiesResponse(new[] { planningDto, messageDto, resultDto, failureDto, progressDto, execDto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -68,8 +85,8 @@ public class RestJulesActivityClientTests
         Assert.Contains(result, a => a is MessageActivity m && m.Text == "Hello!");
         Assert.Contains(result, a => a is ResultActivity r && r.Patch.UniDiff == "patch");
         Assert.Contains(result, a => a is FailureActivity f && f.Reason == "Broke!");
-        Assert.Contains(result, a => a is ProgressActivity);
-        Assert.Contains(result, a => a is MessageActivity m && m.Text.Contains("Unknown activity type"));
+        Assert.Contains(result, a => a is ProgressActivity p && p.Detail.Contains("Title"));
+        Assert.Contains(result, a => a is ExecutionActivity e && e.Command == "ls");
     }
 
     [Fact(DisplayName = "GetActivitiesAsync should return an empty collection if the API returns null activities.")]
