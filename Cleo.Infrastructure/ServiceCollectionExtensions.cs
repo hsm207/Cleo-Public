@@ -1,13 +1,13 @@
 using Cleo.Core.Domain.Ports;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
-using Cleo.Infrastructure.Common; // New Namespace
+using Cleo.Infrastructure.Common;
 using Cleo.Infrastructure.Messaging;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics.CodeAnalysis; // Added
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Cleo.Infrastructure;
@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IVault>(sp => new NativeVault(identityPath, sp.GetRequiredService<IEncryptionStrategy>()));
+        services.AddSingleton<ICredentialStore>(sp => (NativeVault)sp.GetRequiredService<IVault>());
         
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
         services.AddSingleton<IRegistryPathProvider, DefaultRegistryPathProvider>();
@@ -70,17 +71,32 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        // Jules Clients
         services.AddHttpClient<IJulesSessionClient, RestJulesSessionClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
             .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddScoped<ISessionMessenger>(sp => (RestJulesSessionClient)sp.GetRequiredService<IJulesSessionClient>());
+        services.AddScoped<IPulseMonitor>(sp => (RestJulesSessionClient)sp.GetRequiredService<IJulesSessionClient>());
 
         services.AddHttpClient<IJulesSourceClient, RestJulesSourceClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
             .AddHttpMessageHandler<JulesLoggingHandler>();
 
+        services.AddScoped<ISourceCatalog>(sp => (RestJulesSourceClient)sp.GetRequiredService<IJulesSourceClient>());
+
         services.AddHttpClient<IJulesActivityClient, RestJulesActivityClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
             .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddScoped<ISessionArchivist>(sp => (RestJulesActivityClient)sp.GetRequiredService<IJulesActivityClient>());
+
+        // Use Cases
+        services.AddScoped<Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.RefreshPulse.IRefreshPulseUseCase, Cleo.Core.UseCases.RefreshPulse.RefreshPulseUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.BrowseHistory.IBrowseHistoryUseCase, Cleo.Core.UseCases.BrowseHistory.BrowseHistoryUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.ApprovePlan.IApprovePlanUseCase, Cleo.Core.UseCases.ApprovePlan.ApprovePlanUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.AuthenticateUser.IAuthenticateUserUseCase, Cleo.Core.UseCases.AuthenticateUser.AuthenticateUserUseCase>();
 
         return services;
     }

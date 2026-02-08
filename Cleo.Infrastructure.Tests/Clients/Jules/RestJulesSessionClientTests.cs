@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.Exceptions;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
@@ -114,5 +116,96 @@ public class RestJulesSessionClientTests
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post && req.RequestUri!.ToString().EndsWith(":approvePlan")),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "CreateSessionAsync should throw RemoteCollaboratorUnavailableException on connectivity failure.")]
+    public async Task CreateSessionAsync_ShouldThrowOnConnectivityFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException());
+
+        // Act & Assert
+        await Assert.ThrowsAsync<RemoteCollaboratorUnavailableException>(() => _client.CreateSessionAsync(new TaskDescription("t"), new SourceContext("r", "b"), new SessionCreationOptions(), TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "GetSessionPulseAsync should throw RemoteCollaboratorUnavailableException on connectivity failure.")]
+    public async Task GetSessionPulseAsync_ShouldThrowOnConnectivityFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException());
+
+        // Act & Assert
+        await Assert.ThrowsAsync<RemoteCollaboratorUnavailableException>(() => _client.GetSessionPulseAsync(_testId, TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "GetSessionPulseAsync should throw InvalidOperationException on null response.")]
+    public async Task GetSessionPulseAsync_ShouldThrowOnNullResponse()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("null", System.Text.Encoding.UTF8, "application/json")
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetSessionPulseAsync(_testId, TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "ApprovePlanAsync should throw RemoteCollaboratorUnavailableException on connectivity failure.")]
+    public async Task ApprovePlanAsync_ShouldThrowOnConnectivityFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException());
+
+        // Act & Assert
+        await Assert.ThrowsAsync<RemoteCollaboratorUnavailableException>(() => _client.ApprovePlanAsync(_testId, TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "The client should throw if the server returns an error.")]
+    public async Task ShouldThrowOnServerError()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<RemoteCollaboratorUnavailableException>(() => _client.SendMessageAsync(_testId, "fail", TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "The client should correctly implement IPulseMonitor and ISessionMessenger ports.")]
+    public async Task ShouldImplementPorts()
+    {
+        // Arrange
+        var messenger = (ISessionMessenger)_client;
+        var monitor = (IPulseMonitor)_client;
+        var dto = new JulesSessionDto("name", "id", "PLANNING", "prompt", new SourceContextDto("repo", null), null);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(dto)
+            });
+
+        // Act
+        await messenger.SendMessageAsync(_testId, "hi", TestContext.Current.CancellationToken);
+        var pulse = await monitor.GetSessionPulseAsync(_testId, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(SessionStatus.Planning, pulse.Status);
     }
 }

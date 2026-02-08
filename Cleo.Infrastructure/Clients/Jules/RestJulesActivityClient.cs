@@ -9,7 +9,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// <summary>
 /// A REST-based implementation of the Jules activity history client.
 /// </summary>
-public sealed class RestJulesActivityClient : IJulesActivityClient
+public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArchivist
 {
     private readonly HttpClient _httpClient;
     private readonly IEnumerable<IJulesActivityMapper> _mappers;
@@ -32,5 +32,11 @@ public sealed class RestJulesActivityClient : IJulesActivityClient
                 ?? new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, $"Unknown activity type '{dto.Name}' received."))
             .ToList()
             .AsReadOnly();
+    }
+
+    async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)
+    {
+        var activities = await GetActivitiesAsync(id, cancellationToken).ConfigureAwait(false);
+        return activities.ToList().AsReadOnly();
     }
 }
