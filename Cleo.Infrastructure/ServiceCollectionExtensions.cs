@@ -1,11 +1,13 @@
 using Cleo.Core.Domain.Ports;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using Cleo.Infrastructure.Common; // New Namespace
 using Cleo.Infrastructure.Messaging;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis; // Added
 using System.Runtime.InteropServices;
 
 namespace Cleo.Infrastructure;
@@ -15,16 +17,20 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers all infrastructure services required by the Cleo system.
     /// </summary>
-    public static IServiceCollection AddCleoInfrastructure(this IServiceCollection services, Uri julesBaseUrl)
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Platform is checked via IPlatformProvider.")]
+    public static IServiceCollection AddCleoInfrastructure(this IServiceCollection services, Uri julesBaseUrl, IPlatformProvider? platformProvider = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(julesBaseUrl);
 
-        // Security & Persistence
+        // 1. Determine Platform 🌍
+        platformProvider ??= new DefaultPlatformProvider();
+
+        // 2. Security & Persistence
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var identityPath = Path.Combine(appData, "Cleo", "identity.dat");
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (platformProvider.IsWindows())
         {
             services.AddSingleton<IEncryptionStrategy, DpapiEncryptionStrategy>();
         }
