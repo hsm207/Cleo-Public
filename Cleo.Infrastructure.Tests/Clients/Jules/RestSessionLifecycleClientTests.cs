@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Moq;
 using Moq.Protected;
@@ -31,7 +31,7 @@ public class RestSessionLifecycleClientTests
         var options = new SessionCreationOptions(AutomationMode.AutoCreatePullRequest, "Refactor Mission", true);
         
         // The mock response
-        var responseDto = new JulesSessionDto("session-1", "id", "state", "QUEUED", new SourceContextDto("repo", new GithubRepoContextDto("main")), null, true, "AUTO_CREATE_PR", null, null);
+        var responseDto = new JulesSessionResponse("session-1", "id", "state", "QUEUED", new SourceContextDto("repo", new GithubRepoContextDto("main")), null, true, "AUTO_CREATE_PR", null, null);
         
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

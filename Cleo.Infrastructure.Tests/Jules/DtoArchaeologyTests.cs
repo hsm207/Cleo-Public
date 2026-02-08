@@ -1,4 +1,4 @@
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using FluentAssertions;
 using Xunit;
 
@@ -94,7 +94,7 @@ public sealed class DtoArchaeologyTests
         source.Source.Should().Be("repo");
         source.GithubRepoContext.Should().Be(github);
 
-        var session = new JulesSessionDto("sn", "si", "state", "prompt", source, new Uri("https://jules.com"), true, "AUTO_CREATE_PR", now, now);
+        var session = new JulesSessionResponse("sn", "si", "state", "prompt", source, new Uri("https://jules.com"), true, "AUTO_CREATE_PR", now, now);
         session.Name.Should().Be("sn");
         session.Id.Should().Be("si");
         session.State.Should().Be("state");
