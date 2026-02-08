@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
@@ -24,12 +25,15 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var response = await _httpClient.GetFromJsonAsync<ListActivitiesResponse>($"v1alpha/{id.Value}/activities", cancellationToken).ConfigureAwait(false);
-        if (response?.Activities == null) return Array.Empty<SessionActivity>();
+        var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}/activities", UriKind.Relative), cancellationToken).ConfigureAwait(false);
+        await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-        return response.Activities
-            .Select(dto => _mappers.FirstOrDefault(m => m.CanMap(dto))?.Map(dto) 
-                ?? new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, $"Unknown activity type '{dto.Name}' received."))
+        var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (dto?.Activities == null) return Array.Empty<SessionActivity>();
+
+        return dto.Activities
+            .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
+                ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."))
             .ToList()
             .AsReadOnly();
     }
