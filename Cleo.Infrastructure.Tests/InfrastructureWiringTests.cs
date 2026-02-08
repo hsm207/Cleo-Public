@@ -5,11 +5,12 @@ using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using System.Net.Http; // Added
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 
 namespace Cleo.Infrastructure.Tests;
 
-public class InfrastructureWiringTests
+public sealed class InfrastructureWiringTests
 {
     [Fact(DisplayName = "The DI container should resolve all segregated infrastructure ports.")]
     public void DI_ShouldResolveAllPorts()
@@ -54,6 +55,7 @@ public class InfrastructureWiringTests
     }
 
     [Fact(DisplayName = "AddCleoInfrastructure should register DpapiEncryptionStrategy when on Windows.")]
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Platform is mocked via IPlatformProvider in this test.")]
     public void DI_ShouldRegisterDpapiOnWindows()
     {
         // Arrange
