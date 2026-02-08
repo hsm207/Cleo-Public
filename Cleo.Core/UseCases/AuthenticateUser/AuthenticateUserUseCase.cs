@@ -19,7 +19,7 @@ public class AuthenticateUserUseCase : IAuthenticateUserUseCase
 
         if (string.IsNullOrWhiteSpace(request.ApiKey))
         {
-            return new AuthenticateUserResponse(false, "API Key cannot be empty, babe! 🥀");
+            return new AuthenticateUserResponse(false, "API Key cannot be empty. 🥀");
         }
 
         var identity = new Identity(new ApiKey(request.ApiKey));

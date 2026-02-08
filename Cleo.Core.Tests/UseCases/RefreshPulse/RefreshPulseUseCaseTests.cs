@@ -1,4 +1,5 @@
 using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.Tests.Builders;
@@ -82,7 +83,7 @@ public sealed class RefreshPulseUseCaseTests
         public bool ShouldThrow { get; set; }
         public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
         {
-            if (ShouldThrow) throw new HttpRequestException("Cloud is down, babe! ⛈️");
+            if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
             return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
         }
     }
