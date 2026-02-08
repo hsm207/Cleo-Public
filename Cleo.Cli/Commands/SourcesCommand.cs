@@ -44,7 +44,6 @@ internal sealed class SourcesCommand
                 Console.WriteLine($"- {source.Name} ({source.Owner}/{source.Repo})");
             }
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -52,6 +51,5 @@ internal sealed class SourcesCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Something went wrong: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

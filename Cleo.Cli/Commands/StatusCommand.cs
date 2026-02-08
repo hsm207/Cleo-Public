@@ -46,7 +46,6 @@ internal sealed class StatusCommand
             Console.WriteLine($"💓 Status for {handle}: {response.Pulse.Status}");
             Console.WriteLine($"📝 {response.Pulse.Detail}");
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
@@ -54,6 +53,5 @@ internal sealed class StatusCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Something went wrong: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }
