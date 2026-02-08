@@ -1,70 +1,75 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
-using Cleo.Core.Domain.ValueObjects;
-using Microsoft.Extensions.DependencyInjection;
+using Cleo.Core.UseCases.AuthenticateUser;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class AuthCommand
+internal sealed class AuthCommand
 {
-    public static Command Create(IServiceProvider serviceProvider)
+    private readonly IAuthenticateUserUseCase _useCase;
+    private readonly ICredentialStore _credentialStore;
+    private readonly ILogger<AuthCommand> _logger;
+
+    public AuthCommand(IAuthenticateUserUseCase useCase, ICredentialStore credentialStore, ILogger<AuthCommand> logger)
+    {
+        _useCase = useCase;
+        _credentialStore = credentialStore;
+        _logger = logger;
+    }
+
+    public Command Build()
     {
         var authCommand = new Command("auth", "Manage your Jules authentication 🔐");
 
         var loginCommand = new Command("login", "Login to Jules with your API key.");
-        
-        loginCommand.SetHandler(async () =>
-        {
-            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("AuthCommand");
-            var vault = serviceProvider.GetRequiredService<IVault>();
-
-            Console.WriteLine("🔐 Login to Jules");
-            Console.WriteLine("Please get your API key from the Jules console.");
-            Console.Write("Enter your API Key: ");
-            
-            // Mask the input (simple version)
-            var apiKey = ReadMaskedLine();
-            
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                Console.WriteLine("❌ API Key cannot be empty.");
-                return;
-            }
-
-            try
-            {
-                var identity = new Identity(new ApiKey(apiKey));
-                await vault.StoreAsync(identity).ConfigureAwait(false);
-                
-                Console.WriteLine("✅ API Key saved securely! Systems ready for launch! 🚀✨");
-            }
-            #pragma warning disable CA1031
-            catch (Exception ex)
-            {
-                #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to store API key.");
-                #pragma warning restore CA1848
-                Console.WriteLine($"💔 Something went wrong: {ex.Message}");
-            }
-            #pragma warning restore CA1031
-        });
-
+        loginCommand.SetHandler(async () => await ExecuteLoginAsync());
         authCommand.AddCommand(loginCommand);
         
         var logoutCommand = new Command("logout", "Clear your stored credentials.");
-        logoutCommand.SetHandler(async () => 
-        {
-            var vault = serviceProvider.GetRequiredService<IVault>();
-            await vault.ClearAsync().ConfigureAwait(false);
-            Console.WriteLine("🗑️ Credentials cleared. See you later! 👋🥀");
-        });
-        
+        logoutCommand.SetHandler(async () => await ExecuteLogoutAsync());
         authCommand.AddCommand(logoutCommand);
 
         return authCommand;
+    }
+
+    private async Task ExecuteLoginAsync()
+    {
+        Console.WriteLine("🔐 Login to Jules");
+        Console.WriteLine("Please get your API key from the Jules console.");
+        Console.Write("Enter your API Key: ");
+        
+        var apiKey = ReadMaskedLine();
+        
+        try
+        {
+            var request = new AuthenticateUserRequest(apiKey);
+            var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
+            
+            if (response.Success)
+            {
+                Console.WriteLine($"✅ {response.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ {response.Message}");
+            }
+        }
+        #pragma warning disable CA1031
+        catch (Exception ex)
+        {
+            #pragma warning disable CA1848
+            _logger.LogError(ex, "❌ Failed to store API key.");
+            #pragma warning restore CA1848
+            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+        }
+        #pragma warning restore CA1031
+    }
+
+    private async Task ExecuteLogoutAsync()
+    {
+        await _credentialStore.ClearIdentityAsync().ConfigureAwait(false);
+        Console.WriteLine("🗑️ Credentials cleared. See you later! 👋🥀");
     }
 
     private static string ReadMaskedLine()

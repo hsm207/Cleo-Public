@@ -1,60 +1,57 @@
 using System.CommandLine;
-using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Microsoft.Extensions.DependencyInjection;
+using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
-internal static class StatusCommand
+internal sealed class StatusCommand
 {
-    public static Command Create(IServiceProvider serviceProvider)
+    private readonly IRefreshPulseUseCase _useCase;
+    private readonly ILogger<StatusCommand> _logger;
+
+    public StatusCommand(IRefreshPulseUseCase useCase, ILogger<StatusCommand> logger)
+    {
+        _useCase = useCase;
+        _logger = logger;
+    }
+
+    public Command Build()
     {
         var command = new Command("status", "Fetch the fresh pulse and update the registry 💓");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
         command.AddArgument(handleArgument);
 
-        command.SetHandler(async (handle) =>
-        {
-            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("StatusCommand");
-            var julesClient = serviceProvider.GetRequiredService<IJulesSessionClient>();
-            var reader = serviceProvider.GetRequiredService<ISessionReader>();
-            var writer = serviceProvider.GetRequiredService<ISessionWriter>();
-
-            try
-            {
-                var sessionId = new SessionId(handle);
-                var session = await reader.GetByIdAsync(sessionId).ConfigureAwait(false);
-
-                if (session == null)
-                {
-                    Console.WriteLine($"🔍 Handle {handle} not found in the registry, babe. 🥀");
-                    return;
-                }
-
-                var pulse = await julesClient.GetSessionPulseAsync(sessionId).ConfigureAwait(false);
-                
-                // Update session pulse
-                session.UpdatePulse(pulse);
-                
-                await writer.SaveAsync(session).ConfigureAwait(false);
-
-                Console.WriteLine($"💓 Status for {handle}: {session.Pulse.Status}");
-                Console.WriteLine($"📝 {session.Pulse.Detail}");
-            }
-            #pragma warning disable CA1031
-            catch (Exception ex)
-            {
-                #pragma warning disable CA1848
-                logger.LogError(ex, "❌ Failed to fetch status.");
-                #pragma warning restore CA1848
-                Console.WriteLine($"💔 Something went wrong: {ex.Message}");
-            }
-            #pragma warning restore CA1031
-        }, handleArgument);
+        command.SetHandler(async (handle) => await ExecuteAsync(handle), handleArgument);
 
         return command;
+    }
+
+    private async Task ExecuteAsync(string handle)
+    {
+        try
+        {
+            var sessionId = new SessionId(handle);
+            var request = new RefreshPulseRequest(sessionId);
+            var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
+
+            if (response.IsCached)
+            {
+                Console.WriteLine(response.Warning);
+            }
+
+            Console.WriteLine($"💓 Status for {handle}: {response.Pulse.Status}");
+            Console.WriteLine($"📝 {response.Pulse.Detail}");
+        }
+        #pragma warning disable CA1031
+        catch (Exception ex)
+        {
+            #pragma warning disable CA1848
+            _logger.LogError(ex, "❌ Failed to fetch status.");
+            #pragma warning restore CA1848
+            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+        }
+        #pragma warning restore CA1031
     }
 }

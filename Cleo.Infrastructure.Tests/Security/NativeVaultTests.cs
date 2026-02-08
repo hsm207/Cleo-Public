@@ -1,11 +1,12 @@
 using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Security;
 using Xunit;
 
 namespace Cleo.Infrastructure.Tests.Security;
 
-public class NativeVaultTests : IDisposable
+public sealed class NativeVaultTests : IDisposable
 {
     private readonly string _tempFile = Path.GetTempFileName();
     private readonly IEncryptionStrategy _strategy = new AesGcmEncryptionStrategy();
@@ -101,5 +102,23 @@ public class NativeVaultTests : IDisposable
         {
             if (Directory.Exists(baseDir)) Directory.Delete(baseDir, true);
         }
+    }
+
+    [Fact(DisplayName = "The vault should correctly implement ICredentialStore port.")]
+    public async Task ShouldImplementPort()
+    {
+        // Arrange
+        var store = (ICredentialStore)new NativeVault(_tempFile, _strategy);
+        var identity = new Identity(new ApiKey("port-test"));
+
+        // Act
+        await store.SaveIdentityAsync(identity, TestContext.Current.CancellationToken);
+        var result = await store.GetIdentityAsync(TestContext.Current.CancellationToken);
+        await store.ClearIdentityAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("port-test", (string)result.ApiKey);
+        Assert.False(File.Exists(_tempFile));
     }
 }

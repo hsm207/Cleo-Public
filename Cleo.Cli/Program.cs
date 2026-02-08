@@ -1,6 +1,15 @@
 using System.CommandLine;
+using Cleo.Cli.Commands;
 using Cleo.Core.UseCases;
+using Cleo.Core.UseCases.AbandonSession;
+using Cleo.Core.UseCases.ApprovePlan;
+using Cleo.Core.UseCases.AuthenticateUser;
+using Cleo.Core.UseCases.BrowseHistory;
+using Cleo.Core.UseCases.BrowseSources;
+using Cleo.Core.UseCases.Correspond;
 using Cleo.Core.UseCases.InitiateSession;
+using Cleo.Core.UseCases.ListMissions;
+using Cleo.Core.UseCases.RefreshPulse;
 using Cleo.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -39,6 +48,25 @@ internal static class Program
 
         // Use Cases 🧠
         services.AddScoped<IUseCase<InitiateSessionRequest, InitiateSessionResponse>, InitiateSessionUseCase>();
+        services.AddScoped<IRefreshPulseUseCase, RefreshPulseUseCase>();
+        services.AddScoped<IBrowseHistoryUseCase, BrowseHistoryUseCase>();
+        services.AddScoped<IApprovePlanUseCase, ApprovePlanUseCase>();
+        services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
+        services.AddScoped<IListMissionsUseCase, ListMissionsUseCase>();
+        services.AddScoped<IBrowseSourcesUseCase, BrowseSourcesUseCase>();
+        services.AddScoped<IAbandonSessionUseCase, AbandonSessionUseCase>();
+        services.AddScoped<ICorrespondUseCase, CorrespondUseCase>();
+
+        // CLI Commands (View Layer) 🖥️
+        services.AddTransient<AuthCommand>();
+        services.AddTransient<SourcesCommand>();
+        services.AddTransient<NewCommand>();
+        services.AddTransient<ListCommand>();
+        services.AddTransient<StatusCommand>();
+        services.AddTransient<DeleteCommand>();
+        services.AddTransient<ActivitiesCommand>();
+        services.AddTransient<ApproveCommand>();
+        services.AddTransient<TalkCommand>();
     }
 
     private static RootCommand CreateRootCommand(IServiceProvider serviceProvider)
@@ -48,16 +76,16 @@ internal static class Program
             Name = "cleo"
         };
 
-        // Add subcommands ⌨️
-        rootCommand.AddCommand(Commands.AuthCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.SourcesCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.NewCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.ListCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.StatusCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.DeleteCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.ActivitiesCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.ApproveCommand.Create(serviceProvider));
-        rootCommand.AddCommand(Commands.TalkCommand.Create(serviceProvider));
+        // Add subcommands resolved via DI 🪄✨
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<AuthCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<SourcesCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<NewCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<ListCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<StatusCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<DeleteCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<ActivitiesCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<ApproveCommand>().Build());
+        rootCommand.AddCommand(serviceProvider.GetRequiredService<TalkCommand>().Build());
         
         rootCommand.SetHandler(() => 
         {
