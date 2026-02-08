@@ -73,13 +73,22 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        // Jules Clients
-        services.AddHttpClient<IJulesSessionClient, RestJulesSessionClient>(ConfigureJulesClient)
+        // Jules Clients (Specialized & SRP-Compliant)
+        services.AddHttpClient<IJulesSessionClient, RestSessionLifecycleClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
             .AddHttpMessageHandler<JulesLoggingHandler>();
 
-        services.AddScoped<ISessionMessenger>(sp => (RestJulesSessionClient)sp.GetRequiredService<IJulesSessionClient>());
-        services.AddScoped<IPulseMonitor>(sp => (RestJulesSessionClient)sp.GetRequiredService<IJulesSessionClient>());
+        services.AddHttpClient<ISessionMessenger, RestSessionMessenger>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddHttpClient<IPulseMonitor, RestPulseMonitor>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
+
+        services.AddHttpClient<ISessionController, RestSessionController>(ConfigureJulesClient)
+            .AddHttpMessageHandler<JulesAuthHandler>()
+            .AddHttpMessageHandler<JulesLoggingHandler>();
 
         services.AddHttpClient<IJulesSourceClient, RestJulesSourceClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
