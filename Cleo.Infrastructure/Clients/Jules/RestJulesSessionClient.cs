@@ -46,7 +46,7 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
                     startingBranch = source.StartingBranch
                 }
             },
-            requirePlanApproval = options.Mode != AutomationMode.AutoCreatePullRequest,
+            requirePlanApproval = options.RequirePlanApproval,
             automationMode = options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "NONE"
         };
 
