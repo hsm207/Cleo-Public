@@ -4,7 +4,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Requests;
 using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
@@ -50,7 +50,7 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
             var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
             return JulesMapper.Map(dto!, task, _statusMapper);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)

@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
