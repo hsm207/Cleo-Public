@@ -7,12 +7,18 @@ namespace Cleo.Core.UseCases.RefreshPulse;
 public class RefreshPulseUseCase : IRefreshPulseUseCase
 {
     private readonly IPulseMonitor _pulseMonitor;
+    private readonly IJulesActivityClient _activityClient;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
 
-    public RefreshPulseUseCase(IPulseMonitor pulseMonitor, ISessionReader sessionReader, ISessionWriter sessionWriter)
+    public RefreshPulseUseCase(
+        IPulseMonitor pulseMonitor, 
+        IJulesActivityClient activityClient,
+        ISessionReader sessionReader, 
+        ISessionWriter sessionWriter)
     {
         _pulseMonitor = pulseMonitor;
+        _activityClient = activityClient;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
     }
@@ -29,11 +35,28 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
         try
         {
-            // 1. Happy Path: Get the latest Pulse from the monitor
-            var pulse = await _pulseMonitor.GetSessionPulseAsync(request.Id, cancellationToken).ConfigureAwait(false);
+            // 1. Happy Path: Get the latest Pulse and History from the remote system 💓📜
+            var pulseTask = _pulseMonitor.GetSessionPulseAsync(request.Id, cancellationToken);
+            var activitiesTask = _activityClient.GetActivitiesAsync(request.Id, cancellationToken);
+
+            await Task.WhenAll(pulseTask, activitiesTask).ConfigureAwait(false);
+
+            var pulse = await pulseTask.ConfigureAwait(false);
+            var activities = await activitiesTask.ConfigureAwait(false);
             
-            // Update and Save 📝
+            // 2. Mirror Reality: Synchronize the local session with the remote truth 🔄💎
             session.UpdatePulse(pulse);
+            
+            foreach (var activity in activities)
+            {
+                // Simple synchronization: Add only if not already present
+                // (In a more robust system, we would check Activity IDs)
+                if (session.SessionLog.All(a => a.Id != activity.Id))
+                {
+                    session.AddActivity(activity);
+                }
+            }
+
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
             
             return new RefreshPulseResponse(request.Id, pulse);
