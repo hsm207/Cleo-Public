@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
+using System.Net.Sockets;
 using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos;
@@ -47,21 +49,35 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
             automationMode = options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "NONE"
         };
 
-        var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
 
-        var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
-        return JulesMapper.Map(dto!, task, _statusMapper);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return JulesMapper.Map(dto!, task, _statusMapper);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to initiate session due to connectivity issues.", ex);
+        }
     }
 
     public async Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>($"v1alpha/{id.Value}", cancellationToken).ConfigureAwait(false);
-        if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
+        try
+        {
+            var dto = await _httpClient.GetFromJsonAsync<JulesSessionDto>($"v1alpha/{id.Value}", cancellationToken).ConfigureAwait(false);
+            if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
-        return new SessionPulse(_statusMapper.Map(dto.State), $"Session is {dto.State}");
+            return new SessionPulse(_statusMapper.Map(dto.State), $"Session is {dto.State}");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to retrieve session pulse due to connectivity issues.", ex);
+        }
     }
 
     public async Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)
@@ -70,8 +86,16 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
 
         var request = new { messageText = feedback };
-        var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to send message due to connectivity issues.", ex);
+        }
     }
 
     async Task<SessionPulse> IPulseMonitor.GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken)
@@ -88,7 +112,14 @@ public sealed class RestJulesSessionClient : IJulesSessionClient, ISessionMessen
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var response = await _httpClient.PostAsync(new Uri($"v1alpha/{id.Value}:approvePlan", UriKind.Relative), null, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await _httpClient.PostAsync(new Uri($"v1alpha/{id.Value}:approvePlan", UriKind.Relative), null, cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to approve plan due to connectivity issues.", ex);
+        }
     }
 }
