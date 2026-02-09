@@ -37,6 +37,11 @@ public abstract record SessionActivity(
     /// Returns technical or metadata details about the activity.
     /// </summary>
     public virtual string GetMetaDetail() => $"Originator: {Originator} | Evidence: {Evidence.Count}";
+
+    /// <summary>
+    /// Indicates whether this activity represents a major state transition or communication event.
+    /// </summary>
+    public virtual bool IsSignificant => true;
 }
 
 /// <summary>
@@ -104,6 +109,8 @@ public record ProgressActivity(
 
         return string.Empty;
     }
+
+    public override bool IsSignificant => false;
 }
 
 /// <summary>
