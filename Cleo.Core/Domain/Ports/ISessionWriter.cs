@@ -4,17 +4,18 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// A portal for persisting and removing active Jules sessions.
+/// A symmetric, action-oriented port for persisting and forgetting active Jules sessions.
+/// Acts as the primary mechanism for managing Cleo's Workbench Memory. 🧠✨
 /// </summary>
 public interface ISessionWriter
 {
     /// <summary>
-    /// Saves a session to local storage.
+    /// Records a session in the local registry, ensuring it is remembered across sessions.
     /// </summary>
-    Task SaveAsync(Session session, CancellationToken cancellationToken = default);
+    Task RememberAsync(Session session, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Removes a session from local storage.
+    /// Removes a session from the local registry (Workbench Memory Abandonment).
     /// </summary>
-    Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default);
+    Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default);
 }

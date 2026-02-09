@@ -18,7 +18,7 @@ public record InitiateSessionResponse(
 );
 
 /// <summary>
-/// The orchestrator for launching a new engineering mission.
+/// The orchestrator for launching a new engineering session.
 /// Implements session initiation policies.
 /// </summary>
 public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateSessionResponse>
@@ -36,13 +36,14 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        // 1. Apply Business Policy: Automated Pull Request
+        // 1. Apply Business Policy: Every session must result in a PR and require explicit developer approval.
         var mode = AutomationMode.AutoCreatePullRequest;
+        const bool RequireApproval = true;
 
         // 2. Apply Business Policy: Title Generation / Fallback
         var title = request.UserProvidedTitle ?? TruncateTaskToTitle(request.TaskDescription);
 
-        var options = new SessionCreationOptions(mode, title);
+        var options = new SessionCreationOptions(mode, title, RequireApproval);
 
         // 3. Coordinate with Infrastructure via Ports
         var taskDescription = new TaskDescription(request.TaskDescription);
@@ -55,7 +56,7 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
             cancellationToken).ConfigureAwait(false);
 
         // 4. Persistence (Task Registry)
-        await _sessionWriter.SaveAsync(session, cancellationToken).ConfigureAwait(false);
+        await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
 
         // 5. Return the Response Model
         return new InitiateSessionResponse(

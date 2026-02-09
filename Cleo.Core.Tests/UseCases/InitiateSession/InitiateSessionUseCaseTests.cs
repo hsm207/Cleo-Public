@@ -82,13 +82,13 @@ public class InitiateSessionUseCaseTests
     {
         public Dictionary<SessionId, Session> SavedSessions { get; } = new();
 
-        public Task SaveAsync(Session session, CancellationToken cancellationToken = default)
+        public Task RememberAsync(Session session, CancellationToken cancellationToken = default)
         {
             SavedSessions[session.Id] = session;
             return Task.CompletedTask;
         }
 
-        public Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)
+        public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             SavedSessions.Remove(id);
             return Task.CompletedTask;

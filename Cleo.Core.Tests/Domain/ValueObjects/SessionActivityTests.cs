@@ -7,56 +7,47 @@ public class SessionActivityTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
-    [Fact(DisplayName = "MessageActivity should store text and originator.")]
-    public void MessageActivityTest()
+    [Fact(DisplayName = "ProgressActivity should show Detail when present.")]
+    public void ProgressActivityShouldShowDetail()
     {
-        var activity = new MessageActivity("id1", Now, ActivityOriginator.User, "Hello!");
-        Assert.Equal("id1", activity.Id);
-        Assert.Equal(Now, activity.Timestamp);
-        Assert.Equal(ActivityOriginator.User, activity.Originator);
-        Assert.Equal("Hello!", activity.Text);
+        var activity = new ProgressActivity("id", Now, "Working hard!");
+        Assert.Equal("Working hard!", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "PlanningActivity should store plan steps.")]
-    public void PlanningActivityTest()
+    [Fact(DisplayName = "ProgressActivity should summarize single artifact when Detail is empty.")]
+    public void ProgressActivityShouldSummarizeSingleArtifact()
     {
-        var steps = new[] { new PlanStep(0, "T1", "D1") };
-        var activity = new PlanningActivity("id2", Now, "plan-1", steps);
-        Assert.Equal(ActivityOriginator.Agent, activity.Originator);
-        Assert.Single(activity.Steps);
-        Assert.Equal("plan-1", activity.PlanId);
-        Assert.Equal("T1", activity.Steps.First().Title);
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var activity = new ProgressActivity("id", Now, "", new[] { changeSet });
+
+        Assert.Equal(changeSet.GetSummary(), activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "ExecutionActivity should store command details.")]
-    public void ExecutionActivityTest()
+    [Fact(DisplayName = "ProgressActivity should summarize multiple artifacts when Detail is empty.")]
+    public void ProgressActivityShouldSummarizeMultipleArtifacts()
     {
-        var activity = new ExecutionActivity("id3", Now, "ls", "out", 0);
-        Assert.Equal("ls", activity.Command);
-        Assert.Equal("out", activity.Output);
-        Assert.Equal(0, activity.ExitCode);
+        var output = new BashOutput("echo", "hi", 0);
+        var snapshot = new VisualSnapshot("img/png", "data");
+        var activity = new ProgressActivity("id", Now, "", new Artifact[] { output, snapshot });
+
+        Assert.Equal($"{output.GetSummary()} | {snapshot.GetSummary()}", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "ProgressActivity should store detail heartbeat.")]
-    public void ProgressActivityTest()
+    [Fact(DisplayName = "CompletionActivity should show completion message when no artifacts.")]
+    public void CompletionActivityShouldShowDefault()
     {
-        var activity = new ProgressActivity("id4", Now, "Still working...");
-        Assert.Equal("Still working...", activity.Detail);
+        var activity = new CompletionActivity("id", Now);
+        Assert.Equal("Session Completed Successfully", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "ResultActivity should store the solution patch.")]
-    public void ResultActivityTest()
+    [Fact(DisplayName = "CompletionActivity should append artifacts to completion message.")]
+    public void CompletionActivityShouldAppendArtifacts()
     {
-        var patch = new SolutionPatch("diff", "base");
-        var activity = new ResultActivity("id5", Now, patch);
-        Assert.Equal(patch, activity.Patch);
-    }
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var activity = new CompletionActivity("id", Now, new[] { changeSet });
 
-    [Fact(DisplayName = "FailureActivity should store the reason.")]
-    public void FailureActivityTest()
-    {
-        var activity = new FailureActivity("id6", Now, "Quota exceeded");
-        Assert.Equal("Quota exceeded", activity.Reason);
-        Assert.Equal(ActivityOriginator.System, activity.Originator);
+        Assert.Equal($"Session Completed Successfully | {changeSet.GetSummary()}", activity.GetContentSummary());
     }
 }

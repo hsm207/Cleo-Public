@@ -3,7 +3,7 @@ using Cleo.Core.Domain.ValueObjects;
 namespace Cleo.Core.Domain.Ports;
 
 /// <summary>
-/// The guardian of the Session Log. Responsible for retrieving the chronological history of a mission.
+/// The guardian of the Session Log. Responsible for retrieving the chronological history of a session.
 /// </summary>
 public interface ISessionArchivist
 {

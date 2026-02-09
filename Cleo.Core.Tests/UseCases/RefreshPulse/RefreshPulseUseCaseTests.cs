@@ -11,22 +11,26 @@ namespace Cleo.Core.Tests.UseCases.RefreshPulse;
 public sealed class RefreshPulseUseCaseTests
 {
     private readonly FakePulseMonitor _pulseMonitor = new();
+    private readonly FakeActivityClient _activityClient = new();
     private readonly FakeSessionReader _sessionReader = new();
     private readonly FakeSessionWriter _sessionWriter = new();
     private readonly RefreshPulseUseCase _sut;
 
     public RefreshPulseUseCaseTests()
     {
-        _sut = new RefreshPulseUseCase(_pulseMonitor, _sessionReader, _sessionWriter);
+        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter);
     }
 
-    [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and update the Task Registry.")]
+    [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
     public async Task ShouldRetrieveLatestPulse()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
-        var session = new SessionBuilder().WithId("sessions/active-mission").Build();
+        var sessionId = new SessionId("sessions/active-session");
+        var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
+
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Remotely synchronized activity");
+        _activityClient.Activities.Add(activity);
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -38,15 +42,18 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
         Assert.False(result.IsCached);
         Assert.True(_sessionWriter.Saved);
+        
+        // Verify history synchronization 🔄📜
+        Assert.Contains(session.SessionLog, a => a.Id == "act-1");
     }
 
     [Fact(DisplayName = "Given the remote collaborator is unreachable, when the Use Case refreshes the Pulse, then it should retrieve the cached State from the local Registry and return it with a connectivity warning.")]
     public async Task ShouldFallbackToCacheOnConnectivityFailure()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-mission");
+        var sessionId = new SessionId("sessions/active-session");
         var cachedSession = new SessionBuilder()
-            .WithId("sessions/active-mission")
+            .WithId("sessions/active-session")
             .WithPulse(SessionStatus.InProgress, "Cached Progress")
             .Build();
             
@@ -66,16 +73,20 @@ public sealed class RefreshPulseUseCaseTests
         Assert.NotNull(result.Warning);
     }
 
-    [Fact(DisplayName = "Given a Handle that does not exist in the Task Registry, when refreshing the Pulse, then it should notify that the mission is unknown.")]
-    public async Task ShouldThrowWhenHandleNotFound()
+    [Fact(DisplayName = "Given a Handle not in the Registry, when refreshing the Pulse, then it should synchronize and heal the Registry.")]
+    public async Task ShouldSynchronizeRecoveredSession()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/ghost-mission");
+        var sessionId = new SessionId("sessions/lost-session");
         var request = new RefreshPulseRequest(sessionId);
 
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(request, CancellationToken.None));
-        Assert.Contains("not found", ex.Message, StringComparison.OrdinalIgnoreCase);
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(sessionId, result.Id);
+        Assert.True(_sessionWriter.Saved);
+        Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
     }
 
     private sealed class FakePulseMonitor : IPulseMonitor
@@ -86,12 +97,32 @@ public sealed class RefreshPulseUseCaseTests
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
             return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
         }
+
+        public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
+        {
+            if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
+            var session = new SessionBuilder()
+                .WithId(id.Value)
+                .WithTask((string)originalTask)
+                .WithPulse(SessionStatus.InProgress, "All good!")
+                .Build();
+            return Task.FromResult(session);
+        }
+    }
+
+    private sealed class FakeActivityClient : IJulesActivityClient
+    {
+        public List<SessionActivity> Activities { get; } = new();
+        public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<SessionActivity>>(Activities.AsReadOnly());
+        }
     }
 
     private sealed class FakeSessionReader : ISessionReader
     {
         public Dictionary<SessionId, Session> Sessions { get; } = new();
-        public Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
+        public Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Sessions.GetValueOrDefault(id));
         }
@@ -104,11 +135,11 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeSessionWriter : ISessionWriter
     {
         public bool Saved { get; private set; }
-        public Task SaveAsync(Session session, CancellationToken cancellationToken = default)
+        public Task RememberAsync(Session session, CancellationToken cancellationToken = default)
         {
             Saved = true;
             return Task.CompletedTask;
         }
-        public Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

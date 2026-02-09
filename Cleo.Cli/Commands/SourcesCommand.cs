@@ -1,9 +1,11 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using Cleo.Core.UseCases.BrowseSources;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
+[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class SourcesCommand
 {
     private readonly IBrowseSourcesUseCase _useCase;
@@ -17,7 +19,7 @@ internal sealed class SourcesCommand
 
     public Command Build()
     {
-        var command = new Command("sources", "List available sources in Jules 🌍");
+        var command = new Command("sources", "List available GitHub repositories for collaboration 🛰️");
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -32,24 +34,22 @@ internal sealed class SourcesCommand
 
             if (response.Sources.Count == 0)
             {
-                Console.WriteLine("📭 No sources found. Have you connected your GitHub account to Jules? 💖");
+                Console.WriteLine("📭 No sources found. Ensure your GitHub account is connected to Jules! 💖");
                 return;
             }
 
-            Console.WriteLine("📡 Available Sources:");
+            Console.WriteLine("🛰️ Available Sources:");
             foreach (var source in response.Sources)
             {
-                Console.WriteLine($"- {source.Name} ({source.Owner}/{source.Repo})");
+                Console.WriteLine($"- {source.Name}");
             }
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
-            _logger.LogError(ex, "❌ Failed to list sources.");
+            _logger.LogError(ex, "❌ Failed to fetch sources.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

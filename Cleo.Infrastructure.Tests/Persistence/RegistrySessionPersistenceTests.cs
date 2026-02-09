@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
+using Cleo.Infrastructure.Persistence.Mappers;
 using Moq;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
@@ -12,14 +13,33 @@ public class RegistrySessionPersistenceTests : IDisposable
     private readonly Mock<IRegistryPathProvider> _pathProviderMock = new();
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
+    private readonly ActivityMapperFactory _activityFactory;
 
     public RegistrySessionPersistenceTests()
     {
         _tempFile = Path.Combine(Path.GetTempPath(), $"Cleo_Test_Registry_{Guid.NewGuid():N}.json");
         _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_tempFile);
 
-        // REAL VIBES: Use real logic and real FileSystem
-        var mapper = new RegistryTaskMapper();
+        // Register Artifact mapping 🔌📎
+        var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
+        {
+            new BashOutputMapper(),
+            new ChangeSetMapper(),
+            new VisualSnapshotMapper()
+        });
+
+        // Register Activity mapping 🔌🏺
+        _activityFactory = new ActivityMapperFactory(new IActivityPersistenceMapper[]
+        {
+            new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory)
+        });
+
+        var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
         var fileSystem = new PhysicalFileSystem();
 
@@ -32,22 +52,28 @@ public class RegistrySessionPersistenceTests : IDisposable
     {
         // Arrange
         var id = new SessionId("sessions/real-vibes-1");
-        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning));
+        var dashboardUri = new Uri("https://jules.ai/sessions/1");
+        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), dashboardUri);
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Initial thought");
+        session.AddActivity(activity);
 
         // Act
-        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
-        Assert.Equal(session.Pulse.Status, result.Pulse.Status);
+        Assert.Equal(dashboardUri, result.DashboardUri);
+        Assert.Equal(SessionStatus.StartingUp, result.Pulse.Status); // Status is ephemeral! 💓💨
+        Assert.Contains(result.SessionLog, a => a.Id == "act-1");
         
         // Verify file actually exists and has content
         Assert.True(File.Exists(_tempFile));
         var json = File.ReadAllText(_tempFile);
         Assert.Contains("Real world testing", json);
+        Assert.Contains("Initial thought", json);
     }
 
     [Fact(DisplayName = "RegistrySessionWriter should handle updates to existing sessions.")]
@@ -59,12 +85,12 @@ public class RegistrySessionPersistenceTests : IDisposable
         var updated = new Session(id, new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed));
 
         // Act
-        await _writer.SaveAsync(initial, TestContext.Current.CancellationToken);
-        await _writer.SaveAsync(updated, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(initial, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(updated, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
+        Assert.Equal(SessionStatus.StartingUp, result!.Pulse.Status); // Ephemeral!
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 
@@ -76,9 +102,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         var session = new Session(id, new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
 
         // Act
-        await _writer.SaveAsync(session, TestContext.Current.CancellationToken);
-        await _writer.DeleteAsync(id, TestContext.Current.CancellationToken);
-        var result = await _reader.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        await _writer.ForgetAsync(id, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -113,13 +139,13 @@ public class RegistrySessionPersistenceTests : IDisposable
         var mockPath = new Mock<IRegistryPathProvider>();
         mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
 
-        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(), new JsonRegistrySerializer(), new PhysicalFileSystem());
+        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
         var session = new Session(new SessionId("s"), new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
 
         try
         {
             // Act
-            await writer.SaveAsync(session, TestContext.Current.CancellationToken);
+            await writer.RememberAsync(session, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.True(Directory.Exists(nestedDir));
@@ -134,7 +160,7 @@ public class RegistrySessionPersistenceTests : IDisposable
     [Fact(DisplayName = "RegistrySessionWriter should have a working DI-compatible constructor.")]
     public void DIConstructor_ShouldWork()
     {
-        var mapper = new RegistryTaskMapper();
+        var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
         var fileSystem = new PhysicalFileSystem();
         var pathProvider = new DefaultRegistryPathProvider();

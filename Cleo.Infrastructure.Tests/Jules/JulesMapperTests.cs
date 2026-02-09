@@ -1,6 +1,6 @@
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using FluentAssertions;
 using Xunit;
@@ -18,7 +18,7 @@ public sealed class JulesMapperTests
         var dto = CreateBaseDto() with {
             PlanGenerated = new PlanGeneratedDto(new PlanDto("plan-1", new[] {
                 new PlanStepDto("s1", "Title", "Desc", 0)
-            }))
+            }, Now))
         };
 
         sut.CanMap(dto).Should().BeTrue();
@@ -33,12 +33,13 @@ public sealed class JulesMapperTests
     public void Map_ProgressUpdated_ShouldReturnProgressActivity()
     {
         var sut = new ProgressActivityMapper();
-        var dto = CreateBaseDto() with { ProgressUpdated = new object() };
+        var dto = CreateBaseDto() with { ProgressUpdated = new ProgressUpdatedDto("Cooking", "Still at it") };
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
 
         result.Should().BeOfType<ProgressActivity>();
+        ((ProgressActivity)result).Detail.Should().Be("Still at it");
     }
 
     [Fact(DisplayName = "FailureActivityMapper should map SessionFailed activity correctly.")]
@@ -54,52 +55,59 @@ public sealed class JulesMapperTests
         ((FailureActivity)result).Reason.Should().Be("Quota Exceeded");
     }
 
-    [Fact(DisplayName = "MessageActivityMapper should map PlanApproved activity to a MessageActivity.")]
-    public void Map_PlanApproved_ShouldReturnMessageActivity()
+    [Fact(DisplayName = "CompletionActivityMapper should map SessionCompleted activity correctly.")]
+    public void Map_SessionCompleted_ShouldReturnCompletionActivity()
     {
-        var sut = new MessageActivityMapper();
+        var sut = new CompletionActivityMapper();
+        var dto = CreateBaseDto() with { SessionCompleted = new SessionCompletedDto() };
+
+        sut.CanMap(dto).Should().BeTrue();
+        var result = sut.Map(dto);
+
+        result.Should().BeOfType<CompletionActivity>();
+    }
+
+    [Fact(DisplayName = "ApprovalActivityMapper should map PlanApproved activity correctly. ✅")]
+    public void Map_PlanApproved_ShouldReturnApprovalActivity()
+    {
+        var sut = new ApprovalActivityMapper();
         var dto = CreateBaseDto() with { PlanApproved = new PlanApprovedDto("plan-cake") };
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
 
-        result.Should().BeOfType<MessageActivity>();
-        ((MessageActivity)result).Text.Should().Contain("plan-cake");
+        result.Should().BeOfType<ApprovalActivity>();
+        ((ApprovalActivity)result).PlanId.Should().Be("plan-cake");
     }
 
-    [Fact(DisplayName = "MessageActivityMapper should handle different originator strings.")]
-    public void Map_ShouldHandleOriginators()
+    [Fact(DisplayName = "MessageActivityMapper should handle userMessaged and agentMessaged fields.")]
+    public void Map_ShouldHandleNewMessageFields()
     {
         var sut = new MessageActivityMapper();
-        var userDto = CreateBaseDto() with { Originator = "user", MessageText = "Hi" };
-        var agentDto = CreateBaseDto() with { Originator = "agent", MessageText = "Hi" };
-        var systemDto = CreateBaseDto() with { Originator = "something-else", MessageText = "Hi" };
+        var userDto = CreateBaseDto() with { Originator = "user", UserMessaged = new UserMessagedDto("User Hi") };
+        var agentDto = CreateBaseDto() with { Originator = "agent", AgentMessaged = new AgentMessagedDto("Agent Yo") };
 
-        sut.Map(userDto).Originator.Should().Be(ActivityOriginator.User);
-        sut.Map(agentDto).Originator.Should().Be(ActivityOriginator.Agent);
-        sut.Map(systemDto).Originator.Should().Be(ActivityOriginator.System);
+        ((MessageActivity)sut.Map(userDto)).Text.Should().Be("User Hi");
+        ((MessageActivity)sut.Map(agentDto)).Text.Should().Be("Agent Yo");
     }
 
-    [Fact(DisplayName = "ResultActivityMapper should map Result activity correctly.")]
-    public void Map_Result_ShouldReturnResultActivity()
+    [Fact(DisplayName = "ArtifactMappingHelper should attach evidence to any activity type! 📎💎")]
+    public void Map_ShouldAttachArtifactsToActivity()
     {
-        var sut = new ResultActivityMapper();
-        var dto = CreateBaseDto() with {
-            Artifacts = new[] {
-                new ArtifactDto(new ChangeSetDto(new GitPatchDto("diff", "base")))
-            }
+        var sut = new ProgressActivityMapper();
+        var artifacts = new[] {
+            new ArtifactDto(null, null, new BashOutputDto("ls", "out", 0)),
+            new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("diff", "base", null)), null, null)
+        };
+        var dto = CreateBaseDto() with { 
+            ProgressUpdated = new ProgressUpdatedDto("T", "D"),
+            Artifacts = artifacts
         };
 
-        sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
-
-        result.Should().BeOfType<ResultActivity>();
-        var act = (ResultActivity)result;
-        act.Patch.UniDiff.Should().Be("diff");
-        
-        // Exercise the 'false' branch of ResultActivityMapper.CanMap
-        var emptyArtifactDto = CreateBaseDto() with { Artifacts = new ArtifactDto[] { new(null) } };
-        sut.CanMap(emptyArtifactDto).Should().BeFalse();
+        result.Evidence.Should().HaveCount(2);
+        result.Evidence.Should().Contain(a => a is BashOutput);
+        result.Evidence.Should().Contain(a => a is ChangeSet);
     }
 
     [Fact(DisplayName = "JulesMapper.Map should throw ArgumentNullException if DTO is null.")]
@@ -111,5 +119,5 @@ public sealed class JulesMapperTests
     }
 
     private static JulesActivityDto CreateBaseDto() => new(
-        "name", "id", Now, "agent", null, null, null, null, null, null);
+        "name", "id", "desc", Now, "agent", null, null, null, null, null, null, null, null);
 }
