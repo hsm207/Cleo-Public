@@ -30,10 +30,15 @@ public class ChangeSetTests
         Assert.Throws<ArgumentNullException>(() => new ChangeSet("source", null!));
     }
 
-    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary.")]
+    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary with file details.")]
     public void ShouldProvideSummary()
     {
-        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", Patch);
-        Assert.Equal("📦 ChangeSet: Produced patch for 'sources/github/hsm207/Cleo'", changeSet.GetSummary());
+        var diff = @"--- a/file1.cs
++++ b/file1.cs
+--- a/README.md
++++ b/README.md
+";
+        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", new GitPatch(diff, "sha"));
+        Assert.Equal("📦 ChangeSet: Updated [file1.cs, README.md] in 'sources/github/hsm207/Cleo'", changeSet.GetSummary());
     }
 }

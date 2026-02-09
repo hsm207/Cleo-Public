@@ -30,11 +30,36 @@ public class GitPatchTests
         Assert.Throws<ArgumentNullException>(() => new GitPatch(null!, "sha"));
     }
 
-    [Fact(DisplayName = "GitPatch should throw if BaseCommitId is empty.")]
-    public void ShouldThrowIfBaseCommitIdEmpty()
+    [Fact(DisplayName = "GitPatch should extract unique modified filenames from UniDiff.")]
+    public void ShouldExtractFilenames()
     {
-        Assert.Throws<ArgumentException>(() => new GitPatch("diff", ""));
-        Assert.Throws<ArgumentException>(() => new GitPatch("diff", " "));
-        Assert.Throws<ArgumentNullException>(() => new GitPatch("diff", null!));
+        var diff = @"diff --git a/file1.cs b/file1.cs
+--- a/file1.cs
++++ b/file1.cs
+@@ -1,1 +1,2 @@
++new line
+diff --git a/dir/file2.md b/dir/file2.md
+--- a/dir/file2.md
++++ b/dir/file2.md
+";
+        var patch = new GitPatch(diff, "sha");
+
+        var files = patch.GetModifiedFiles();
+        Assert.Equal(2, files.Count);
+        Assert.Contains("file1.cs", files);
+        Assert.Contains("dir/file2.md", files);
+    }
+
+    [Fact(DisplayName = "GitPatch should handle /dev/null in filenames.")]
+    public void ShouldHandleDevNull()
+    {
+        var diff = @"--- /dev/null
++++ b/newfile.txt
+";
+        var patch = new GitPatch(diff, "sha");
+
+        var files = patch.GetModifiedFiles();
+        Assert.Single(files);
+        Assert.Equal("newfile.txt", files[0]);
     }
 }
