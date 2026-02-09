@@ -20,25 +20,25 @@ internal sealed class ForgetCommand
 
     public Command Build()
     {
-        var command = new Command("forget", "Remove a session from the local registry 🧹");
+        var command = new Command("forget", "Forget a session from the local Session Registry 🧹");
 
-        var handleArgument = new Argument<string>("handle", "The session handle (ID) to forget.");
-        command.AddArgument(handleArgument);
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        command.AddArgument(sessionIdArgument);
 
-        command.SetHandler(async (handle) => await ExecuteAsync(handle), handleArgument);
+        command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string handle)
+    private async Task ExecuteAsync(string sessionId)
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            var request = new ForgetSessionRequest(sessionId);
+            var id = new SessionId(sessionId);
+            var request = new ForgetSessionRequest(id);
             await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            Console.WriteLine($"🧹 Session {handle} removed from registry.");
+            Console.WriteLine($"🧹 Session {sessionId} removed from registry.");
         }
         catch (Exception ex)
         {
