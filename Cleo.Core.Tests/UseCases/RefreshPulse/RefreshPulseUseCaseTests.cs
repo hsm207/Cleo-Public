@@ -73,16 +73,20 @@ public sealed class RefreshPulseUseCaseTests
         Assert.NotNull(result.Warning);
     }
 
-    [Fact(DisplayName = "Given a Handle that does not exist in the Task Registry, when refreshing the Pulse, then it should notify that the session is unknown.")]
-    public async Task ShouldThrowWhenHandleNotFound()
+    [Fact(DisplayName = "Given a Handle not in the Registry, when refreshing the Pulse, then it should synchronize and heal the Registry.")]
+    public async Task ShouldSynchronizeRecoveredSession()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/ghost-session");
+        var sessionId = new SessionId("sessions/lost-session");
         var request = new RefreshPulseRequest(sessionId);
 
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(request, CancellationToken.None));
-        Assert.Contains("not found", ex.Message, StringComparison.OrdinalIgnoreCase);
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(sessionId, result.Id);
+        Assert.True(_sessionWriter.Saved);
+        Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
     }
 
     private sealed class FakePulseMonitor : IPulseMonitor
