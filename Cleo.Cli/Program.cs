@@ -73,9 +73,9 @@ internal static class Program
         services.AddTransient<ConfigCommand>();
     }
 
-    private static RootCommand BuildRootCommand(IServiceProvider sp)
+    internal static RootCommand BuildRootCommand(IServiceProvider sp)
     {
-        var rootCommand = new RootCommand("🏛️ Cleo: The God-Tier Engineering Assistant")
+        var rootCommand = new RootCommand("Cleo is a high-fidelity engineering orchestrator organized into functional domains. To operate autonomously, explore the hierarchical structure by running 'cleo <command> --help' for each group (session, log, plan, config). Each domain manages a specific phase of the collaboration session lifecycle.")
         {
             sp.GetRequiredService<SessionCommand>().Build(),
             sp.GetRequiredService<LogCommand>().Build(),
