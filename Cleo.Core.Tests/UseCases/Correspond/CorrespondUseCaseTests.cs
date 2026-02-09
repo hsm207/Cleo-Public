@@ -34,7 +34,7 @@ public sealed class CorrespondUseCaseTests
         Assert.Equal("Hello", _messenger.LastMessage);
     }
 
-    [Fact(DisplayName = "Given a Handle that does not exist, when sending a message, then it should notify that the mission is unknown.")]
+    [Fact(DisplayName = "Given a Handle that does not exist, when sending a message, then it should notify that the session is unknown.")]
     public async Task ShouldThrowWhenHandleNotFound()
     {
         // Arrange
@@ -58,7 +58,7 @@ public sealed class CorrespondUseCaseTests
     private sealed class FakeSessionReader : ISessionReader
     {
         public Dictionary<SessionId, Cleo.Core.Domain.Entities.Session> Sessions { get; } = new();
-        public Task<Cleo.Core.Domain.Entities.Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default) => Task.FromResult(Sessions.GetValueOrDefault(id));
+        public Task<Cleo.Core.Domain.Entities.Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default) => Task.FromResult(Sessions.GetValueOrDefault(id));
         public Task<IReadOnlyCollection<Cleo.Core.Domain.Entities.Session>> ListAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 }

@@ -27,7 +27,7 @@ public sealed class RegistrySessionReader : ISessionReader
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public async Task<Session?> GetByIdAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 
@@ -43,13 +43,13 @@ public sealed class RegistrySessionReader : ISessionReader
         return tasks.Select(_mapper.MapToDomain).ToList().AsReadOnly();
     }
 
-    private async Task<IEnumerable<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
+    private async Task<IEnumerable<RegisteredSessionDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!_fileSystem.FileExists(path)) return Array.Empty<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return Array.Empty<RegisteredSessionDto>();
 
         var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(json)) return Array.Empty<RegisteredTaskDto>();
+        if (string.IsNullOrWhiteSpace(json)) return Array.Empty<RegisteredSessionDto>();
 
         return _serializer.Deserialize(json);
     }

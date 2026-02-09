@@ -27,7 +27,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public async Task SaveAsync(Session session, CancellationToken cancellationToken = default)
+    public async Task RememberAsync(Session session, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(session);
 
@@ -47,7 +47,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
         await SaveRegistryAsync(tasks, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 
@@ -60,18 +60,18 @@ public sealed class RegistrySessionWriter : ISessionWriter
         }
     }
 
-    private async Task<List<RegisteredTaskDto>> LoadRegistryAsync(CancellationToken ct)
+    private async Task<List<RegisteredSessionDto>> LoadRegistryAsync(CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
-        if (!_fileSystem.FileExists(path)) return new List<RegisteredTaskDto>();
+        if (!_fileSystem.FileExists(path)) return new List<RegisteredSessionDto>();
 
         var json = await _fileSystem.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredTaskDto>();
+        if (string.IsNullOrWhiteSpace(json)) return new List<RegisteredSessionDto>();
 
         return _serializer.Deserialize(json).ToList();
     }
 
-    private async Task SaveRegistryAsync(IEnumerable<RegisteredTaskDto> tasks, CancellationToken ct)
+    private async Task SaveRegistryAsync(IEnumerable<RegisteredSessionDto> tasks, CancellationToken ct)
     {
         var path = _pathProvider.GetRegistryPath();
         var directory = Path.GetDirectoryName(path);

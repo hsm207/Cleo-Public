@@ -1,10 +1,12 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
+[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class StatusCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
@@ -18,40 +20,45 @@ internal sealed class StatusCommand
 
     public Command Build()
     {
-        var command = new Command("status", "Fetch the fresh pulse and update the registry 💓");
+        var command = new Command("status", "Check the Pulse and Stance of a session 💓");
 
-        var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        command.AddArgument(handleArgument);
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        command.AddArgument(sessionIdArgument);
 
-        command.SetHandler(async (handle) => await ExecuteAsync(handle), handleArgument);
+        command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string handle)
+    private async Task ExecuteAsync(string sessionId)
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            var request = new RefreshPulseRequest(sessionId);
+            var id = new SessionId(sessionId);
+            var request = new RefreshPulseRequest(id);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            if (response.IsCached)
+            if (response.Warning != null)
             {
                 Console.WriteLine(response.Warning);
             }
 
-            Console.WriteLine($"💓 Status for {handle}: {response.Pulse.Status}");
+            Console.WriteLine($"🧘‍♀️ Stance: {response.Stance}");
+            Console.WriteLine($"🏆 Delivery: {response.DeliveryStatus}");
+
+            if (response.PullRequest != null)
+            {
+                Console.WriteLine($"🎁 Pull Request: {response.PullRequest.Url}");
+            }
+
             Console.WriteLine($"📝 {response.Pulse.Detail}");
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch status.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

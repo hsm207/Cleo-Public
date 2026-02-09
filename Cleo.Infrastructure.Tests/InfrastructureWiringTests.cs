@@ -32,6 +32,9 @@ public sealed class InfrastructureWiringTests
         Assert.NotNull(provider.GetRequiredService<IJulesSessionClient>());
         Assert.NotNull(provider.GetRequiredService<IJulesSourceClient>());
         Assert.NotNull(provider.GetRequiredService<IJulesActivityClient>());
+        Assert.NotNull(provider.GetRequiredService<ISessionMessenger>());
+        Assert.NotNull(provider.GetRequiredService<IPulseMonitor>());
+        Assert.NotNull(provider.GetRequiredService<ISessionController>());
     }
 
     [Fact(DisplayName = "Specialized clients should resolve to their respective implementations.")]
@@ -47,11 +50,17 @@ public sealed class InfrastructureWiringTests
         var sessionClient = provider.GetRequiredService<IJulesSessionClient>();
         var sourceClient = provider.GetRequiredService<IJulesSourceClient>();
         var activityClient = provider.GetRequiredService<IJulesActivityClient>();
+        var messenger = provider.GetRequiredService<ISessionMessenger>();
+        var monitor = provider.GetRequiredService<IPulseMonitor>();
+        var controller = provider.GetRequiredService<ISessionController>();
 
         // Assert
-        Assert.IsType<RestJulesSessionClient>(sessionClient);
+        Assert.IsType<RestSessionLifecycleClient>(sessionClient);
         Assert.IsType<RestJulesSourceClient>(sourceClient);
         Assert.IsType<RestJulesActivityClient>(activityClient);
+        Assert.IsType<RestSessionMessenger>(messenger);
+        Assert.IsType<RestPulseMonitor>(monitor);
+        Assert.IsType<RestSessionController>(controller);
     }
 
     [Fact(DisplayName = "AddCleoInfrastructure should register DpapiEncryptionStrategy when on Windows.")]
@@ -105,16 +114,19 @@ public sealed class InfrastructureWiringTests
         // Act & Assert
         var factory = provider.GetRequiredService<IHttpClientFactory>();
         
-        var clientNames = new[] 
+        var clientPorts = new[] 
         { 
-            typeof(IJulesSessionClient).Name, 
-            typeof(IJulesSourceClient).Name, 
-            typeof(IJulesActivityClient).Name 
+            typeof(IJulesSessionClient), 
+            typeof(IJulesSourceClient), 
+            typeof(IJulesActivityClient),
+            typeof(ISessionMessenger),
+            typeof(IPulseMonitor),
+            typeof(ISessionController)
         };
 
-        foreach (var name in clientNames)
+        foreach (var port in clientPorts)
         {
-            var client = factory.CreateClient(name);
+            var client = factory.CreateClient(port.Name);
             Assert.Equal(julesBaseUrl, client.BaseAddress);
             Assert.Contains(client.DefaultRequestHeaders.Accept, h => h.MediaType == "application/json");
         }

@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
+using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 
 namespace Cleo.Infrastructure.Clients.Jules;
@@ -24,14 +25,35 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var response = await _httpClient.GetFromJsonAsync<ListActivitiesResponse>($"v1alpha/{id.Value}/activities", cancellationToken).ConfigureAwait(false);
-        if (response?.Activities == null) return Array.Empty<SessionActivity>();
+        var allActivities = new List<SessionActivity>();
+        string? nextPageToken = null;
 
-        return response.Activities
-            .Select(dto => _mappers.FirstOrDefault(m => m.CanMap(dto))?.Map(dto) 
-                ?? new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, $"Unknown activity type '{dto.Name}' received."))
-            .ToList()
-            .AsReadOnly();
+        do
+        {
+            var uri = $"v1alpha/{id.Value}/activities";
+            if (nextPageToken != null)
+            {
+                uri += $"?pageToken={nextPageToken}";
+            }
+
+            var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+
+            var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (dto?.Activities != null)
+            {
+                var mapped = dto.Activities
+                    .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
+                        ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."));
+                
+                allActivities.AddRange(mapped);
+            }
+
+            nextPageToken = dto?.NextPageToken;
+
+        } while (nextPageToken != null);
+
+        return allActivities.AsReadOnly();
     }
 
     async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)

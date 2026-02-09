@@ -1,10 +1,12 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.BrowseHistory;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
 
+[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class ActivitiesCommand
 {
     private readonly IBrowseHistoryUseCase _useCase;
@@ -18,22 +20,22 @@ internal sealed class ActivitiesCommand
 
     public Command Build()
     {
-        var command = new Command("activities", "List recent activities for a session 📜");
+        var command = new Command("activities", "View the Session Log for a session 📜");
 
-        var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        command.AddArgument(handleArgument);
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        command.AddArgument(sessionIdArgument);
 
-        command.SetHandler(async (handle) => await ExecuteAsync(handle), handleArgument);
+        command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string handle)
+    private async Task ExecuteAsync(string sessionId)
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            var request = new BrowseHistoryRequest(sessionId);
+            var id = new SessionId(sessionId);
+            var request = new BrowseHistoryRequest(id);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             if (response.History.Count == 0)
@@ -42,20 +44,18 @@ internal sealed class ActivitiesCommand
                 return;
             }
 
-            Console.WriteLine($"📜 Activities for {handle}:");
+            Console.WriteLine($"📜 Activities for {sessionId}:");
             foreach (var activity in response.History)
             {
-                Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetType().Name} ({activity.Id})");
+                Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
             }
         }
-        #pragma warning disable CA1031
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch activities.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
-        #pragma warning restore CA1031
     }
 }

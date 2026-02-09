@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Clients.Jules.Dtos;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
+using Cleo.Infrastructure.Clients.Jules.Internal;
 
 namespace Cleo.Infrastructure.Clients.Jules;
 
@@ -19,11 +20,14 @@ public sealed class RestJulesSourceClient : IJulesSourceClient, ISourceCatalog
 
     public async Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetFromJsonAsync<ListSourcesResponse>("v1alpha/sources", cancellationToken).ConfigureAwait(false);
-        if (response?.Sources == null) return Array.Empty<SessionSource>();
+        var response = await _httpClient.GetAsync(new Uri("v1alpha/sources", UriKind.Relative), cancellationToken).ConfigureAwait(false);
+        await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-        return response.Sources
-            .Select(dto => new SessionSource(dto.Name, dto.GithubRepo?.Owner ?? "unknown", dto.GithubRepo?.Repo ?? "unknown"))
+        var dto = await response.Content.ReadFromJsonAsync<ListSourcesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (dto?.Sources == null) return Array.Empty<SessionSource>();
+
+        return dto.Sources
+            .Select(s => new SessionSource(s.Name, s.GithubRepo?.Owner ?? "unknown", s.GithubRepo?.Repo ?? "unknown"))
             .ToList()
             .AsReadOnly();
     }

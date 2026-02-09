@@ -12,7 +12,7 @@ public interface IRegistryPathProvider
 
 internal sealed class DefaultRegistryPathProvider : IRegistryPathProvider
 {
-    private const string RegistryFileName = "tasks.json";
+    private const string RegistryFileName = "sessions.json";
     public string GetRegistryPath()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -20,52 +20,39 @@ internal sealed class DefaultRegistryPathProvider : IRegistryPathProvider
     }
 }
 
-// 2. The Task Mapper (What are we saving?) 🔄
+// 2. The Session Mapper (What are we saving?) 🔄
 public interface IRegistryTaskMapper
 {
-    RegisteredTaskDto MapToDto(Session session);
-    Session MapToDomain(RegisteredTaskDto dto);
-}
-
-internal sealed class RegistryTaskMapper : IRegistryTaskMapper
-{
-    public RegisteredTaskDto MapToDto(Session session) => new(
-        session.Id.Value,
-        (string)session.Task,
-        session.Source.Repository,
-        session.Source.StartingBranch,
-        session.Pulse.Status.ToString(),
-        session.Pulse.Detail);
-
-    public Session MapToDomain(RegisteredTaskDto dto) => new(
-        new SessionId(dto.SessionId),
-        (TaskDescription)dto.TaskDescription,
-        new SourceContext(dto.Repository, dto.Branch),
-        new SessionPulse(Enum.Parse<SessionStatus>(dto.Status), dto.Detail));
+    RegisteredSessionDto MapToDto(Session session);
+    Session MapToDomain(RegisteredSessionDto dto);
 }
 
 // 3. The Serializer (How do we format it?) 🔓
 public interface IRegistrySerializer
 {
-    string Serialize(IEnumerable<RegisteredTaskDto> tasks);
-    IEnumerable<RegisteredTaskDto> Deserialize(string content);
+    string Serialize(IEnumerable<RegisteredSessionDto> sessions);
+    IEnumerable<RegisteredSessionDto> Deserialize(string content);
 }
 
 internal sealed class JsonRegistrySerializer : IRegistrySerializer
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
-    public string Serialize(IEnumerable<RegisteredTaskDto> tasks) => JsonSerializer.Serialize(tasks, Options);
-    public IEnumerable<RegisteredTaskDto> Deserialize(string content) => 
-        JsonSerializer.Deserialize<List<RegisteredTaskDto>>(content) ?? new List<RegisteredTaskDto>();
+    public string Serialize(IEnumerable<RegisteredSessionDto> sessions) => JsonSerializer.Serialize(sessions, Options);
+    public IEnumerable<RegisteredSessionDto> Deserialize(string content) => 
+        JsonSerializer.Deserialize<List<RegisteredSessionDto>>(content) ?? new List<RegisteredSessionDto>();
 }
 
 /// <summary>
-/// A passive DTO for serializing a mission in the global Task Registry.
+/// A high-fidelity DTO for serializing a session in the global Session Registry.
+/// Following the High-Fidelity Ledger pattern.
 /// </summary>
-public sealed record RegisteredTaskDto(
+public sealed record RegisteredSessionDto(
     string SessionId,
     string TaskDescription,
     string Repository,
     string Branch,
-    string Status,
-    string? Detail);
+    Uri? DashboardUri,
+    IReadOnlyCollection<ActivityEnvelopeDto> History,
+    Uri? PullRequestUrl = null,
+    string? PullRequestTitle = null,
+    string? PullRequestDescription = null);
