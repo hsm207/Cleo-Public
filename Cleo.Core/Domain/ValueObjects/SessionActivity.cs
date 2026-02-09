@@ -13,7 +13,10 @@ public enum ActivityOriginator
 /// <summary>
 /// A tangible unit of data produced during a session activity.
 /// </summary>
-public abstract record Artifact;
+public abstract record Artifact
+{
+    public virtual string GetSummary() => "📦 Artifact produced.";
+}
 
 /// <summary>
 /// Evidence of a terminal command execution.
