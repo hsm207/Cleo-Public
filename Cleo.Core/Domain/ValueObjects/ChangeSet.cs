@@ -30,6 +30,6 @@ public record ChangeSet : Artifact
             ? $"Updated [{string.Join(", ", files)}]" 
             : "Produced patch";
 
-        return $"📦 ChangeSet: {fileSummary} in '{Source}'";
+        return $"📦 ChangeSet: {fileSummary}";
     }
 }
