@@ -9,7 +9,9 @@ public enum SessionStatus
     Planning,
     InProgress,
     AwaitingFeedback,
+    AwaitingPlanApproval,
     Completed,
+    Abandoned,
     Failed
 }
 
