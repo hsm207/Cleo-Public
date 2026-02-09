@@ -18,11 +18,9 @@ public record GitPatch
         ArgumentNullException.ThrowIfNull(uniDiff);
         ArgumentNullException.ThrowIfNull(baseCommitId);
 
-        if (string.IsNullOrWhiteSpace(uniDiff))
-        {
-            throw new ArgumentException("UniDiff content cannot be empty.", nameof(uniDiff));
-        }
-
+        // Note: We allow an empty UniDiff to support agent "startup" heartbeats. 
+        // In these cases, the agent may report an attached ChangeSet before any physical
+        // code changes have been synthesized. 🤖✨
         if (string.IsNullOrWhiteSpace(baseCommitId))
         {
             throw new ArgumentException("Base commit identifier cannot be empty.", nameof(baseCommitId));

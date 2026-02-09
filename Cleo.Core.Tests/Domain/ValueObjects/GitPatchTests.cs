@@ -22,11 +22,14 @@ public class GitPatchTests
         Assert.Null(patch.SuggestedCommitMessage);
     }
 
-    [Fact(DisplayName = "GitPatch should throw if UniDiff is empty.")]
-    public void ShouldThrowIfDiffEmpty()
+    [Fact(DisplayName = "GitPatch should allow empty UniDiff to support agent startup heartbeats.")]
+    public void ShouldAllowEmptyDiff()
     {
-        Assert.Throws<ArgumentException>(() => new GitPatch("", "sha"));
-        Assert.Throws<ArgumentException>(() => new GitPatch(" ", "sha"));
+        var patch1 = new GitPatch("", "sha");
+        var patch2 = new GitPatch(" ", "sha");
+
+        Assert.Equal("", patch1.UniDiff);
+        Assert.Equal(" ", patch2.UniDiff);
         Assert.Throws<ArgumentNullException>(() => new GitPatch(null!, "sha"));
     }
 
