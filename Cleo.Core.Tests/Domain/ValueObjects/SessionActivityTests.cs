@@ -50,4 +50,28 @@ public class SessionActivityTests
 
         Assert.Equal($"Session Completed Successfully | {changeSet.GetSummary()}", activity.GetContentSummary());
     }
+
+    [Fact(DisplayName = "ProgressActivity should be marked as Low significance.")]
+    public void ProgressActivityShouldBeLowSignificance()
+    {
+        var activity = new ProgressActivity("id", Now, "Working");
+        Assert.False(activity.IsSignificant);
+    }
+
+    [Theory(DisplayName = "Significant activities should be marked as High significance.")]
+    [MemberData(nameof(SignificantActivities))]
+    public void SignificantActivitiesShouldBeHighSignificance(SessionActivity activity)
+    {
+        ArgumentNullException.ThrowIfNull(activity);
+        Assert.True(activity.IsSignificant);
+    }
+
+    public static TheoryData<SessionActivity> SignificantActivities => new()
+    {
+        new PlanningActivity("id", Now, "planId", new List<PlanStep>()),
+        new MessageActivity("id", Now, ActivityOriginator.User, "hello"),
+        new ApprovalActivity("id", Now, "planId"),
+        new CompletionActivity("id", Now),
+        new FailureActivity("id", Now, "reason")
+    };
 }
