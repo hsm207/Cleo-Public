@@ -30,6 +30,10 @@ public record ChangeSet : Artifact
             ? $"Updated [{string.Join(", ", files)}]" 
             : "Produced patch";
 
-        return $"📦 ChangeSet: {fileSummary}";
+        var shortSha = Patch.BaseCommitId.Length >= 7 
+            ? Patch.BaseCommitId[..7] 
+            : Patch.BaseCommitId;
+
+        return $"📦 ChangeSet [{shortSha}]: {fileSummary}";
     }
 }
