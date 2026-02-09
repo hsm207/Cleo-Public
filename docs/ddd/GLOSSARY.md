@@ -4,43 +4,40 @@
 ## Core Concepts
 
 ### Task
-The "What." A specific session or goal assigned to Jules (e.g., "Fix the login bug"). It represents the developer's initial intent.
+The "What." A specific goal assigned to Jules (e.g., "Fix the login bug"). It represents the developer's initial intent.
 
 ### Source
-The "Where." The repository and the **Base Branch** where Jules should begin her work.
+The "Where." The repository and the **Starting Branch** where Jules should begin her work.
 
 ### Session
-The "Living Archive." A remote environment where Jules executes a **Task**. It is the central authority for the collaboration, owning the **Session Log**, the **Task** description, and the **Dashboard URI**.
+The "Eternal Dialogue." A remote environment where Jules executes a **Task**. It owns the **Session Log**, the **Task** description, and the resulting **Outputs**.
 
-### State
-The "Pulse." The strictly **Ephemeral**, monitorable status of a session (e.g., Starting Up, In Progress, Complete, Failed). It is a "Live-only" query to the collaborator.
+### Stance
+The "Agent's Pose." The ephemeral, physical activity of the collaborator at this exact moment (e.g., Working, AwaitingFeedback, Idle). See [04: Collaborator Stance and Delivery](04_Collaborator_Stance_and_Delivery.md).
 
-### Talk
-The "Refinement Loop." The collaborative stream of **Feedback** and **Messages** recorded in the **Session Log**.
+### Delivery Status
+The "Business Truth." A domain-driven evaluation of whether the session has fulfilled its purpose by submitting a **Pull Request**. See [04: Collaborator Stance and Delivery](04_Collaborator_Stance_and_Delivery.md).
 
 ### Session Log
 The "History." A chronological, structured ledger of all **Activities** within a **Session**. It provides full observability into Jules's thoughts and actions and is persisted locally for deep review.
 
-### Feedback
-The primary intent emitted by the developer to guide, correct, or approve Jules's progress. Recorded as a specific type of **Activity** in the **Session Log**.
-
 ### Activity
 A single, observable event within a **Session**. Examples include generating a plan, running a shell command, or sending a message.
 
-### Patch
-The "Solution." The resulting code changes produced by Jules. Instead of just a branch, the developer thinks of this as the tangible answer to their **Task**.
+### Artifact
+A unit of data produced during an **Activity** (e.g., a raw Patch or terminal output). Represents work-in-progress.
 
-### Identity
-The "Persona." Represents the developer's authentication to the Jules API via their **API Key**.
+### Output
+A final, high-level **Deliverable** produced by the **Session** itself. The most important output is the **Pull Request**.
+
+### Pull Request
+The "Goal." A formal submission of the completed work. The presence of a Pull Request in the session's **Outputs** is the primary indicator of a successful delivery.
 
 ### Session Registry
-The "Workbench Memory." A centralized, persistent record of all **Sessions** initiated by the developer. It stores the **Task**, the **History**, and the **Dashboard URI** so the developer can manage sessions across different projects.
-
-### Handle
-The unique **Session ID** used to reference a specific entry in the **Session Registry**. In the CLI, the handle is the primary way to direct **Feedback** or check the **Pulse**.
+The "Workbench Memory." A centralized, persistent record of all **Sessions** initiated by the developer. It stores the **Task**, the **History**, and the **Dashboard URI**.
 
 ### Vault
-The "Secret Memory." The secure, OS-native storage (Keyring) where Cleo keeps the **Identity** safe.
+The "Secret Memory." The secure, OS-native storage (Keyring) where Cleo keeps the developer's **Identity** safe.
 
 ### Dashboard URI
 The "Web Portal." A direct link to view the session's visual progress and artifacts on the official Jules website.
