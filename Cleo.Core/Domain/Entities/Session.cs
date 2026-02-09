@@ -18,9 +18,6 @@ public class Session : AggregateRoot
     public SolutionPatch? Solution { get; private set; }
     public Uri? DashboardUri { get; }
     
-    /// <summary>
-    /// The authoritative, chronological ledger of everything that happened in this session.
-    /// </summary>
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
     public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse, Uri? dashboardUri = null)
@@ -39,6 +36,54 @@ public class Session : AggregateRoot
         RecordDomainEvent(new SessionAssigned(id, task));
     }
 
+    /// <summary>
+    /// Evaluates the agent's current stance, applying logical overrides for blocked sessions.
+    /// </summary>
+    public Stance EvaluatedStance
+    {
+        get
+        {
+            var physicalStance = MapToStance(Pulse.Status);
+
+            // Logical Stance Override: If Idle + No PR + Last Activity was Planning -> AwaitingPlanApproval
+            if (physicalStance == Stance.Idle && !IsDelivered && LastSignificantActivity is PlanningActivity)
+            {
+                return Stance.AwaitingPlanApproval;
+            }
+
+            return physicalStance;
+        }
+    }
+
+    /// <summary>
+    /// Evaluates the business truth of the session's deliverables.
+    /// </summary>
+    public DeliveryStatus DeliveryStatus
+    {
+        get
+        {
+            if (IsDelivered) return DeliveryStatus.Delivered;
+            
+            // If physically idle but no PR, it is officially unfulfilled.
+            // This holds even if the EvaluatedStance is logically overridden to AwaitingPlanApproval.
+            if (MapToStance(Pulse.Status) == Stance.Idle && !IsDelivered)
+            {
+                return DeliveryStatus.Unfulfilled;
+            }
+
+            var stance = EvaluatedStance;
+            if (stance == Stance.Broken || stance == Stance.Interrupted) return DeliveryStatus.Stalled;
+
+            return DeliveryStatus.Pending;
+        }
+    }
+
+    public bool IsDelivered => Solution != null;
+
+    private SessionActivity? LastSignificantActivity => _sessionLog
+        .OrderByDescending(a => a.Timestamp)
+        .FirstOrDefault(a => a is PlanningActivity or MessageActivity or ApprovalActivity);
+
     public void UpdatePulse(SessionPulse newPulse)
     {
         ArgumentNullException.ThrowIfNull(newPulse);
@@ -53,26 +98,21 @@ public class Session : AggregateRoot
     }
 
     /// <summary>
-    /// Records a new collaborative activity in the session log.
+    /// Records a new collaborative activity and scans for delivered artifacts.
     /// </summary>
     public void AddActivity(SessionActivity activity)
     {
         ArgumentNullException.ThrowIfNull(activity);
-        
-        // Ensure activities are added in chronological order if possible
-        // (In a distributed system we'd handle re-ordering, but here we keep it simple).
         _sessionLog.Add(activity);
 
-        // Side Effect: If the activity is a Result, update the solution.
-        if (activity is ResultActivity result)
+        // Identify if this event produced a solution
+        var codeProposal = activity.Evidence.OfType<CodeProposal>().FirstOrDefault();
+        if (codeProposal != null)
         {
-            SetSolution(result.Patch);
+            SetSolution(codeProposal.Patch);
         }
     }
 
-    /// <summary>
-    /// Convenience method for adding user feedback to the log.
-    /// </summary>
     public void AddFeedback(string feedback, string activityId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
@@ -84,4 +124,17 @@ public class Session : AggregateRoot
         Solution = solution;
         RecordDomainEvent(new SolutionReady(Id, solution));
     }
+
+    private static Stance MapToStance(SessionStatus status) => status switch
+    {
+        SessionStatus.StartingUp => Stance.Queued,
+        SessionStatus.Planning => Stance.Planning,
+        SessionStatus.InProgress => Stance.Working,
+        SessionStatus.AwaitingFeedback => Stance.AwaitingFeedback,
+        SessionStatus.AwaitingPlanApproval => Stance.AwaitingPlanApproval,
+        SessionStatus.Completed => Stance.Idle,
+        SessionStatus.Abandoned => Stance.Idle,
+        SessionStatus.Failed => Stance.Broken,
+        _ => Stance.WTF
+    };
 }
