@@ -25,17 +25,35 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}/activities", UriKind.Relative), cancellationToken).ConfigureAwait(false);
-        await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+        var allActivities = new List<SessionActivity>();
+        string? nextPageToken = null;
 
-        var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (dto?.Activities == null) return Array.Empty<SessionActivity>();
+        do
+        {
+            var uri = $"v1alpha/{id.Value}/activities";
+            if (nextPageToken != null)
+            {
+                uri += $"?pageToken={nextPageToken}";
+            }
 
-        return dto.Activities
-            .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
-                ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."))
-            .ToList()
-            .AsReadOnly();
+            var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+
+            var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (dto?.Activities != null)
+            {
+                var mapped = dto.Activities
+                    .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
+                        ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."));
+                
+                allActivities.AddRange(mapped);
+            }
+
+            nextPageToken = dto?.NextPageToken;
+
+        } while (nextPageToken != null);
+
+        return allActivities.AsReadOnly();
     }
 
     async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)

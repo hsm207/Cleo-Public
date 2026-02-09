@@ -28,15 +28,14 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
         ArgumentNullException.ThrowIfNull(request);
 
         var session = await _sessionReader.RecallAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (session == null)
-        {
-            throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry. 🥀");
-        }
-
+        
         try
         {
             // 1. Happy Path: Get the latest authoritative state and History from the remote system 💓📜
-            var remoteSessionTask = _pulseMonitor.GetRemoteSessionAsync(request.Id, session.Task, cancellationToken);
+            // We use a dummy TaskDescription if the session is new to the registry.
+            // It will be corrected once we fetch the remote session.
+            var task = session?.Task ?? (TaskDescription)"Unknown Task (Recovered)";
+            var remoteSessionTask = _pulseMonitor.GetRemoteSessionAsync(request.Id, task, cancellationToken);
             var activitiesTask = _activityClient.GetActivitiesAsync(request.Id, cancellationToken);
 
             await Task.WhenAll(remoteSessionTask, activitiesTask).ConfigureAwait(false);
@@ -45,6 +44,9 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             var activities = await activitiesTask.ConfigureAwait(false);
             
             // 2. Mirror Reality: Synchronize the local session with the remote truth 🔄💎
+            // If the session was missing, we use the remote one as our base!
+            session ??= remoteSession;
+
             session.UpdatePulse(remoteSession.Pulse);
             
             if (remoteSession.PullRequest != null)
@@ -72,6 +74,11 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
         }
         catch (RemoteCollaboratorUnavailableException)
         {
+            if (session == null)
+            {
+                throw new InvalidOperationException($"🔍 Handle {request.Id} not found in the registry and the remote system is unreachable. 🥀");
+            }
+
             // 2. Connectivity Fallback: Business Policy logic lives here. 🧠✨
             return new RefreshPulseResponse(
                 request.Id,
