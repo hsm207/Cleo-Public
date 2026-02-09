@@ -106,8 +106,8 @@ public sealed class JulesMapperTests
 
         var result = sut.Map(dto);
         result.Evidence.Should().HaveCount(2);
-        result.Evidence.Should().Contain(a => a is CommandEvidence);
-        result.Evidence.Should().Contain(a => a is CodeProposal);
+        result.Evidence.Should().Contain(a => a is BashOutput);
+        result.Evidence.Should().Contain(a => a is ChangeSet);
     }
 
     [Fact(DisplayName = "JulesMapper.Map should throw ArgumentNullException if DTO is null.")]
