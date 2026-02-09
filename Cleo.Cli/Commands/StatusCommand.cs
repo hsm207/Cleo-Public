@@ -20,22 +20,22 @@ internal sealed class StatusCommand
 
     public Command Build()
     {
-        var command = new Command("status", "Check the status and heartbeat of a session 💓");
+        var command = new Command("status", "Check the Pulse and Stance of a session 💓");
 
-        var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        command.AddArgument(handleArgument);
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        command.AddArgument(sessionIdArgument);
 
-        command.SetHandler(async (handle) => await ExecuteAsync(handle), handleArgument);
+        command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string handle)
+    private async Task ExecuteAsync(string sessionId)
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            var request = new RefreshPulseRequest(sessionId);
+            var id = new SessionId(sessionId);
+            var request = new RefreshPulseRequest(id);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             if (response.Warning != null)

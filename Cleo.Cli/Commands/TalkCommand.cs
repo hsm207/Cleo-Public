@@ -9,7 +9,7 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class TalkCommand
 {
-    private static readonly string[] MessageAliases = { "--message", "-m", "-p", "--prompt" };
+    private static readonly string[] MessageAliases = { "--message", "-m" };
 
     private readonly ICorrespondUseCase _useCase;
     private readonly ILogger<TalkCommand> _logger;
@@ -22,27 +22,27 @@ internal sealed class TalkCommand
 
     public Command Build()
     {
-        var command = new Command("talk", "Send a message or prompt to Jules 💬");
+        var command = new Command("talk", "Send a message to Jules 💬");
 
-        var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        command.AddArgument(handleArgument);
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        command.AddArgument(sessionIdArgument);
 
-        var messageOption = new Option<string>(MessageAliases, "The message or prompt to send")
+        var messageOption = new Option<string>(MessageAliases, "The message or guidance to send.")
         {
             IsRequired = true
         };
         command.AddOption(messageOption);
 
-        command.SetHandler(async (handle, message) => await ExecuteAsync(handle, message), handleArgument, messageOption);
+        command.SetHandler(async (sessionId, message) => await ExecuteAsync(sessionId, message), sessionIdArgument, messageOption);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string handle, string message)
+    private async Task ExecuteAsync(string sessionId, string message)
     {
         try
         {
-            var request = new CorrespondRequest(new SessionId(handle), message);
+            var request = new CorrespondRequest(new SessionId(sessionId), message);
             await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
