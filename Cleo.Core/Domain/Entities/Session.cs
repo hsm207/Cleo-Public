@@ -16,6 +16,7 @@ public class Session : AggregateRoot
     public SourceContext Source { get; }
     public SessionPulse Pulse { get; private set; }
     public ChangeSet? Solution { get; private set; }
+    public PullRequest? PullRequest { get; private set; }
     public Uri? DashboardUri { get; }
     
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
@@ -78,7 +79,7 @@ public class Session : AggregateRoot
         }
     }
 
-    public bool IsDelivered => Solution != null;
+    public bool IsDelivered => Solution != null || PullRequest != null;
 
     private SessionActivity? LastSignificantActivity => _sessionLog
         .OrderByDescending(a => a.Timestamp)
@@ -117,6 +118,12 @@ public class Session : AggregateRoot
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
         AddActivity(new MessageActivity(activityId, DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
+    }
+
+    public void SetPullRequest(PullRequest pullRequest)
+    {
+        ArgumentNullException.ThrowIfNull(pullRequest);
+        PullRequest = pullRequest;
     }
 
     private void SetSolution(ChangeSet solution)

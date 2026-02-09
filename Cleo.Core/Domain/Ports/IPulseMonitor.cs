@@ -1,3 +1,4 @@
+using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.Domain.Ports;
@@ -8,4 +9,9 @@ namespace Cleo.Core.Domain.Ports;
 public interface IPulseMonitor
 {
     Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the full, authoritative state of a remote session.
+    /// </summary>
+    Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default);
 }

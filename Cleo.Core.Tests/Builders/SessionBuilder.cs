@@ -17,6 +17,12 @@ internal sealed class SessionBuilder
         return this;
     }
 
+    public SessionBuilder WithTask(string task)
+    {
+        _task = (TaskDescription)task;
+        return this;
+    }
+
     public SessionBuilder WithPulse(SessionStatus status, string detail = "")
     {
         _pulse = new SessionPulse(status, detail);

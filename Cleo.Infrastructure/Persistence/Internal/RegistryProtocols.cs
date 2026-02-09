@@ -52,4 +52,7 @@ public sealed record RegisteredSessionDto(
     string Repository,
     string Branch,
     Uri? DashboardUri,
-    IReadOnlyCollection<ActivityEnvelopeDto> History);
+    IReadOnlyCollection<ActivityEnvelopeDto> History,
+    Uri? PullRequestUrl = null,
+    string? PullRequestTitle = null,
+    string? PullRequestDescription = null);

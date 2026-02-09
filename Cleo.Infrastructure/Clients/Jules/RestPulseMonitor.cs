@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Net.Sockets;
+using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -40,6 +41,27 @@ public sealed class RestPulseMonitor : IPulseMonitor
         catch (Exception ex) when (ex is HttpRequestException or SocketException)
         {
             throw new RemoteCollaboratorUnavailableException("Failed to retrieve session pulse due to connectivity issues.", ex);
+        }
+    }
+
+    public async Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(originalTask);
+
+        try
+        {
+            var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
+            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (dto == null) throw new InvalidOperationException("Failed to retrieve session.");
+
+            return JulesMapper.Map(dto, originalTask, _statusMapper);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to retrieve session due to connectivity issues.", ex);
         }
     }
 }

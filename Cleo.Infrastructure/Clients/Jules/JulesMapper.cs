@@ -28,18 +28,25 @@ internal static class JulesMapper
         );
 
         // Map the formal Pull Request output if it exists 💎🎁
-        var prOutput = dto.Outputs?.FirstOrDefault(o => o.ChangeSet?.GitPatch != null);
-        if (prOutput != null)
+        var changeSetOutput = dto.Outputs?.FirstOrDefault(o => o.ChangeSet?.GitPatch != null);
+        if (changeSetOutput != null)
         {
-            var patch = prOutput.ChangeSet!.GitPatch!;
-            var source = prOutput.ChangeSet.Source ?? "remote-source";
+            var patch = changeSetOutput.ChangeSet!.GitPatch!;
+            var source = changeSetOutput.ChangeSet.Source ?? "remote-source";
             var evidence = new List<Artifact> { new ChangeSet(source, new GitPatch(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
             
-            // Attach the PR to a synthetic completion activity to mark delivery
+            // Attach the patch to a synthetic completion activity to mark delivery
             session.AddActivity(new CompletionActivity(
                 $"output-{session.Id.Value}", 
                 DateTimeOffset.UtcNow, 
                 evidence));
+        }
+
+        var prOutput = dto.Outputs?.FirstOrDefault(o => o.PullRequest != null);
+        if (prOutput?.PullRequest != null)
+        {
+            var pr = prOutput.PullRequest;
+            session.SetPullRequest(new PullRequest(pr.Url, pr.Title, pr.Description));
         }
 
         return session;

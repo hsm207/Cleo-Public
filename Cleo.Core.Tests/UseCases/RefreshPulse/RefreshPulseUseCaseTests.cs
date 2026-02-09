@@ -93,6 +93,17 @@ public sealed class RefreshPulseUseCaseTests
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
             return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
         }
+
+        public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
+        {
+            if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
+            var session = new SessionBuilder()
+                .WithId(id.Value)
+                .WithTask((string)originalTask)
+                .WithPulse(SessionStatus.InProgress, "All good!")
+                .Build();
+            return Task.FromResult(session);
+        }
     }
 
     private sealed class FakeActivityClient : IJulesActivityClient
