@@ -7,63 +7,47 @@ public class SessionActivityTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
-    [Fact(DisplayName = "MessageActivity should store text, originator, and evidence.")]
-    public void MessageActivityTest()
+    [Fact(DisplayName = "ProgressActivity should show Detail when present.")]
+    public void ProgressActivityShouldShowDetail()
     {
-        var evidence = new List<Artifact> { new CommandEvidence("ls", "out", 0) };
-        var activity = new MessageActivity("id1", Now, ActivityOriginator.User, "Hello!", evidence);
-        Assert.Equal("id1", activity.Id);
-        Assert.Equal(Now, activity.Timestamp);
-        Assert.Equal(ActivityOriginator.User, activity.Originator);
-        Assert.Equal("Hello!", activity.Text);
-        Assert.Equal(evidence, activity.Evidence);
+        var activity = new ProgressActivity("id", Now, "Working hard!");
+        Assert.Equal("Working hard!", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "PlanningActivity should store plan steps and evidence.")]
-    public void PlanningActivityTest()
+    [Fact(DisplayName = "ProgressActivity should summarize single artifact when Detail is empty.")]
+    public void ProgressActivityShouldSummarizeSingleArtifact()
     {
-        var steps = new[] { new PlanStep(0, "T1", "D1") };
-        var evidence = new List<Artifact> { new MediaEvidence("mime", "data") };
-        var activity = new PlanningActivity("id2", Now, "plan-1", steps, evidence);
-        Assert.Equal(ActivityOriginator.Agent, activity.Originator);
-        Assert.Single(activity.Steps);
-        Assert.Equal("plan-1", activity.PlanId);
-        Assert.Equal("T1", activity.Steps.First().Title);
-        Assert.Equal(evidence, activity.Evidence);
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var activity = new ProgressActivity("id", Now, "", new[] { changeSet });
+
+        Assert.Equal(changeSet.GetSummary(), activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "ApprovalActivity should store plan identifier.")]
-    public void ApprovalActivityTest()
+    [Fact(DisplayName = "ProgressActivity should summarize multiple artifacts when Detail is empty.")]
+    public void ProgressActivityShouldSummarizeMultipleArtifacts()
     {
-        var activity = new ApprovalActivity("id3", Now, "plan-123");
-        Assert.Equal("plan-123", activity.PlanId);
-        Assert.Equal(ActivityOriginator.User, activity.Originator);
+        var output = new BashOutput("echo", "hi", 0);
+        var snapshot = new VisualSnapshot("img/png", "data");
+        var activity = new ProgressActivity("id", Now, "", new Artifact[] { output, snapshot });
+
+        Assert.Equal($"{output.GetSummary()} | {snapshot.GetSummary()}", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "Artifact types should store their respective data.")]
-    public void ArtifactTypesTest()
+    [Fact(DisplayName = "CompletionActivity should show completion message when no artifacts.")]
+    public void CompletionActivityShouldShowDefault()
     {
-        var cmd = new CommandEvidence("ls", "out", 0);
-        var patch = new CodeProposal(new SolutionPatch("d", "b"));
-        var media = new MediaEvidence("m", "d");
-
-        Assert.Equal("ls", cmd.Command);
-        Assert.Equal("d", patch.Patch.UniDiff);
-        Assert.Equal("m", media.MimeType);
+        var activity = new CompletionActivity("id", Now);
+        Assert.Equal("Session Completed Successfully", activity.GetContentSummary());
     }
 
-    [Fact(DisplayName = "ProgressActivity should store detail heartbeat.")]
-    public void ProgressActivityTest()
+    [Fact(DisplayName = "CompletionActivity should append artifacts to completion message.")]
+    public void CompletionActivityShouldAppendArtifacts()
     {
-        var activity = new ProgressActivity("id4", Now, "Still working...");
-        Assert.Equal("Still working...", activity.Detail);
-    }
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var activity = new CompletionActivity("id", Now, new[] { changeSet });
 
-    [Fact(DisplayName = "FailureActivity should store the reason.")]
-    public void FailureActivityTest()
-    {
-        var activity = new FailureActivity("id6", Now, "Quota exceeded");
-        Assert.Equal("Quota exceeded", activity.Reason);
-        Assert.Equal(ActivityOriginator.System, activity.Originator);
+        Assert.Equal($"Session Completed Successfully | {changeSet.GetSummary()}", activity.GetContentSummary());
     }
 }
