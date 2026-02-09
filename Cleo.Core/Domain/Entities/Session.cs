@@ -84,4 +84,15 @@ public class Session : AggregateRoot
         Solution = solution;
         RecordDomainEvent(new SolutionReady(Id, solution));
     }
+
+    /// <summary>
+    /// Resolves the latest authoritative plan from the session history.
+    /// </summary>
+    public PlanningActivity? GetLatestPlan()
+    {
+        return _sessionLog
+            .OfType<PlanningActivity>()
+            .OrderByDescending(a => a.Timestamp)
+            .FirstOrDefault();
+    }
 }
