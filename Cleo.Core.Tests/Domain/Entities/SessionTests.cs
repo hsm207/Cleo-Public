@@ -256,4 +256,26 @@ public class SessionTests
         Assert.Throws<ArgumentNullException>(() => new Session(Id, Task, null!, InitialPulse));
         Assert.Throws<ArgumentNullException>(() => new Session(Id, Task, Source, null!));
     }
+
+    [Fact(DisplayName = "GetSignificantHistory should exclude non-significant activities.")]
+    public void GetSignificantHistoryShouldFilter()
+    {
+        var session = new Session(Id, Task, Source, InitialPulse);
+        var now = DateTimeOffset.UtcNow;
+
+        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
+        session.AddActivity(new ProgressActivity("a2", now, "working")); // Not significant
+        session.AddActivity(new MessageActivity("a3", now, ActivityOriginator.User, "msg"));
+        session.AddActivity(new ProgressActivity("a4", now, "working more")); // Not significant
+        session.AddActivity(new CompletionActivity("a5", now));
+
+        var significantHistory = session.GetSignificantHistory();
+
+        Assert.Equal(3, significantHistory.Count);
+        Assert.Contains(significantHistory, a => a.Id == "a1");
+        Assert.Contains(significantHistory, a => a.Id == "a3");
+        Assert.Contains(significantHistory, a => a.Id == "a5");
+        Assert.DoesNotContain(significantHistory, a => a.Id == "a2");
+        Assert.DoesNotContain(significantHistory, a => a.Id == "a4");
+    }
 }

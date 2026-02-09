@@ -35,12 +35,18 @@ internal sealed class LogCommand
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
         command.AddArgument(sessionIdArgument);
 
-        command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
+        var allOption = new Option<bool>("--all", "Display all activities, including technical heartbeats.");
+        command.AddOption(allOption);
+
+        var limitOption = new Option<int?>("--limit", "Limit the number of activities displayed.");
+        command.AddOption(limitOption);
+
+        command.SetHandler(async (sessionId, all, limit) => await ExecuteAsync(sessionId, all, limit), sessionIdArgument, allOption, limitOption);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string sessionId)
+    private async Task ExecuteAsync(string sessionId, bool showAll, int? limit)
     {
         try
         {
@@ -55,9 +61,14 @@ internal sealed class LogCommand
             }
 
             Console.WriteLine($"📜 Activities for {sessionId}:");
-            foreach (var activity in response.History)
+
+            if (showAll)
             {
-                Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+                RenderAllActivities(response.History);
+            }
+            else
+            {
+                RenderSignificantActivities(response.History, limit ?? 10);
             }
         }
         catch (Exception ex)
@@ -67,5 +78,65 @@ internal sealed class LogCommand
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Error: {ex.Message}");
         }
+    }
+
+    private static void RenderAllActivities(IReadOnlyList<SessionActivity> history)
+    {
+        foreach (var activity in history)
+        {
+            Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+        }
+        Console.WriteLine($"Showing all {history.Count} activities.");
+    }
+
+    private static void RenderSignificantActivities(IReadOnlyList<SessionActivity> history, int limit)
+    {
+        var significantIndices = new List<int>();
+        for (int i = 0; i < history.Count; i++)
+        {
+            if (history[i].IsSignificant)
+            {
+                significantIndices.Add(i);
+            }
+        }
+
+        var totalSignificantCount = significantIndices.Count;
+        var startIndex = Math.Max(0, totalSignificantCount - limit);
+        var displayedIndices = significantIndices.Skip(startIndex).ToList();
+        var hiddenSignificantCount = startIndex;
+
+        // Truncation Marker
+        if (hiddenSignificantCount > 0)
+        {
+            Console.WriteLine($"... [{hiddenSignificantCount} earlier activities hidden] ...");
+        }
+
+        int lastDisplayedIndex = -1;
+
+        // If we truncated significant activities, start tracking gaps from the last hidden significant activity.
+        if (hiddenSignificantCount > 0)
+        {
+            lastDisplayedIndex = significantIndices[startIndex - 1];
+        }
+
+        foreach (var currentIndex in displayedIndices)
+        {
+            // Calculate gap (number of non-significant activities between last displayed and current)
+            var gap = currentIndex - lastDisplayedIndex - 1;
+
+            if (gap > 0)
+            {
+                Console.WriteLine($"... [{gap} heartbeats hidden] ...");
+            }
+
+            var activity = history[currentIndex];
+            Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+            lastDisplayedIndex = currentIndex;
+        }
+
+        var displayedCount = displayedIndices.Count;
+        var totalHeartbeatsHidden = history.Count - totalSignificantCount;
+
+        Console.WriteLine($"Showing {displayedCount} of {totalSignificantCount} significant activities ({totalHeartbeatsHidden} total heartbeats hidden). Use --all to see the full history.");
     }
 }

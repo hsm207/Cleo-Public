@@ -22,6 +22,8 @@ public class Session : AggregateRoot
     
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
+    public IReadOnlyCollection<SessionActivity> GetSignificantHistory() => _sessionLog.Where(a => a.IsSignificant).ToList().AsReadOnly();
+
     public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse, Uri? dashboardUri = null)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -84,7 +86,7 @@ public class Session : AggregateRoot
 
     private SessionActivity? LastSignificantActivity => _sessionLog
         .OrderByDescending(a => a.Timestamp)
-        .FirstOrDefault(a => a is PlanningActivity or MessageActivity or ApprovalActivity);
+        .FirstOrDefault(a => a.IsSignificant);
 
     public void UpdatePulse(SessionPulse newPulse)
     {
