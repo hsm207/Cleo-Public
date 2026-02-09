@@ -9,6 +9,7 @@ public record RefreshPulseResponse(
     SessionPulse Pulse,
     Stance Stance,
     DeliveryStatus DeliveryStatus,
+    PullRequest? PullRequest = null,
     bool IsCached = false,
     string? Warning = null
 );

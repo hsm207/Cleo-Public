@@ -46,6 +46,12 @@ internal sealed class StatusCommand
             Console.WriteLine($"💓 Status: {response.Pulse.Status}");
             Console.WriteLine($"🧘‍♀️ Stance: {response.Stance}");
             Console.WriteLine($"🏆 Delivery: {response.DeliveryStatus}");
+
+            if (response.PullRequest != null)
+            {
+                Console.WriteLine($"🎁 Pull Request: {response.PullRequest.Url}");
+            }
+
             Console.WriteLine($"📝 {response.Pulse.Detail}");
         }
         catch (Exception ex)

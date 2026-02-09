@@ -35,18 +35,23 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
         try
         {
-            // 1. Happy Path: Get the latest Pulse and History from the remote system 💓📜
-            var pulseTask = _pulseMonitor.GetSessionPulseAsync(request.Id, cancellationToken);
+            // 1. Happy Path: Get the latest authoritative state and History from the remote system 💓📜
+            var remoteSessionTask = _pulseMonitor.GetRemoteSessionAsync(request.Id, session.Task, cancellationToken);
             var activitiesTask = _activityClient.GetActivitiesAsync(request.Id, cancellationToken);
 
-            await Task.WhenAll(pulseTask, activitiesTask).ConfigureAwait(false);
+            await Task.WhenAll(remoteSessionTask, activitiesTask).ConfigureAwait(false);
 
-            var pulse = await pulseTask.ConfigureAwait(false);
+            var remoteSession = await remoteSessionTask.ConfigureAwait(false);
             var activities = await activitiesTask.ConfigureAwait(false);
             
             // 2. Mirror Reality: Synchronize the local session with the remote truth 🔄💎
-            session.UpdatePulse(pulse);
+            session.UpdatePulse(remoteSession.Pulse);
             
+            if (remoteSession.PullRequest != null)
+            {
+                session.SetPullRequest(remoteSession.PullRequest);
+            }
+
             foreach (var activity in activities)
             {
                 // Simple synchronization: Add only if not already present
@@ -60,9 +65,10 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             
             return new RefreshPulseResponse(
                 request.Id, 
-                pulse, 
+                remoteSession.Pulse, 
                 session.EvaluatedStance, 
-                session.DeliveryStatus);
+                session.DeliveryStatus,
+                session.PullRequest);
         }
         catch (RemoteCollaboratorUnavailableException)
         {
@@ -72,6 +78,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 session.Pulse,
                 session.EvaluatedStance,
                 session.DeliveryStatus,
+                session.PullRequest,
                 IsCached: true,
                 Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry."
             );

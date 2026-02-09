@@ -19,7 +19,10 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         session.Source.Repository,
         session.Source.StartingBranch,
         session.DashboardUri,
-        session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly());
+        session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
+        session.PullRequest?.Url,
+        session.PullRequest?.Title,
+        session.PullRequest?.Description);
 
     public Session MapToDomain(RegisteredSessionDto dto)
     {
@@ -33,6 +36,11 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         foreach (var envelope in dto.History ?? Enumerable.Empty<ActivityEnvelopeDto>())
         {
             session.AddActivity(_activityFactory.FromEnvelope(envelope));
+        }
+
+        if (dto.PullRequestUrl != null && dto.PullRequestTitle != null)
+        {
+            session.SetPullRequest(new PullRequest(dto.PullRequestUrl, dto.PullRequestTitle, dto.PullRequestDescription));
         }
 
         return session;

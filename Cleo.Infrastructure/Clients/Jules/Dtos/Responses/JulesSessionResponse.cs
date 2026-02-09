@@ -22,5 +22,12 @@ public sealed record JulesSessionResponse(
 );
 
 public sealed record JulesOutputDto(
-    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet
+    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet,
+    [property: JsonPropertyName("pullRequest")] PullRequestDto? PullRequest
+);
+
+public sealed record PullRequestDto(
+    [property: JsonPropertyName("url")] Uri Url,
+    [property: JsonPropertyName("title")] string Title,
+    [property: JsonPropertyName("description")] string? Description
 );
