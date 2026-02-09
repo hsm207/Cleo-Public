@@ -23,8 +23,9 @@ internal sealed class ApproveCommand
         var command = new Command("approve", "Approve a generated plan 👍");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve.");
         command.AddArgument(handleArgument);
+
+        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve.");
         command.AddArgument(planIdArgument);
 
         command.SetHandler(async (handle, planId) => await ExecuteAsync(handle, planId), handleArgument, planIdArgument);
@@ -36,8 +37,7 @@ internal sealed class ApproveCommand
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            var request = new ApprovePlanRequest(sessionId, planId);
+            var request = new ApprovePlanRequest(new SessionId(handle), planId);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine($"✅ Plan {response.PlanId} approved for session {handle} at {response.ApprovedAt:t}! Let's go! 🚀");
@@ -47,7 +47,7 @@ internal sealed class ApproveCommand
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to approve plan.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }
 }

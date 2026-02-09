@@ -9,10 +9,10 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class TalkCommand
 {
+    private static readonly string[] MessageAliases = { "--message", "-m", "-p", "--prompt" };
+
     private readonly ICorrespondUseCase _useCase;
     private readonly ILogger<TalkCommand> _logger;
-
-    private static readonly string[] MessageAliases = { "--message", "-m", "--prompt", "-p" };
 
     public TalkCommand(ICorrespondUseCase useCase, ILogger<TalkCommand> logger)
     {
@@ -25,9 +25,12 @@ internal sealed class TalkCommand
         var command = new Command("talk", "Send a message or prompt to Jules 💬");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
-        var messageOption = new Option<string>(MessageAliases, "The message or prompt to send.") { IsRequired = true };
-
         command.AddArgument(handleArgument);
+
+        var messageOption = new Option<string>(MessageAliases, "The message or prompt to send")
+        {
+            IsRequired = true
+        };
         command.AddOption(messageOption);
 
         command.SetHandler(async (handle, message) => await ExecuteAsync(handle, message), handleArgument, messageOption);
@@ -39,11 +42,8 @@ internal sealed class TalkCommand
     {
         try
         {
-            var sessionId = new SessionId(handle);
-            
-            Console.WriteLine($"💬 Sending message to {handle}...");
-            var request = new CorrespondRequest(sessionId, message);
-            await _useCase.ExecuteAsync(request);
+            var request = new CorrespondRequest(new SessionId(handle), message);
+            await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
         }
@@ -52,7 +52,7 @@ internal sealed class TalkCommand
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to send message.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }
 }

@@ -39,7 +39,7 @@ public sealed class JulesMapperTests
         var result = sut.Map(dto);
 
         result.Should().BeOfType<ProgressActivity>();
-        ((ProgressActivity)result).Detail.Should().Be("Cooking: Still at it");
+        ((ProgressActivity)result).Detail.Should().Be("Still at it");
     }
 
     [Fact(DisplayName = "FailureActivityMapper should map SessionFailed activity correctly.")]
@@ -67,17 +67,17 @@ public sealed class JulesMapperTests
         result.Should().BeOfType<CompletionActivity>();
     }
 
-    [Fact(DisplayName = "MessageActivityMapper should map PlanApproved activity to a MessageActivity.")]
-    public void Map_PlanApproved_ShouldReturnMessageActivity()
+    [Fact(DisplayName = "ApprovalActivityMapper should map PlanApproved activity correctly. ✅")]
+    public void Map_PlanApproved_ShouldReturnApprovalActivity()
     {
-        var sut = new MessageActivityMapper();
+        var sut = new ApprovalActivityMapper();
         var dto = CreateBaseDto() with { PlanApproved = new PlanApprovedDto("plan-cake") };
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
 
-        result.Should().BeOfType<MessageActivity>();
-        ((MessageActivity)result).Text.Should().Contain("plan-cake");
+        result.Should().BeOfType<ApprovalActivity>();
+        ((ApprovalActivity)result).PlanId.Should().Be("plan-cake");
     }
 
     [Fact(DisplayName = "MessageActivityMapper should handle userMessaged and agentMessaged fields.")]
@@ -91,59 +91,23 @@ public sealed class JulesMapperTests
         ((MessageActivity)sut.Map(agentDto)).Text.Should().Be("Agent Yo");
     }
 
-    [Fact(DisplayName = "MessageActivityMapper should handle different originator strings.")]
-    public void Map_ShouldHandleOriginators()
+    [Fact(DisplayName = "ArtifactMappingHelper should attach evidence to any activity type! 📎💎")]
+    public void Map_ShouldAttachArtifactsToActivity()
     {
-        var sut = new MessageActivityMapper();
-        var userDto = CreateBaseDto() with { Originator = "user", UserMessaged = new UserMessagedDto("Hi") };
-        var agentDto = CreateBaseDto() with { Originator = "agent", AgentMessaged = new AgentMessagedDto("Hi") };
-        var systemDto = CreateBaseDto() with { Originator = "something-else" };
-
-        sut.Map(userDto).Originator.Should().Be(ActivityOriginator.User);
-        sut.Map(agentDto).Originator.Should().Be(ActivityOriginator.Agent);
-        sut.Map(systemDto).Originator.Should().Be(ActivityOriginator.System);
-    }
-
-    [Fact(DisplayName = "ResultActivityMapper should map Result activity correctly.")]
-    public void Map_Result_ShouldReturnResultActivity()
-    {
-        var sut = new ResultActivityMapper();
-        var dto = CreateBaseDto() with {
-            Artifacts = new[] {
-                new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("diff", "base", null)), null, null)
-            }
+        var sut = new ProgressActivityMapper();
+        var artifacts = new[] {
+            new ArtifactDto(null, null, new BashOutputDto("ls", "out", 0)),
+            new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("diff", "base", null)), null, null)
+        };
+        var dto = CreateBaseDto() with { 
+            ProgressUpdated = new ProgressUpdatedDto("T", "D"),
+            Artifacts = artifacts
         };
 
-        sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
-
-        result.Should().BeOfType<ResultActivity>();
-        var act = (ResultActivity)result;
-        act.Patch.UniDiff.Should().Be("diff");
-        
-        // Exercise the 'false' branch of ResultActivityMapper.CanMap
-        var emptyArtifactDto = CreateBaseDto() with { Artifacts = new ArtifactDto[] { new(null, null, null) } };
-        sut.CanMap(emptyArtifactDto).Should().BeFalse();
-    }
-
-    [Fact(DisplayName = "ExecutionActivityMapper should map BashOutput activity correctly.")]
-    public void Map_BashOutput_ShouldReturnExecutionActivity()
-    {
-        var sut = new ExecutionActivityMapper();
-        var dto = CreateBaseDto() with {
-            Artifacts = new[] {
-                new ArtifactDto(null, null, new BashOutputDto("ls", "out", 0))
-            }
-        };
-
-        sut.CanMap(dto).Should().BeTrue();
-        var result = sut.Map(dto);
-
-        result.Should().BeOfType<ExecutionActivity>();
-        var act = (ExecutionActivity)result;
-        act.Command.Should().Be("ls");
-        act.Output.Should().Be("out");
-        act.ExitCode.Should().Be(0);
+        result.Evidence.Should().HaveCount(2);
+        result.Evidence.Should().Contain(a => a is CommandEvidence);
+        result.Evidence.Should().Contain(a => a is CodeProposal);
     }
 
     [Fact(DisplayName = "JulesMapper.Map should throw ArgumentNullException if DTO is null.")]

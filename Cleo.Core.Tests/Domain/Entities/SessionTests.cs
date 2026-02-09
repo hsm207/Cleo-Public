@@ -61,12 +61,13 @@ public class SessionTests
         Assert.Equal(activity, session.SessionLog.First());
     }
 
-    [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when a ResultActivity is added.")]
-    public void AddResultActivityShouldUpdateSolution()
+    [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when an activity with a CodeProposal is added.")]
+    public void AddingCodeProposalEvidenceShouldUpdateSolution()
     {
         var session = new Session(Id, Task, Source, InitialPulse);
         var patch = new SolutionPatch("diff-content", "base-commit");
-        var activity = new ResultActivity("act/2", DateTimeOffset.UtcNow, patch);
+        var evidence = new List<Artifact> { new CodeProposal(patch) };
+        var activity = new ProgressActivity("act/2", DateTimeOffset.UtcNow, "Done", evidence);
 
         session.AddActivity(activity);
 
@@ -133,7 +134,7 @@ public class SessionTests
         var now = DateTimeOffset.UtcNow;
 
         session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
-        session.AddActivity(new ExecutionActivity("a2", now, "cmd", "out", 0));
+        session.AddActivity(new MessageActivity("a2", now, ActivityOriginator.User, "msg"));
         session.AddActivity(new ProgressActivity("a3", now, "working"));
         session.AddActivity(new FailureActivity("a4", now, "error"));
 

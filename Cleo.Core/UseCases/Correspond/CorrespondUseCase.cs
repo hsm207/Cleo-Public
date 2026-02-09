@@ -1,4 +1,5 @@
 using Cleo.Core.Domain.Ports;
+using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.UseCases.Correspond;
 
