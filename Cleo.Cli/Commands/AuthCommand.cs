@@ -22,7 +22,7 @@ internal sealed class AuthCommand
 
     public Command Build()
     {
-        var authCommand = new Command("auth", "Manage your Jules identity and credentials 🔐");
+        var authCommand = new Command("auth", "Manage your Identity in the Vault 🔐");
 
         var loginCommand = new Command("login", "Authenticate with your Jules API Key 🔑");
         var keyArgument = new Argument<string>("key", "Your Jules API Key");

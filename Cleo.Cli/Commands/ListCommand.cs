@@ -19,7 +19,7 @@ internal sealed class ListCommand
 
     public Command Build()
     {
-        var command = new Command("list", "List all tracked engineering sessions 📋");
+        var command = new Command("list", "List sessions in the local Session Registry 📋");
 
         command.SetHandler(async () => await ExecuteAsync());
 
