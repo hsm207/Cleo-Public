@@ -1,5 +1,6 @@
 using Cleo.Core.Domain.Common;
 using Cleo.Core.Domain.Events;
+using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.Domain.Entities;
@@ -124,6 +125,18 @@ public class Session : AggregateRoot
     {
         ArgumentNullException.ThrowIfNull(pullRequest);
         PullRequest = pullRequest;
+    }
+
+    /// <summary>
+    /// Resolves the latest authoritative plan from the session history using a pluggable strategy.
+    /// </summary>
+    /// <param name="strategy">The strategy to use. Defaults to <see cref="TimestampBasedPlanResolutionStrategy"/> if null.</param>
+    public PlanningActivity? GetLatestPlan(IPlanResolutionStrategy? strategy = null)
+    {
+        // Use default strategy if none provided (Pragmatic default for existing clients)
+        var effectiveStrategy = strategy ?? new TimestampBasedPlanResolutionStrategy();
+
+        return effectiveStrategy.ResolvePlan(_sessionLog);
     }
 
     private void SetSolution(ChangeSet solution)

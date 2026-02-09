@@ -1,0 +1,69 @@
+using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.ValueObjects;
+using Xunit;
+
+namespace Cleo.Core.Tests.Domain.Entities;
+
+public class SessionPlanResolutionTests
+{
+    private static readonly SessionId Id = new("sessions/test-resolution");
+    private static readonly TaskDescription Task = (TaskDescription)"Resolution Test";
+    private static readonly SourceContext Source = new("sources/repo", "main");
+    private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp, "Init");
+
+    [Fact(DisplayName = "Given a new session, when requesting the latest plan, then it should return null.")]
+    public void FreshStartShouldReturnNull()
+    {
+        // Given
+        var session = new Session(Id, Task, Source, InitialPulse);
+
+        // When
+        var plan = session.GetLatestPlan();
+
+        // Then
+        Assert.Null(plan);
+    }
+
+    [Fact(DisplayName = "Given a session with a single roadmap, when requesting the latest plan, then it should return that roadmap regardless of other activities.")]
+    public void SingleRoadmapShouldReturnOriginal()
+    {
+        // Given
+        var session = new Session(Id, Task, Source, InitialPulse);
+        var plan = new PlanningActivity("plan-1", DateTimeOffset.UtcNow, "p1", Array.Empty<PlanStep>());
+
+        session.AddActivity(new ProgressActivity("prog-1", DateTimeOffset.UtcNow.AddMinutes(1), "working..."));
+        session.AddActivity(plan);
+        session.AddActivity(new ProgressActivity("prog-2", DateTimeOffset.UtcNow.AddMinutes(2), "still working..."));
+
+        // When
+        var result = session.GetLatestPlan();
+
+        // Then
+        Assert.NotNull(result);
+        Assert.Same(plan, result);
+    }
+
+    [Fact(DisplayName = "Given an evolving session with multiple roadmaps, when requesting the latest plan, then it should return the most recent roadmap by timestamp.")]
+    public void EvolutionaryChangeShouldReturnLatest()
+    {
+        // Given
+        var session = new Session(Id, Task, Source, InitialPulse);
+        var now = DateTimeOffset.UtcNow;
+
+        var planAlpha = new PlanningActivity("plan-alpha", now, "alpha", Array.Empty<PlanStep>());
+        var planBeta = new PlanningActivity("plan-beta", now.AddHours(1), "beta", Array.Empty<PlanStep>());
+
+        session.AddActivity(planAlpha);
+        session.AddActivity(new ProgressActivity("prog-1", now.AddMinutes(30), "working on alpha"));
+        session.AddActivity(planBeta); // This is the latest one
+        session.AddActivity(new ProgressActivity("prog-2", now.AddHours(2), "working on beta"));
+
+        // When
+        var result = session.GetLatestPlan();
+
+        // Then
+        Assert.NotNull(result);
+        Assert.Same(planBeta, result);
+        Assert.NotSame(planAlpha, result);
+    }
+}
