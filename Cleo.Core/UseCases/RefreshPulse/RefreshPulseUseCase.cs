@@ -58,7 +58,11 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
             
-            return new RefreshPulseResponse(request.Id, pulse);
+            return new RefreshPulseResponse(
+                request.Id, 
+                pulse, 
+                session.EvaluatedStance, 
+                session.DeliveryStatus);
         }
         catch (RemoteCollaboratorUnavailableException)
         {
@@ -66,6 +70,8 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             return new RefreshPulseResponse(
                 request.Id,
                 session.Pulse,
+                session.EvaluatedStance,
+                session.DeliveryStatus,
                 IsCached: true,
                 Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry."
             );
