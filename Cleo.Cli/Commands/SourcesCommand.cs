@@ -19,7 +19,7 @@ internal sealed class SourcesCommand
 
     public Command Build()
     {
-        var command = new Command("sources", "List available source repositories 🛰️");
+        var command = new Command("sources", "List available GitHub repositories for collaboration 🛰️");
 
         command.SetHandler(async () => await ExecuteAsync());
 

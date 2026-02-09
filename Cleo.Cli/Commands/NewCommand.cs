@@ -24,10 +24,10 @@ internal sealed class NewCommand
 
     public Command Build()
     {
-        var command = new Command("new", "Initiate a new engineering session ✨");
+        var command = new Command("new", "Assign a new Task to Jules ✨");
 
-        var promptArgument = new Argument<string>("prompt", "The task description or prompt for Jules");
-        command.AddArgument(promptArgument);
+        var taskArgument = new Argument<string>("task", "The high-level goal or task for Jules.");
+        command.AddArgument(taskArgument);
 
         var repoOption = new Option<string>(RepoAliases, "The repository name (format: sources/{source})");
         command.AddOption(repoOption);
@@ -38,20 +38,20 @@ internal sealed class NewCommand
         var titleOption = new Option<string>(TitleAliases, "A custom title for the session");
         command.AddOption(titleOption);
 
-        command.SetHandler(async (prompt, repo, branch, title) => await ExecuteAsync(prompt, repo, branch, title), promptArgument, repoOption, branchOption, titleOption);
+        command.SetHandler(async (task, repo, branch, title) => await ExecuteAsync(task, repo, branch, title), taskArgument, repoOption, branchOption, titleOption);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string prompt, string repo, string branch, string? title)
+    private async Task ExecuteAsync(string task, string repo, string branch, string? title)
     {
         try
         {
-            var request = new InitiateSessionRequest(prompt, repo, branch, title);
+            var request = new InitiateSessionRequest(task, repo, branch, title);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine("✨ Session initiated successfully! 🚀");
-            Console.WriteLine($"Handle: {response.Id}");
+            Console.WriteLine($"SessionId: {response.Id}");
             if (response.DashboardUri != null)
             {
                 Console.WriteLine($"Portal: {response.DashboardUri}");
