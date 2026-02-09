@@ -108,7 +108,17 @@ public record ProgressActivity(
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
 {
-    public override string GetContentSummary() => Detail;
+    public override string GetContentSummary()
+    {
+        if (!string.IsNullOrWhiteSpace(Detail)) return Detail;
+        
+        if (Evidence.Count > 0)
+        {
+            return string.Join(" | ", Evidence.Select(e => e.GetSummary()));
+        }
+
+        return string.Empty;
+    }
 }
 
 /// <summary>
@@ -120,7 +130,15 @@ public record CompletionActivity(
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, Timestamp, ActivityOriginator.System, Evidence ?? Array.Empty<Artifact>())
 {
-    public override string GetContentSummary() => "Session Completed Successfully";
+    public override string GetContentSummary()
+    {
+        var baseMsg = "Session Completed Successfully";
+        if (Evidence.Count > 0)
+        {
+            return $"{baseMsg} | {string.Join(" | ", Evidence.Select(e => e.GetSummary()))}";
+        }
+        return baseMsg;
+    }
 }
 
 /// <summary>
