@@ -1,7 +1,8 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
-using Cleo.Infrastructure;
 using Cleo.Cli.Commands;
+using Cleo.Core.UseCases.ViewPlan;
+using Cleo.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -52,32 +53,35 @@ internal static class Program
         services.AddScoped<Cleo.Core.UseCases.BrowseSources.IBrowseSourcesUseCase, Cleo.Core.UseCases.BrowseSources.BrowseSourcesUseCase>();
         services.AddScoped<Cleo.Core.UseCases.Correspond.ICorrespondUseCase, Cleo.Core.UseCases.Correspond.CorrespondUseCase>();
         services.AddScoped<Cleo.Core.UseCases.ForgetSession.IForgetSessionUseCase, Cleo.Core.UseCases.ForgetSession.ForgetSessionUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.BrowseHistory.IBrowseHistoryUseCase, Cleo.Core.UseCases.BrowseHistory.BrowseHistoryUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.ViewPlan.IViewPlanUseCase, Cleo.Core.UseCases.ViewPlan.ViewPlanUseCase>();
 
-        // CLI Commands (View Layer) 🖥️
+        // CLI Commands (Leafs) 🍃
         services.AddTransient<AuthCommand>();
         services.AddTransient<ListCommand>();
         services.AddTransient<NewCommand>();
         services.AddTransient<StatusCommand>();
-        services.AddTransient<SourcesCommand>();
+        services.AddTransient<ReposCommand>();
         services.AddTransient<TalkCommand>();
-        services.AddTransient<ActivitiesCommand>();
         services.AddTransient<ApproveCommand>();
         services.AddTransient<ForgetCommand>();
+
+        // CLI Command Groups 🌳
+        services.AddTransient<SessionCommand>();
+        services.AddTransient<LogCommand>();
+        services.AddTransient<PlanCommand>();
+        services.AddTransient<ConfigCommand>();
     }
 
     private static RootCommand BuildRootCommand(IServiceProvider sp)
     {
         var rootCommand = new RootCommand("🏛️ Cleo: The God-Tier Engineering Assistant")
         {
-            sp.GetRequiredService<AuthCommand>().Build(),
-            sp.GetRequiredService<ListCommand>().Build(),
-            sp.GetRequiredService<NewCommand>().Build(),
-            sp.GetRequiredService<StatusCommand>().Build(),
-            sp.GetRequiredService<SourcesCommand>().Build(),
+            sp.GetRequiredService<SessionCommand>().Build(),
+            sp.GetRequiredService<LogCommand>().Build(),
+            sp.GetRequiredService<PlanCommand>().Build(),
             sp.GetRequiredService<TalkCommand>().Build(),
-            sp.GetRequiredService<ActivitiesCommand>().Build(),
-            sp.GetRequiredService<ApproveCommand>().Build(),
-            sp.GetRequiredService<ForgetCommand>().Build()
+            sp.GetRequiredService<ConfigCommand>().Build()
         };
 
         return rootCommand;
