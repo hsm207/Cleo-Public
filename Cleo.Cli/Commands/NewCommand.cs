@@ -11,6 +11,7 @@ internal sealed class NewCommand
 {
     private static readonly string[] RepoAliases = { "--repo", "-r" };
     private static readonly string[] BranchAliases = { "--branch", "-b" };
+    private static readonly string[] TitleAliases = { "--title", "-t" };
 
     private readonly InitiateSessionUseCase _useCase;
     private readonly ILogger<NewCommand> _logger;
@@ -34,16 +35,19 @@ internal sealed class NewCommand
         var branchOption = new Option<string>(BranchAliases, () => "main", "The starting branch");
         command.AddOption(branchOption);
 
-        command.SetHandler(async (prompt, repo, branch) => await ExecuteAsync(prompt, repo, branch), promptArgument, repoOption, branchOption);
+        var titleOption = new Option<string>(TitleAliases, "A custom title for the session");
+        command.AddOption(titleOption);
+
+        command.SetHandler(async (prompt, repo, branch, title) => await ExecuteAsync(prompt, repo, branch, title), promptArgument, repoOption, branchOption, titleOption);
 
         return command;
     }
 
-    private async Task ExecuteAsync(string prompt, string repo, string branch)
+    private async Task ExecuteAsync(string prompt, string repo, string branch, string? title)
     {
         try
         {
-            var request = new InitiateSessionRequest(prompt, repo, branch);
+            var request = new InitiateSessionRequest(prompt, repo, branch, title);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine("✨ Session initiated successfully! 🚀");
