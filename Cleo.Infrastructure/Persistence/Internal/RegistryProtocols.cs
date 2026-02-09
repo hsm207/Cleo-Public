@@ -27,55 +27,6 @@ public interface IRegistryTaskMapper
     Session MapToDomain(RegisteredSessionDto dto);
 }
 
-internal sealed class RegistryTaskMapper : IRegistryTaskMapper
-{
-    public RegisteredSessionDto MapToDto(Session session) => new(
-        session.Id.Value,
-        (string)session.Task,
-        session.Source.Repository,
-        session.Source.StartingBranch,
-        session.DashboardUri,
-        session.SessionLog.Select(MapActivityToDto).ToList().AsReadOnly());
-
-    public Session MapToDomain(RegisteredSessionDto dto)
-    {
-        var session = new Session(
-            new SessionId(dto.SessionId),
-            (TaskDescription)dto.TaskDescription,
-            new SourceContext(dto.Repository, dto.Branch),
-            new SessionPulse(SessionStatus.StartingUp), // Status is ephemeral!
-            dto.DashboardUri);
-
-        foreach (var activityDto in dto.History ?? Enumerable.Empty<RegisteredActivityDto>())
-        {
-            session.AddActivity(MapDtoToActivity(activityDto));
-        }
-
-        return session;
-    }
-
-    private static RegisteredActivityDto MapActivityToDto(SessionActivity activity) => new(
-        activity.GetType().Name,
-        activity.Id,
-        activity.Timestamp,
-        activity.Originator.ToString(),
-        activity.GetContentSummary(),
-        activity.GetMetaDetail());
-
-    private static SessionActivity MapDtoToActivity(RegisteredActivityDto dto)
-    {
-        // For now, we reconstruct the activities using their summaries/details
-        // In a full implementation, we would use a more robust polymorphic mapping
-        return dto.Type switch
-        {
-            nameof(MessageActivity) => new MessageActivity(dto.Id, dto.Timestamp, Enum.Parse<ActivityOriginator>(dto.Originator), dto.Summary),
-            nameof(ProgressActivity) => new ProgressActivity(dto.Id, dto.Timestamp, dto.Summary),
-            nameof(CompletionActivity) => new CompletionActivity(dto.Id, dto.Timestamp),
-            _ => new ProgressActivity(dto.Id, dto.Timestamp, dto.Summary) // Fallback
-        };
-    }
-}
-
 // 3. The Serializer (How do we format it?) 🔓
 public interface IRegistrySerializer
 {
@@ -92,7 +43,8 @@ internal sealed class JsonRegistrySerializer : IRegistrySerializer
 }
 
 /// <summary>
-/// A passive DTO for serializing a session in the global Session Registry.
+/// A high-fidelity DTO for serializing a session in the global Session Registry.
+/// Following the High-Fidelity Ledger pattern.
 /// </summary>
 public sealed record RegisteredSessionDto(
     string SessionId,
@@ -100,15 +52,4 @@ public sealed record RegisteredSessionDto(
     string Repository,
     string Branch,
     Uri? DashboardUri,
-    IReadOnlyCollection<RegisteredActivityDto> History);
-
-/// <summary>
-/// A passive DTO for serializing a single activity in the session history.
-/// </summary>
-public sealed record RegisteredActivityDto(
-    string Type,
-    string Id,
-    DateTimeOffset Timestamp,
-    string Originator,
-    string Summary,
-    string? Detail);
+    IReadOnlyCollection<ActivityEnvelopeDto> History);
