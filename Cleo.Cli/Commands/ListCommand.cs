@@ -19,7 +19,7 @@ internal sealed class ListCommand
 
     public Command Build()
     {
-        var command = new Command("list", "List all active sessions from the global registry 🌍");
+        var command = new Command("list", "List all tracked engineering sessions 📋");
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -41,7 +41,7 @@ internal sealed class ListCommand
             Console.WriteLine("📋 Current Sessions:");
             foreach (var session in response.Sessions)
             {
-                Console.WriteLine($"- [{session.Id.Value}] {session.Task} ({session.Pulse.Status})");
+                Console.WriteLine($"- [{session.Id}] {session.Task} ({session.Pulse.Status})");
             }
         }
         catch (Exception ex)
@@ -49,7 +49,7 @@ internal sealed class ListCommand
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to list sessions.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }
 }

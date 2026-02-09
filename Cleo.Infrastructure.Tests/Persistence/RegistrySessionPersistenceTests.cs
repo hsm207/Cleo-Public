@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
+using Cleo.Infrastructure.Persistence.Mappers;
 using Moq;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
@@ -12,14 +13,33 @@ public class RegistrySessionPersistenceTests : IDisposable
     private readonly Mock<IRegistryPathProvider> _pathProviderMock = new();
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
+    private readonly ActivityMapperFactory _activityFactory;
 
     public RegistrySessionPersistenceTests()
     {
         _tempFile = Path.Combine(Path.GetTempPath(), $"Cleo_Test_Registry_{Guid.NewGuid():N}.json");
         _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_tempFile);
 
-        // REAL VIBES: Use real logic and real FileSystem
-        var mapper = new RegistryTaskMapper();
+        // Register Artifact mapping 🔌📎
+        var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
+        {
+            new CommandEvidenceMapper(),
+            new CodeProposalMapper(),
+            new MediaEvidenceMapper()
+        });
+
+        // Register Activity mapping 🔌🏺
+        _activityFactory = new ActivityMapperFactory(new IActivityPersistenceMapper[]
+        {
+            new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory)
+        });
+
+        var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
         var fileSystem = new PhysicalFileSystem();
 
@@ -119,7 +139,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var mockPath = new Mock<IRegistryPathProvider>();
         mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
 
-        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(), new JsonRegistrySerializer(), new PhysicalFileSystem());
+        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
         var session = new Session(new SessionId("s"), new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
 
         try
@@ -140,7 +160,7 @@ public class RegistrySessionPersistenceTests : IDisposable
     [Fact(DisplayName = "RegistrySessionWriter should have a working DI-compatible constructor.")]
     public void DIConstructor_ShouldWork()
     {
-        var mapper = new RegistryTaskMapper();
+        var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
         var fileSystem = new PhysicalFileSystem();
         var pathProvider = new DefaultRegistryPathProvider();

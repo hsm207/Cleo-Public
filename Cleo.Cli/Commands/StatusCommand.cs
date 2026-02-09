@@ -20,7 +20,7 @@ internal sealed class StatusCommand
 
     public Command Build()
     {
-        var command = new Command("status", "Fetch the fresh pulse and update the registry 💓");
+        var command = new Command("status", "Check the status and heartbeat of a session 💓");
 
         var handleArgument = new Argument<string>("handle", "The session handle (ID).");
         command.AddArgument(handleArgument);
@@ -38,7 +38,7 @@ internal sealed class StatusCommand
             var request = new RefreshPulseRequest(sessionId);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            if (response.IsCached)
+            if (response.Warning != null)
             {
                 Console.WriteLine(response.Warning);
             }
@@ -51,7 +51,7 @@ internal sealed class StatusCommand
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch status.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }
 }

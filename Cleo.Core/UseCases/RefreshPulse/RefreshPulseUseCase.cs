@@ -50,7 +50,6 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             foreach (var activity in activities)
             {
                 // Simple synchronization: Add only if not already present
-                // (In a more robust system, we would check Activity IDs)
                 if (session.SessionLog.All(a => a.Id != activity.Id))
                 {
                     session.AddActivity(activity);

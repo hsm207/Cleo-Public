@@ -55,7 +55,7 @@ internal sealed class ActivitiesCommand
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch activities.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Something went wrong: {ex.Message}");
+            Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }
 }
