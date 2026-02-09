@@ -44,9 +44,9 @@ public record FeedbackRequested(
 /// </summary>
 public record SolutionReady(
     SessionId SessionId, 
-    SolutionPatch Solution, 
+    ChangeSet Solution, 
     DateTimeOffset OccurredOn) : IDomainEvent
 {
-    public SolutionReady(SessionId sessionId, SolutionPatch solution) 
+    public SolutionReady(SessionId sessionId, ChangeSet solution) 
         : this(sessionId, solution, DateTimeOffset.UtcNow) { }
 }

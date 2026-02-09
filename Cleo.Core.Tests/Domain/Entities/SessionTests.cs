@@ -61,17 +61,18 @@ public class SessionTests
         Assert.Equal(activity, session.SessionLog.First());
     }
 
-    [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when an activity with a CodeProposal is added.")]
-    public void AddingCodeProposalEvidenceShouldUpdateSolution()
+    [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when an activity with a ChangeSet is added.")]
+    public void AddingChangeSetEvidenceShouldUpdateSolution()
     {
         var session = new Session(Id, Task, Source, InitialPulse);
-        var patch = new SolutionPatch("diff-content", "base-commit");
-        var evidence = new List<Artifact> { new CodeProposal(patch) };
+        var patch = new GitPatch("diff-content", "base-commit");
+        var changeSet = new ChangeSet("sources/repo", patch);
+        var evidence = new List<Artifact> { changeSet };
         var activity = new ProgressActivity("act/2", DateTimeOffset.UtcNow, "Done", evidence);
 
         session.AddActivity(activity);
 
-        Assert.Equal(patch, session.Solution);
+        Assert.Equal(changeSet, session.Solution);
         var events = session.DomainEvents;
         Assert.Contains(events, e => e is SolutionReady);
     }
@@ -119,7 +120,7 @@ public class SessionTests
         var e1 = new SessionAssigned(Id, Task, now);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse, now);
         var e3 = new FeedbackRequested(Id, "prompt", now);
-        var e4 = new SolutionReady(Id, new SolutionPatch("d", "b"), now);
+        var e4 = new SolutionReady(Id, new ChangeSet("s", new GitPatch("d", "b")), now);
 
         Assert.Equal(now, e1.OccurredOn);
         Assert.Equal(now, e2.OccurredOn);
@@ -176,12 +177,13 @@ public class SessionTests
     public void EventsShouldBeFullyExercised()
     {
         var now = DateTimeOffset.UtcNow;
-        var patch = new SolutionPatch("d", "b");
+        var patch = new GitPatch("d", "b");
+        var changeSet = new ChangeSet("s", patch);
         
         var e1 = new SessionAssigned(Id, Task, now);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse, now);
         var e3 = new FeedbackRequested(Id, "prompt", now);
-        var e4 = new SolutionReady(Id, patch, now);
+        var e4 = new SolutionReady(Id, changeSet, now);
 
         // Explicitly hit EVERY property of EVERY event
         Assert.Equal(Id, e1.SessionId);
@@ -197,7 +199,7 @@ public class SessionTests
         Assert.Equal(now, e3.OccurredOn);
 
         Assert.Equal(Id, e4.SessionId);
-        Assert.Equal(patch, e4.Solution);
+        Assert.Equal(changeSet, e4.Solution);
         Assert.Equal(now, e4.OccurredOn);
     }
 
@@ -228,18 +230,19 @@ public class SessionTests
     public void EventsShouldExposeProperties()
     {
         var now = DateTimeOffset.UtcNow;
-        var patch = new SolutionPatch("d", "b");
+        var patch = new GitPatch("d", "b");
+        var changeSet = new ChangeSet("s", patch);
         
         var e1 = new SessionAssigned(Id, Task);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse);
         var e3 = new FeedbackRequested(Id, "prompt");
-        var e4 = new SolutionReady(Id, patch);
+        var e4 = new SolutionReady(Id, changeSet);
 
         Assert.Equal(Id, e1.SessionId);
         Assert.Equal(Task, e1.Task);
         Assert.Equal(InitialPulse, e2.Pulse);
         Assert.Equal("prompt", e3.Prompt);
-        Assert.Equal(patch, e4.Solution);
+        Assert.Equal(changeSet, e4.Solution);
         
         // Exercise the 'OccurredOn' from secondary constructor
         Assert.True((DateTimeOffset.UtcNow - e1.OccurredOn).TotalSeconds < 5);

@@ -15,7 +15,7 @@ public class Session : AggregateRoot
     public TaskDescription Task { get; }
     public SourceContext Source { get; }
     public SessionPulse Pulse { get; private set; }
-    public SolutionPatch? Solution { get; private set; }
+    public ChangeSet? Solution { get; private set; }
     public Uri? DashboardUri { get; }
     
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
@@ -105,11 +105,11 @@ public class Session : AggregateRoot
         ArgumentNullException.ThrowIfNull(activity);
         _sessionLog.Add(activity);
 
-        // Identify if this event produced a solution
-        var codeProposal = activity.Evidence.OfType<CodeProposal>().FirstOrDefault();
-        if (codeProposal != null)
+        // Identify if this event produced a solution (ChangeSet)
+        var changeSet = activity.Evidence.OfType<ChangeSet>().FirstOrDefault();
+        if (changeSet != null)
         {
-            SetSolution(codeProposal.Patch);
+            SetSolution(changeSet);
         }
     }
 
@@ -119,7 +119,7 @@ public class Session : AggregateRoot
         AddActivity(new MessageActivity(activityId, DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
     }
 
-    private void SetSolution(SolutionPatch solution)
+    private void SetSolution(ChangeSet solution)
     {
         Solution = solution;
         RecordDomainEvent(new SolutionReady(Id, solution));
