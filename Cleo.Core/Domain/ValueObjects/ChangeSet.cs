@@ -23,5 +23,13 @@ public record ChangeSet : Artifact
         Patch = patch;
     }
 
-    public override string GetSummary() => $"📦 ChangeSet: Produced patch for '{Source}'";
+    public override string GetSummary()
+    {
+        var files = Patch.GetModifiedFiles();
+        var fileSummary = files.Count > 0 
+            ? $"Updated [{string.Join(", ", files)}]" 
+            : "Produced patch";
+
+        return $"📦 ChangeSet: {fileSummary} in '{Source}'";
+    }
 }

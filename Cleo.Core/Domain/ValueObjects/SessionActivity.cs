@@ -19,21 +19,6 @@ public abstract record Artifact
 }
 
 /// <summary>
-/// Evidence of a terminal command execution.
-/// </summary>
-public record CommandEvidence(string Command, string Output, int ExitCode) : Artifact;
-
-/// <summary>
-/// A formal code proposal (Patch).
-/// </summary>
-public record CodeProposal(SolutionPatch Patch) : Artifact;
-
-/// <summary>
-/// Media-based evidence (e.g., screenshots).
-/// </summary>
-public record MediaEvidence(string MimeType, string Data) : Artifact;
-
-/// <summary>
 /// Represents a single observable event in the Session Log.
 /// Acts as a container for hierarchical Artifacts (Evidence).
 /// </summary>
