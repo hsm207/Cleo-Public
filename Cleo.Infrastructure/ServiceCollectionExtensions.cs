@@ -52,9 +52,11 @@ public static class ServiceCollectionExtensions
 
         // High-Fidelity Activity Persistence Plugins (South Boundary) 🔌💎
         services.AddSingleton<ArtifactMapperFactory>();
-        services.AddSingleton<IArtifactPersistenceMapper, CommandEvidenceMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, CodeProposalMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, MediaEvidenceMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, BashOutputMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, LegacyCommandMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, ChangeSetMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, LegacyPatchMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, VisualSnapshotMapper>();
 
         services.AddSingleton<ActivityMapperFactory>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.PlanningActivityMapper>();

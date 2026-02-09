@@ -7,6 +7,7 @@ using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Moq;
 using Moq.Protected;
+using Xunit;
 
 namespace Cleo.Infrastructure.Tests.Clients.Jules;
 
@@ -72,11 +73,11 @@ public class RestJulesActivityClientTests
         
         var progress = Assert.IsType<ProgressActivity>(result.First());
         Assert.Single(progress.Evidence);
-        Assert.IsType<CommandEvidence>(progress.Evidence.First());
+        Assert.IsType<BashOutput>(progress.Evidence.First());
         
         var completion = Assert.IsType<CompletionActivity>(result.Last());
         Assert.Single(completion.Evidence);
-        Assert.IsType<CodeProposal>(completion.Evidence.First());
+        Assert.IsType<ChangeSet>(completion.Evidence.First());
     }
 
     [Fact(DisplayName = "GetActivitiesAsync should return an empty collection if the API returns null activities.")]

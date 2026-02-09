@@ -15,21 +15,23 @@ internal static class ArtifactMappingHelper
             if (dto.ChangeSet?.GitPatch != null)
             {
                 var patch = dto.ChangeSet.GitPatch;
-                artifacts.Add(new CodeProposal(new SolutionPatch(
-                    patch.UnidiffPatch ?? string.Empty, 
-                    patch.BaseCommitId ?? string.Empty, 
-                    patch.SuggestedCommitMessage)));
+                artifacts.Add(new ChangeSet(
+                    dto.ChangeSet.Source ?? "unknown-source",
+                    new GitPatch(
+                        patch.UnidiffPatch ?? string.Empty, 
+                        patch.BaseCommitId ?? string.Empty, 
+                        patch.SuggestedCommitMessage)));
             }
             else if (dto.BashOutput != null)
             {
-                artifacts.Add(new CommandEvidence(
+                artifacts.Add(new BashOutput(
                     dto.BashOutput.Command ?? string.Empty, 
                     dto.BashOutput.Output ?? string.Empty, 
                     dto.BashOutput.ExitCode));
             }
             else if (dto.Media != null)
             {
-                artifacts.Add(new MediaEvidence(
+                artifacts.Add(new VisualSnapshot(
                     dto.Media.MimeType ?? string.Empty, 
                     dto.Media.Data ?? string.Empty));
             }

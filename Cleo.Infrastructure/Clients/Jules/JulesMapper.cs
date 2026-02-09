@@ -32,7 +32,8 @@ internal static class JulesMapper
         if (prOutput != null)
         {
             var patch = prOutput.ChangeSet!.GitPatch!;
-            var evidence = new List<Artifact> { new CodeProposal(new SolutionPatch(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
+            var source = prOutput.ChangeSet.Source ?? "remote-source";
+            var evidence = new List<Artifact> { new ChangeSet(source, new GitPatch(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
             
             // Attach the PR to a synthetic completion activity to mark delivery
             session.AddActivity(new CompletionActivity(

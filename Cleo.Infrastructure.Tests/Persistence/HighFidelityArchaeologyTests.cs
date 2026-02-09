@@ -18,9 +18,9 @@ public class HighFidelityArchaeologyTests
         
         // Register High-Fidelity Persistence Plugins (South Boundary) 🔌💎
         services.AddSingleton<ArtifactMapperFactory>();
-        services.AddSingleton<IArtifactPersistenceMapper, CommandEvidenceMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, CodeProposalMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, MediaEvidenceMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, BashOutputMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, ChangeSetMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, VisualSnapshotMapper>();
 
         services.AddSingleton<ActivityMapperFactory>();
         services.AddSingleton<IActivityPersistenceMapper, PlanningActivityMapper>();
@@ -65,9 +65,9 @@ public class HighFidelityArchaeologyTests
         var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
         var evidence = new List<Artifact>
         {
-            new CommandEvidence("ls -la", "total 0", 0),
-            new CodeProposal(new SolutionPatch("diff", "base", "msg")),
-            new MediaEvidence("image/png", "base64-data")
+            new BashOutput("ls -la", "total 0", 0),
+            new ChangeSet("repo", new GitPatch("diff", "base", "msg")),
+            new VisualSnapshot("image/png", "base64-data")
         };
         var original = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Testing with evidence", evidence);
 
@@ -78,9 +78,9 @@ public class HighFidelityArchaeologyTests
         // Assert
         hydrated.Should().NotBeNull();
         hydrated!.Evidence.Should().HaveCount(3);
-        hydrated.Evidence.OfType<CommandEvidence>().First().Command.Should().Be("ls -la");
-        hydrated.Evidence.OfType<CodeProposal>().First().Patch.UniDiff.Should().Be("diff");
-        hydrated.Evidence.OfType<MediaEvidence>().First().MimeType.Should().Be("image/png");
+        hydrated.Evidence.OfType<BashOutput>().First().Command.Should().Be("ls -la");
+        hydrated.Evidence.OfType<ChangeSet>().First().Patch.UniDiff.Should().Be("diff");
+        hydrated.Evidence.OfType<VisualSnapshot>().First().MimeType.Should().Be("image/png");
     }
 
     [Fact(DisplayName = "Persistence is decoupled from C# class names via stable discriminators 🧱🛡️")]

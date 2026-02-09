@@ -23,9 +23,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Register Artifact mapping 🔌📎
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
         {
-            new CommandEvidenceMapper(),
-            new CodeProposalMapper(),
-            new MediaEvidenceMapper()
+            new BashOutputMapper(),
+            new ChangeSetMapper(),
+            new VisualSnapshotMapper()
         });
 
         // Register Activity mapping 🔌🏺
