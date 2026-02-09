@@ -14,7 +14,7 @@ internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
         ["PLANNING"] = SessionStatus.Planning,
         ["IN_PROGRESS"] = SessionStatus.InProgress,
         ["AWAITING_USER_FEEDBACK"] = SessionStatus.AwaitingFeedback,
-        ["AWAITING_PLAN_APPROVAL"] = SessionStatus.AwaitingFeedback,
+        ["AWAITING_PLAN_APPROVAL"] = SessionStatus.AwaitingPlanApproval,
         ["PAUSED"] = SessionStatus.InProgress,
         ["COMPLETED"] = SessionStatus.Completed,
         ["FAILED"] = SessionStatus.Failed

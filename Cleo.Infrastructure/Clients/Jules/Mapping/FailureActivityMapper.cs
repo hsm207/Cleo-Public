@@ -10,5 +10,9 @@ internal sealed class FailureActivityMapper : IJulesActivityMapper
 {
     public bool CanMap(JulesActivityDto dto) => dto.SessionFailed is not null;
     
-    public SessionActivity Map(JulesActivityDto dto) => new FailureActivity(dto.Id, dto.CreateTime, dto.SessionFailed!.Reason);
+    public SessionActivity Map(JulesActivityDto dto) => new FailureActivity(
+        dto.Id, 
+        dto.CreateTime, 
+        dto.SessionFailed!.Reason ?? "Unknown failure",
+        ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
 }

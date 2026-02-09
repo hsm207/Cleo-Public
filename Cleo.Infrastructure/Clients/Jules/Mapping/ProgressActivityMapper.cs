@@ -10,13 +10,9 @@ internal sealed class ProgressActivityMapper : IJulesActivityMapper
 {
     public bool CanMap(JulesActivityDto dto) => dto.ProgressUpdated is not null;
     
-    public SessionActivity Map(JulesActivityDto dto)
-    {
-        var detail = dto.ProgressUpdated!.Title;
-        if (!string.IsNullOrWhiteSpace(dto.ProgressUpdated.Description))
-        {
-            detail += $": {dto.ProgressUpdated.Description}";
-        }
-        return new ProgressActivity(dto.Id, dto.CreateTime, detail);
-    }
+    public SessionActivity Map(JulesActivityDto dto) => new ProgressActivity(
+        dto.Id, 
+        dto.CreateTime, 
+        dto.ProgressUpdated!.Description ?? string.Empty,
+        ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
 }

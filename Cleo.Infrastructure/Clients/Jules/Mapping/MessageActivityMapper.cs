@@ -4,28 +4,17 @@ using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
 /// <summary>
-/// Maps various Jules API messaging activities (user, agent, plan approval) into domain-centric MessageActivity objects.
+/// Maps Jules API messaging activities into domain-centric MessageActivity objects.
 /// </summary>
 internal sealed class MessageActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => 
-        dto.UserMessaged is not null || 
-        dto.AgentMessaged is not null || 
-        dto.PlanApproved is not null || 
-        string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase);
+    public bool CanMap(JulesActivityDto dto) => dto.AgentMessaged is not null || dto.UserMessaged is not null;
 
     public SessionActivity Map(JulesActivityDto dto)
     {
-        var originator = dto.Originator switch {
-            _ when string.Equals(dto.Originator, "USER", StringComparison.OrdinalIgnoreCase) => ActivityOriginator.User,
-            _ when string.Equals(dto.Originator, "AGENT", StringComparison.OrdinalIgnoreCase) => ActivityOriginator.Agent,
-            _ => ActivityOriginator.System
-        };
+        var originator = dto.AgentMessaged is not null ? ActivityOriginator.Agent : ActivityOriginator.User;
+        var text = dto.AgentMessaged?.AgentMessage ?? dto.UserMessaged?.UserMessage ?? string.Empty;
 
-        var text = dto.UserMessaged?.UserMessage 
-            ?? dto.AgentMessaged?.AgentMessage 
-            ?? (dto.PlanApproved is not null ? $"Plan {dto.PlanApproved.PlanId} approved." : "Unknown activity.");
-
-        return new MessageActivity(dto.Id, dto.CreateTime, originator, text);
+        return new MessageActivity(dto.Id, dto.CreateTime, originator, text, ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
     }
 }
