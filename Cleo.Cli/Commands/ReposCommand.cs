@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 namespace Cleo.Cli.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
-internal sealed class SourcesCommand
+internal sealed class ReposCommand
 {
     private readonly IBrowseSourcesUseCase _useCase;
-    private readonly ILogger<SourcesCommand> _logger;
+    private readonly ILogger<ReposCommand> _logger;
 
-    public SourcesCommand(IBrowseSourcesUseCase useCase, ILogger<SourcesCommand> logger)
+    public ReposCommand(IBrowseSourcesUseCase useCase, ILogger<ReposCommand> logger)
     {
         _useCase = useCase;
         _logger = logger;
@@ -19,7 +19,7 @@ internal sealed class SourcesCommand
 
     public Command Build()
     {
-        var command = new Command("sources", "List available GitHub repositories for collaboration 🛰️");
+        var command = new Command("repos", "List available GitHub repositories for collaboration 🛰️");
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -38,7 +38,7 @@ internal sealed class SourcesCommand
                 return;
             }
 
-            Console.WriteLine("🛰️ Available Sources:");
+            Console.WriteLine("🛰️ Available Repositories:");
             foreach (var source in response.Sources)
             {
                 Console.WriteLine($"- {source.Name}");
@@ -47,7 +47,7 @@ internal sealed class SourcesCommand
         catch (Exception ex)
         {
             #pragma warning disable CA1848
-            _logger.LogError(ex, "❌ Failed to fetch sources.");
+            _logger.LogError(ex, "❌ Failed to fetch repositories.");
             #pragma warning restore CA1848
             Console.WriteLine($"💔 Error: {ex.Message}");
         }

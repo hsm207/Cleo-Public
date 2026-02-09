@@ -7,12 +7,12 @@ using Microsoft.Extensions.Logging;
 namespace Cleo.Cli.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
-internal sealed class ActivitiesCommand
+internal sealed class LogCommand
 {
     private readonly IBrowseHistoryUseCase _useCase;
-    private readonly ILogger<ActivitiesCommand> _logger;
+    private readonly ILogger<LogCommand> _logger;
 
-    public ActivitiesCommand(IBrowseHistoryUseCase useCase, ILogger<ActivitiesCommand> logger)
+    public LogCommand(IBrowseHistoryUseCase useCase, ILogger<LogCommand> logger)
     {
         _useCase = useCase;
         _logger = logger;
@@ -20,7 +20,17 @@ internal sealed class ActivitiesCommand
 
     public Command Build()
     {
-        var command = new Command("activities", "View the Session Log for a session 📜");
+        var command = new Command("log", "Historical audit trail and artifact archaeology 🏺");
+
+        // Subcommand: view (was activities)
+        command.AddCommand(BuildViewCommand());
+
+        return command;
+    }
+
+    private Command BuildViewCommand()
+    {
+        var command = new Command("view", "View the Session Log for a session 📜");
 
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
         command.AddArgument(sessionIdArgument);
