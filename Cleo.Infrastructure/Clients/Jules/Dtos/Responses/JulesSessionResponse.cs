@@ -17,5 +17,10 @@ public sealed record JulesSessionResponse(
     [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval,
     [property: JsonPropertyName("automationMode")] string? AutomationMode,
     [property: JsonPropertyName("createTime")] DateTimeOffset? CreateTime,
-    [property: JsonPropertyName("updateTime")] DateTimeOffset? UpdateTime
+    [property: JsonPropertyName("updateTime")] DateTimeOffset? UpdateTime,
+    [property: JsonPropertyName("outputs")] JulesOutputDto[]? Outputs = null
+);
+
+public sealed record JulesOutputDto(
+    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet
 );
