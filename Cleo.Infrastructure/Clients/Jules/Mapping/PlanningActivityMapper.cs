@@ -14,5 +14,6 @@ internal sealed class PlanningActivityMapper : IJulesActivityMapper
         dto.Id, 
         dto.CreateTime, 
         dto.PlanGenerated!.Plan.Id ?? "unknown",
-        dto.PlanGenerated!.Plan.Steps.Select(s => new PlanStep(s.Index, s.Title, s.Description ?? string.Empty)).ToList());
+        dto.PlanGenerated!.Plan.Steps.Select(s => new PlanStep(s.Index, s.Title, s.Description ?? string.Empty)).ToList(),
+        ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
 }

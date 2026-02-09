@@ -5,6 +5,7 @@ using Cleo.Infrastructure.Common;
 using Cleo.Infrastructure.Messaging;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
+using Cleo.Infrastructure.Persistence.Mappers;
 using Cleo.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
@@ -48,21 +49,34 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
         services.AddSingleton<ISessionReader, RegistrySessionReader>();
         services.AddSingleton<ISessionWriter, RegistrySessionWriter>();
+
+        // High-Fidelity Activity Persistence Plugins (South Boundary) 🔌💎
+        services.AddSingleton<ArtifactMapperFactory>();
+        services.AddSingleton<IArtifactPersistenceMapper, CommandEvidenceMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, CodeProposalMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, MediaEvidenceMapper>();
+
+        services.AddSingleton<ActivityMapperFactory>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.PlanningActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.MessageActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.ApprovalActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.ProgressActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.CompletionActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.FailureActivityMapper>();
         
         // Messaging
         services.AddSingleton<IDispatcher, MediatRDispatcher>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
 
-        // Jules Client & Mappers
+        // Jules Client & Mappers (North Boundary)
         services.AddSingleton<ISessionStatusMapper, DefaultSessionStatusMapper>();
-        services.AddSingleton<IJulesActivityMapper, PlanningActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, ResultActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, ExecutionActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, ProgressActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, CompletionActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, FailureActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, MessageActivityMapper>();
-        services.AddSingleton<IJulesActivityMapper, UnknownActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.PlanningActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.ApprovalActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.ProgressActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.CompletionActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.FailureActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.MessageActivityMapper>();
+        services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper, Clients.Jules.Mapping.UnknownActivityMapper>();
 
         services.AddTransient<JulesAuthHandler>();
         services.AddTransient<JulesLoggingHandler>();

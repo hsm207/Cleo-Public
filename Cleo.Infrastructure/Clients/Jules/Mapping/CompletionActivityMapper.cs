@@ -10,5 +10,5 @@ internal sealed class CompletionActivityMapper : IJulesActivityMapper
 {
     public bool CanMap(JulesActivityDto dto) => dto.SessionCompleted is not null;
     
-    public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(dto.Id, dto.CreateTime);
+    public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(dto.Id, dto.CreateTime, ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
 }
