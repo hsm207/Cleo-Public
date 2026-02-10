@@ -25,7 +25,7 @@ internal sealed class SessionCommand
 
     public Command Build()
     {
-        var command = new Command("session", "Core lifecycle management and pulse checks 💓");
+        var command = new Command("session", "Lifecycle Management. Use this to initiate, list, recover, or evaluate the pulse and stance of an engineering collaboration. More specialized subcommands available. Use --help to explore further.");
 
         command.AddCommand(_newCommand.Build());
         command.AddCommand(_listCommand.Build());
