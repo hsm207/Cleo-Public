@@ -94,20 +94,35 @@ public record ApprovalActivity(
 public record ProgressActivity(
     string Id, 
     DateTimeOffset Timestamp, 
-    string Detail,
+    string Title,
+    string? Description = null,
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
 {
+    private const string Indent = "          "; // Indent to match "- [HH:mm] "
+
     public override string GetContentSummary()
     {
-        if (!string.IsNullOrWhiteSpace(Detail)) return Detail;
-        
-        if (Evidence.Count > 0)
+        var sb = new System.Text.StringBuilder();
+        sb.Append(Title);
+
+        if (!string.IsNullOrWhiteSpace(Description))
         {
-            return string.Join(" | ", Evidence.Select(e => e.GetSummary()));
+            sb.AppendLine();
+            sb.Append(Indent);
+            sb.Append("💭 ");
+            sb.Append(Description.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
         }
 
-        return string.Empty;
+        if (Evidence.Count > 0)
+        {
+            sb.AppendLine();
+            sb.Append(Indent);
+            sb.Append("📦 ");
+            sb.Append(string.Join($"\n{Indent}📦 ", Evidence.Select(e => e.GetSummary())));
+        }
+
+        return sb.ToString();
     }
 
     public override bool IsSignificant => false;

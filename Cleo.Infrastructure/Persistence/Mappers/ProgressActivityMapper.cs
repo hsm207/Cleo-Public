@@ -21,7 +21,8 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
     {
         var progress = (ProgressActivity)activity;
         return JsonSerializer.Serialize(new ProgressPayloadDto(
-            progress.Detail,
+            progress.Title,
+            progress.Description,
             progress.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
@@ -31,9 +32,10 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
         return new ProgressActivity(
             id, 
             timestamp, 
-            dto?.Detail ?? string.Empty,
+            dto?.Title ?? string.Empty,
+            dto?.Description,
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
-    private sealed record ProgressPayloadDto(string Detail, List<ArtifactEnvelope> Evidence);
+    private sealed record ProgressPayloadDto(string Title, string? Description, List<ArtifactEnvelope> Evidence);
 }
