@@ -13,6 +13,7 @@ internal sealed class ProgressActivityMapper : IJulesActivityMapper
     public SessionActivity Map(JulesActivityDto dto) => new ProgressActivity(
         dto.Id, 
         dto.CreateTime, 
-        dto.ProgressUpdated!.Description ?? string.Empty,
+        dto.ProgressUpdated!.Title,
+        dto.ProgressUpdated.Description,
         ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
 }
