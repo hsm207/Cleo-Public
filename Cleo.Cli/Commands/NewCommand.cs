@@ -24,7 +24,7 @@ internal sealed class NewCommand
 
     public Command Build()
     {
-        var command = new Command("new", "Assign a new Task to Jules ✨");
+        var command = new Command("new", "Assign a specific task to the agent. This initiates the collaboration session.");
 
         var taskArgument = new Argument<string>("task", "The high-level goal or task for Jules.");
         command.AddArgument(taskArgument);

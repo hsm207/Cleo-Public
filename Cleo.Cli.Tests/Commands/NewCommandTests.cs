@@ -30,7 +30,7 @@ public class NewCommandTests
         var command = _command.Build();
 
         // Assert
-        command.Description.Should().Be("Assign a new Task to Jules ✨");
+        command.Description.Should().Be("Assign a specific task to the agent. This initiates the collaboration session.");
 
         var argument = command.Arguments.FirstOrDefault();
         argument.Should().NotBeNull();
