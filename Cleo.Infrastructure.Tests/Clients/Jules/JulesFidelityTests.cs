@@ -1,6 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.Domain.Entities;
+using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
+using Cleo.Infrastructure.Clients.Jules.Mapping;
+using FluentAssertions;
 using Xunit;
 
 namespace Cleo.Infrastructure.Tests.Clients.Jules;
@@ -14,84 +19,86 @@ public class JulesFidelityTests
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    [Fact(DisplayName = "JulesActivityDto should support a perfect, lossless round-trip (JSON -> DTO -> JSON) for all 188 activities")]
-    public void ShouldSupportLosslessJsonRoundTripForEntireHistory()
+    [Fact(DisplayName = "Round-Trip: Activity List Response supports perfect, lossless JSON symmetry")]
+    public void ActivityListResponseShouldSupportLosslessRoundTrip()
     {
-        // Arrange: Load the "Oracle of Jules" (the raw JSON)
-        var path = Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "raw_activities_history.json");
+        var path = Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "raw_activities_list.json");
         var jsonContent = File.ReadAllText(path);
         using var doc = JsonDocument.Parse(jsonContent);
 
-        Assert.Equal(188, doc.RootElement.GetArrayLength());
+        var dto = JsonSerializer.Deserialize<JulesListActivitiesResponseDto>(jsonContent, Options);
+        Assert.NotNull(dto);
 
-        // Act & Assert: The Sovereign Round-Trip
-        foreach (var originalElement in doc.RootElement.EnumerateArray())
-        {
-            // 1. Get the raw JSON of a single activity (A)
-            var originalJson = originalElement.GetRawText();
+        var roundTripJson = JsonSerializer.Serialize(dto, Options);
+        using var roundTripDoc = JsonDocument.Parse(roundTripJson);
+        AssertJsonElementsEqual(doc.RootElement, roundTripDoc.RootElement);
+    }
 
-            // 2. Deserialize into our sectioned DTO
-            var dto = JsonSerializer.Deserialize<JulesActivityDto>(originalJson, Options);
-            Assert.NotNull(dto);
+    [Fact(DisplayName = "Round-Trip: Session Response supports perfect, lossless JSON symmetry")]
+    public void SessionResponseShouldSupportLosslessRoundTrip()
+    {
+        var path = Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "session_created.json");
+        var jsonContent = File.ReadAllText(path);
+        using var doc = JsonDocument.Parse(jsonContent);
 
-            // 3. Serialize back to JSON (B)
-            var roundTripJson = JsonSerializer.Serialize(dto, Options);
+        var dto = JsonSerializer.Deserialize<JulesSessionResponseDto>(jsonContent, Options);
+        Assert.NotNull(dto);
 
-            // 4. Assert A == B (Comparing structural equality)
-            using var roundTripDoc = JsonDocument.Parse(roundTripJson);
-            AssertJsonElementsEqual(originalElement, roundTripDoc.RootElement);
-        }
+        var roundTripJson = JsonSerializer.Serialize(dto, Options);
+        using var roundTripDoc = JsonDocument.Parse(roundTripJson);
+        AssertJsonElementsEqual(doc.RootElement, roundTripDoc.RootElement);
+    }
+
+    [Fact(DisplayName = "Mapping: All API fields must reach the Domain (NO DATA LOSS)")]
+    public void MappingShouldPreserveAllApiFields()
+    {
+        var path = Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "session_created.json");
+        var jsonContent = File.ReadAllText(path);
+        var dto = JsonSerializer.Deserialize<JulesSessionResponseDto>(jsonContent, Options)!;
+        var statusMapper = new DefaultSessionStatusMapper();
+
+        var domain = JulesMapper.Map(dto, new TaskDescription(dto.Prompt), statusMapper);
+
+        // Identity
+        domain.Id.Value.Should().Be(dto.Name);
+        
+        // 🛑 FAILING CHECKS (PROVING DATA LOSS):
+        domain.RemoteId.Should().Be(dto.Id, "the short ID must be preserved for bug correlation");
+        domain.CreatedAt.Should().Be(DateTimeOffset.Parse(dto.CreateTime!), "the session must know when it was born");
     }
 
     private static void AssertJsonElementsEqual(JsonElement expected, JsonElement actual)
     {
         Assert.Equal(expected.ValueKind, actual.ValueKind);
-
         switch (expected.ValueKind)
         {
             case JsonValueKind.Object:
                 var expectedProps = expected.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
                 var actualProps = actual.EnumerateObject().ToDictionary(p => p.Name, p => p.Value);
-                
-                Assert.True(expectedProps.Count == actualProps.Count, $"Property count mismatch! \nExpected [{expectedProps.Count}]: {string.Join(", ", expectedProps.Keys)}\nActual [{actualProps.Count}]: {string.Join(", ", actualProps.Keys)}\nOriginal JSON: {expected.GetRawText()}\nActual JSON: {actual.GetRawText()}");
-                
+                Assert.True(expectedProps.Count == actualProps.Count, $"Prop count mismatch! Expected [{expectedProps.Count}] Actual [{actualProps.Count}] in {expected.GetRawText()}");
                 foreach (var prop in expectedProps)
                 {
-                    Assert.True(actualProps.ContainsKey(prop.Key), $"Missing property: {prop.Key} in {expected.GetRawText()}");
+                    Assert.True(actualProps.ContainsKey(prop.Key), $"Missing property: {prop.Key}");
                     AssertJsonElementsEqual(prop.Value, actualProps[prop.Key]);
                 }
-                
-                // Also check for extra properties in actual that aren't in expected
-                foreach (var prop in actualProps)
-                {
-                    Assert.True(expectedProps.ContainsKey(prop.Key), $"Extra property found in actual: {prop.Key} in {actual.GetRawText()}");
-                }
                 break;
-
             case JsonValueKind.Array:
                 Assert.Equal(expected.GetArrayLength(), actual.GetArrayLength());
                 for (int i = 0; i < expected.GetArrayLength(); i++)
-                {
                     AssertJsonElementsEqual(expected[i], actual[i]);
-                }
                 break;
-
             case JsonValueKind.String:
                 Assert.Equal(expected.GetString(), actual.GetString());
                 break;
-
             case JsonValueKind.Number:
-                Assert.Equal(expected.GetDecimal(), actual.GetDecimal());
+                // Handle precision: use GetRawText if numeric comparison is tricky
+                Assert.Equal(expected.GetRawText(), actual.GetRawText());
                 break;
-
             case JsonValueKind.True:
             case JsonValueKind.False:
             case JsonValueKind.Null:
-                // ValueKind check above handles these
                 break;
-
             default:
-                Assert.Equal(expected.GetRawText(), actual.GetRawText());
                 break;
         }
     }
