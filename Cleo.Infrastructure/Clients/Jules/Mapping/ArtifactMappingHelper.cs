@@ -31,7 +31,7 @@ internal static class ArtifactMappingHelper
             }
             else if (dto.Media != null)
             {
-                artifacts.Add(new VisualSnapshot(
+                artifacts.Add(new MediaArtifact(
                     dto.Media.MimeType ?? string.Empty, 
                     dto.Media.Data ?? string.Empty));
             }

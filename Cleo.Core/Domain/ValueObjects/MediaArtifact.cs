@@ -1,14 +1,14 @@
 namespace Cleo.Core.Domain.ValueObjects;
 
 /// <summary>
-/// A media output produced by the session.
+/// A media artifact produced by the session (e.g., image, video, audio).
 /// </summary>
-public record VisualSnapshot : Artifact
+public record MediaArtifact : Artifact
 {
     public string MimeType { get; init; }
     public string Data { get; init; }
 
-    public VisualSnapshot(string mimeType, string data)
+    public MediaArtifact(string mimeType, string data)
     {
         ArgumentNullException.ThrowIfNull(mimeType);
 
@@ -21,5 +21,9 @@ public record VisualSnapshot : Artifact
         Data = data ?? string.Empty;
     }
 
-    public override string GetSummary() => $"🖼️ Media: Produced '{MimeType}'";
+    public override string GetSummary()
+    {
+        var symbol = MimeType.StartsWith("image/", StringComparison.Ordinal) ? "🖼️" : "📎";
+        return $"{symbol} Media: Produced '{MimeType}'";
+    }
 }
