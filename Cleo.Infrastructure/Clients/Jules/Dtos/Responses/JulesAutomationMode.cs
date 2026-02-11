@@ -8,8 +8,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum JulesAutomationMode
 {
-    [JsonPropertyName("AUTOMATION_MODE_UNSPECIFIED")]
+    [JsonStringEnumMemberName("AUTOMATION_MODE_UNSPECIFIED")]
     AutomationModeUnspecified,
-    [JsonPropertyName("AUTO_CREATE_PR")]
+    [JsonStringEnumMemberName("AUTO_CREATE_PR")]
     AutoCreatePr
 }

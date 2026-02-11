@@ -42,7 +42,7 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
                 new JulesGithubRepoContextDto(source.StartingBranch)),
             options.Title,
             options.RequirePlanApproval,
-            options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "NONE"
+            options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "AUTOMATION_MODE_UNSPECIFIED"
         );
 
         try
