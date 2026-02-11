@@ -46,7 +46,7 @@ public class HighFidelityArchaeologyTests
             new(0, "Step 1", "Description 1"),
             new(1, "Step 2", "Description 2")
         };
-        var original = new PlanningActivity("act-123", DateTimeOffset.UtcNow, "plan-456", originalSteps);
+        var original = new PlanningActivity("act-123", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-456", originalSteps);
 
         // Act
         var envelope = factory.ToEnvelope(original);
@@ -69,7 +69,7 @@ public class HighFidelityArchaeologyTests
             new ChangeSet("repo", new GitPatch("diff", "base", "msg")),
             new VisualSnapshot("image/png", "base64-data")
         };
-        var original = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Testing with evidence", evidence);
+        var original = new ProgressActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Testing with evidence", null, evidence);
 
         // Act
         var envelope = factory.ToEnvelope(original);
@@ -88,7 +88,7 @@ public class HighFidelityArchaeologyTests
     {
         // Arrange
         var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
-        var activity = new PlanningActivity("act-1", DateTimeOffset.UtcNow, "p1", new List<PlanStep>());
+        var activity = new PlanningActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "p1", new List<PlanStep>());
 
         // Act
         var envelope = factory.ToEnvelope(activity);
@@ -109,7 +109,7 @@ public class HighFidelityArchaeologyTests
         var pulse = new SessionPulse(SessionStatus.Completed, "Done (technical)");
         var session = new Session(sessionId, task, source, pulse);
         
-        session.AddActivity(new PlanningActivity("act-plan", DateTimeOffset.UtcNow, "plan-1", new List<PlanStep> { new(0, "Do it", "Now") }));
+        session.AddActivity(new PlanningActivity("act-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-1", new List<PlanStep> { new(0, "Do it", "Now") }));
 
         // Act & Assert
         session.Pulse.Status.Should().Be(SessionStatus.Completed); 

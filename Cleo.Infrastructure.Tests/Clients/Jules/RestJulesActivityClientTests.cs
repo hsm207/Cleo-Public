@@ -5,6 +5,7 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using Cleo.Infrastructure.Tests.Jules;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -43,19 +44,19 @@ public class RestJulesActivityClientTests
     public async Task GetActivitiesAsync_ShouldMapActivitiesWithArtifacts()
     {
         // Arrange
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow.ToString("O");
         
         // 1. Progress activity with Bash Evidence ⚔️
-        var progressDto = new JulesActivityDto("prog", "1", null, now, "agent", 
-            new[] { new ArtifactDto(null, null, new BashOutputDto("ls", "files", 0)) }, 
-            null, null, null, null, new ProgressUpdatedDto("Working", "Running tests"), null, null);
+        var progressDto = JulesDtoTestFactory.Create("prog", "1", null, now, "agent", 
+            new List<ArtifactDto> { new ArtifactDto(null, null, new BashOutputDto("ls", "files", 0)) }, 
+            progressUpdated: new ProgressUpdatedDto("Working", "Running tests"));
             
         // 2. Completion activity with Code Proposal 🎁
-        var completionDto = new JulesActivityDto("done", "2", null, now, "system", 
-            new[] { new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("patch", "base", null)), null, null) }, 
-            null, null, null, null, null, new SessionCompletedDto(), null);
+        var completionDto = JulesDtoTestFactory.Create("done", "2", null, now, "system", 
+            new List<ArtifactDto> { new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("patch", "base", null)), null, null) }, 
+            sessionCompleted: new SessionCompletedDto());
 
-        var response = new ListActivitiesResponse(new[] { progressDto, completionDto }, null);
+        var response = new ListActivitiesResponse(new JulesActivityDto[] { progressDto, completionDto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
