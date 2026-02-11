@@ -37,29 +37,96 @@ public class LogCommandTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact(DisplayName = "Given a valid session ID, when running 'log view', then it should display the history.")]
-    public async Task View_WithActivities_DisplaysHistory()
+    [Fact(DisplayName = "Given a valid session ID with diverse activities, when run, then it renders all symbols correctly.")]
+    public async Task View_WithDiverseActivities_RendersSymbols()
     {
         // Arrange
         var sessionId = new SessionId("test-session");
         var timestamp = DateTimeOffset.UtcNow;
+        var steps = new List<PlanStep> { new PlanStep("step-1", 1, "Do thing", "Desc") };
+        var evidence = new List<Artifact>();
+
         var history = new List<SessionActivity>
         {
-            new MessageActivity("msg-1", "remote-1", timestamp, ActivityOriginator.User, "Hello Jules!")
+            new MessageActivity("msg-1", "remote-1", timestamp, ActivityOriginator.User, "User Msg"), // 👤
+            new MessageActivity("msg-2", "remote-2", timestamp, ActivityOriginator.Agent, "Agent Msg"), // 👸
+            new PlanningActivity("plan-1", "remote-3", timestamp, ActivityOriginator.Agent, "plan-id", steps), // 🗺️
+            new ApprovalActivity("app-1", "remote-4", timestamp, ActivityOriginator.User, "plan-id"), // ✅
+            new ProgressActivity("prog-1", "remote-5", timestamp, ActivityOriginator.Agent, "Thinking...", "I am thinking", evidence), // 🧠 (Reasoning)
+            new ProgressActivity("prog-2", "remote-6", timestamp, ActivityOriginator.Agent, "Working...", null, new List<Artifact> { new MediaArtifact("image/png", "data") }), // 📦 (Outcome)
+            new CompletionActivity("comp-1", "remote-7", timestamp, ActivityOriginator.Agent), // 🏁
+            new FailureActivity("fail-1", "remote-8", timestamp, ActivityOriginator.System, "Error!") // 💥
         };
 
         SetupUseCase(sessionId.Value, history);
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync($"log view {sessionId.Value}");
+        var exitCode = await _command.Build().InvokeAsync($"log view {sessionId.Value} --all");
 
         // Assert
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain($"Activities for {sessionId.Value}");
-        output.Should().Contain("Hello Jules!");
+        output.Should().Contain("👤");
+        output.Should().Contain("👸");
+        output.Should().Contain("🗺️");
+        output.Should().Contain("✅");
+        output.Should().Contain("🧠");
+        output.Should().Contain("📦");
+        output.Should().Contain("🏁");
+        output.Should().Contain("💥");
     }
+
+    [Fact(DisplayName = "Given a session with no activities, when run, then it displays a friendly empty message.")]
+    public async Task View_NoActivities_DisplaysEmptyMessage()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        SetupUseCase(sessionId, new List<SessionActivity>());
+
+        // Act
+        var exitCode = await _command.Build().InvokeAsync($"log view {sessionId}");
+
+        // Assert
+        exitCode.Should().Be(0);
+        _stringWriter.ToString().Should().Contain("📭 No activities found yet");
+    }
+
+    [Fact(DisplayName = "Given a use case failure, when run, then it logs the error and displays a user-friendly message.")]
+    public async Task View_UseCaseFailure_HandlesException()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseHistoryRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Network error"));
+
+        // Act
+        var exitCode = await _command.Build().InvokeAsync($"log view {sessionId}");
+
+        // Assert
+        // Exit code is 0 because the command handles the exception and prints an error message (it returns void Task).
+        // Wait, strictly speaking, System.CommandLine handles exceptions if not caught, but here we catch it.
+        // The command returns `Task`, not `Task<int>`. System.CommandLine infers exit code 0 if successful completion of the handler.
+        // We catch the exception, print error, and return. So exit code is 0.
+        // If we wanted non-zero, we'd need to set context.ExitCode or rethrow.
+        // The current implementation just prints "Error: ...".
+
+        exitCode.Should().Be(0);
+        var output = _stringWriter.ToString();
+        output.Should().Contain("💔 Error: Network error");
+
+        // Verify logger was called
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    // ... Existing tests ...
 
     [Fact(DisplayName = "Given a noisy session log, when viewing the narrative summary, then it should exclude technical heartbeats and show gap markers.")]
     public async Task GivenNoisyLog_WhenViewingSummary_ThenExcludesHeartbeatsAndShowsGapMarkers()
@@ -74,7 +141,6 @@ public class LogCommandTests : IDisposable
             new ProgressActivity("prog-2", "remote-3", now, ActivityOriginator.Agent, "working more"), // Non-Sig
             new MessageActivity("msg-2", "remote-4", now, ActivityOriginator.Agent, "Done") // Sig
         };
-        // Total Sig: 2. Limit: 10. Displayed: 2. Truncated: 0. Hidden Heartbeats: 2. Gap between msg-1 and msg-2 is 2.
 
         SetupUseCase(sessionId, history);
 
