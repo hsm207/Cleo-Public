@@ -6,5 +6,6 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
 public sealed record JulesSourceContextDto(
     [property: JsonPropertyName("source")] string Source,
-    [property: JsonPropertyName("githubRepoContext")] JulesGithubRepoContextDto? GithubRepoContext
+    [property: JsonPropertyName("githubRepoContext")] JulesGithubRepoContextDto? GithubRepoContext,
+    [property: JsonPropertyName("environmentVariablesEnabled")] bool? EnvironmentVariablesEnabled = null
 );

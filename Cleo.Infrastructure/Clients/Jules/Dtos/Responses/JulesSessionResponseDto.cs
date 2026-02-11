@@ -13,11 +13,12 @@ public sealed record JulesSessionResponseDto(
     [property: JsonPropertyName("state")] JulesSessionState State,
     [property: JsonPropertyName("prompt")] string Prompt,
     [property: JsonPropertyName("sourceContext")] JulesSourceContextDto SourceContext,
-    [property: JsonPropertyName("url")] Uri? Url,
-    [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval,
-    [property: JsonPropertyName("automationMode")] JulesAutomationMode? AutomationMode,
-    [property: JsonPropertyName("createTime")] DateTimeOffset? CreateTime,
-    [property: JsonPropertyName("updateTime")] DateTimeOffset? UpdateTime,
+    [property: JsonPropertyName("url")] Uri? Url = null,
+    [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval = null,
+    [property: JsonPropertyName("automationMode")] JulesAutomationMode? AutomationMode = null,
+    [property: JsonPropertyName("createTime")] string? CreateTime = null,
+    [property: JsonPropertyName("updateTime")] string? UpdateTime = null,
+    [property: JsonPropertyName("title")] string? Title = null,
     [property: JsonPropertyName("outputs")] JulesOutputDto[]? Outputs = null
 );
 
@@ -29,5 +30,7 @@ public sealed record JulesOutputDto(
 public sealed record PullRequestDto(
     [property: JsonPropertyName("url")] Uri Url,
     [property: JsonPropertyName("title")] string Title,
-    [property: JsonPropertyName("description")] string? Description
+    [property: JsonPropertyName("description")] string? Description,
+    [property: JsonPropertyName("baseRef")] string? BaseRef = null,
+    [property: JsonPropertyName("headRef")] string? HeadRef = null
 );
