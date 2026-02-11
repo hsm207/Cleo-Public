@@ -2,4 +2,4 @@
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record SessionCompletedDto();
+public sealed record JulesSessionCompletedDto();

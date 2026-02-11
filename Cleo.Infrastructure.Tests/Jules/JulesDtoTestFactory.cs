@@ -10,27 +10,27 @@ internal static class JulesDtoTestFactory
         string? description,
         string createTime,
         string originator,
-        List<ArtifactDto>? artifacts = null,
-        PlanGeneratedDto? planGenerated = null,
-        PlanApprovedDto? planApproved = null,
-        UserMessagedDto? userMessaged = null,
-        AgentMessagedDto? agentMessaged = null,
-        ProgressUpdatedDto? progressUpdated = null,
-        SessionCompletedDto? sessionCompleted = null,
-        SessionFailedDto? sessionFailed = null)
+        List<JulesArtifactDto>? artifacts = null,
+        JulesPlanGeneratedDto? planGenerated = null,
+        JulesPlanApprovedDto? planApproved = null,
+        JulesUserMessagedDto? userMessaged = null,
+        JulesAgentMessagedDto? agentMessaged = null,
+        JulesProgressUpdatedDto? progressUpdated = null,
+        JulesSessionCompletedDto? sessionCompleted = null,
+        JulesSessionFailedDto? sessionFailed = null)
     {
-        var metadata = new JulesActivityMetadata(id, name, description, createTime, originator, artifacts);
+        var metadata = new JulesActivityMetadataDto(id, name, description, createTime, originator, artifacts);
         
-        JulesActivityPayload payload = null!;
+        JulesActivityPayloadDto payload = null!;
 
-        if (progressUpdated != null) payload = new ProgressUpdatedPayload(progressUpdated.Title, progressUpdated.Description);
-        else if (planGenerated != null) payload = new PlanGeneratedPayload(planGenerated.Plan);
-        else if (planApproved != null) payload = new PlanApprovedPayload(planApproved.PlanId);
-        else if (userMessaged != null) payload = new UserMessagedPayload(userMessaged.UserMessage);
-        else if (agentMessaged != null) payload = new AgentMessagedPayload(agentMessaged.AgentMessage);
-        else if (sessionCompleted != null) payload = new SessionCompletedPayload();
-        else if (sessionFailed != null) payload = new SessionFailedPayload(sessionFailed.Reason);
-        else payload = new ProgressUpdatedPayload("Fallback", "Synthetic test payload");
+        if (progressUpdated != null) payload = new JulesProgressUpdatedPayloadDto(progressUpdated.Title, progressUpdated.Description);
+        else if (planGenerated != null) payload = new JulesPlanGeneratedPayloadDto(planGenerated.Plan);
+        else if (planApproved != null) payload = new JulesPlanApprovedPayloadDto(planApproved.PlanId);
+        else if (userMessaged != null) payload = new JulesUserMessagedPayloadDto(userMessaged.UserMessage);
+        else if (agentMessaged != null) payload = new JulesAgentMessagedPayloadDto(agentMessaged.AgentMessage);
+        else if (sessionCompleted != null) payload = new JulesSessionCompletedPayloadDto();
+        else if (sessionFailed != null) payload = new JulesSessionFailedPayloadDto(sessionFailed.Reason);
+        else payload = new JulesProgressUpdatedPayloadDto("Fallback", "Synthetic test payload");
 
         return new JulesActivityDto(metadata, payload);
     }

@@ -19,7 +19,7 @@ public class RestSessionMessengerTests
         _messenger = new RestSessionMessenger(httpClient);
     }
 
-    [Fact(DisplayName = "SendMessage: Uses 'JulesSendMessageRequest' DTO to satisfy OCP.")]
+    [Fact(DisplayName = "SendMessage: Uses 'JulesSendMessageRequestDto' DTO to satisfy OCP.")]
     public async Task SendMessage_UsesCorrectDtoSchema()
     {
         // Arrange

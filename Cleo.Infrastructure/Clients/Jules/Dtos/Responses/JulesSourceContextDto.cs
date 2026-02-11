@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record SourceContextDto(
+public sealed record JulesSourceContextDto(
     [property: JsonPropertyName("source")] string Source,
-    [property: JsonPropertyName("githubRepoContext")] GithubRepoContextDto? GithubRepoContext
+    [property: JsonPropertyName("githubRepoContext")] JulesGithubRepoContextDto? GithubRepoContext
 );

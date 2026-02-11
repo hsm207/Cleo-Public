@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record ChangeSetDto(
+public sealed record JulesChangeSetDto(
     [property: JsonPropertyName("source")] string? Source,
-    [property: JsonPropertyName("gitPatch")] GitPatchDto? GitPatch
+    [property: JsonPropertyName("gitPatch")] JulesGitPatchDto? GitPatch
 )
 {
     [JsonExtensionData]

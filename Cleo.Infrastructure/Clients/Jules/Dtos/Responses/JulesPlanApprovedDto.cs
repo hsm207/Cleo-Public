@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record SessionFailedDto(
-    [property: JsonPropertyName("reason")] string? Reason
+public sealed record JulesPlanApprovedDto(
+    [property: JsonPropertyName("planId")] string? PlanId
 )
 {
     [JsonExtensionData]
