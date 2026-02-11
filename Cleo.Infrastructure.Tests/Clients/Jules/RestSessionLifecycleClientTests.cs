@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -54,6 +56,46 @@ public class RestSessionLifecycleClientTests
                 VerifyRequestBody(req, "Refactor the world", "AUTO_CREATE_PR") // Check specific JSON fields
             ),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "CreateSession: Throws RemoteCollaboratorUnavailableException on API failure.")]
+    public async Task CreateSession_ThrowsOnApiFailure()
+    {
+        // Arrange
+        var task = new TaskDescription("Task");
+        var source = new SourceContext("repo", "main");
+        var options = new SessionCreationOptions(AutomationMode.Unspecified, "Title", false);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.InternalServerError });
+
+        // Act
+        var act = async () => await _client.CreateSessionAsync(task, source, options, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
+    }
+
+    [Fact(DisplayName = "CreateSession: Throws RemoteCollaboratorUnavailableException on network error.")]
+    public async Task CreateSession_ThrowsOnNetworkError()
+    {
+        // Arrange
+        var task = new TaskDescription("Task");
+        var source = new SourceContext("repo", "main");
+        var options = new SessionCreationOptions(AutomationMode.Unspecified, "Title", false);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        // Act
+        var act = async () => await _client.CreateSessionAsync(task, source, options, CancellationToken.None);
+
+        // Assert
+        // Correct usage of WithInnerException in FluentAssertions
+        (await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>())
+            .WithInnerException<HttpRequestException>();
     }
 
     private bool VerifyRequestBody(HttpRequestMessage req, string expectedPrompt, string expectedMode)

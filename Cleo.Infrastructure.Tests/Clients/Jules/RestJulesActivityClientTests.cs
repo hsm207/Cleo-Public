@@ -1,11 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Cleo.Infrastructure.Tests.Jules;
+using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -122,5 +124,37 @@ public class RestJulesActivityClientTests
 
         // Assert
         Assert.Empty(result);
+    }
+
+    [Fact(DisplayName = "GetActivitiesAsync should throw RemoteCollaboratorUnavailableException on API failure.")]
+    public async Task GetActivitiesAsync_ThrowsOnApiFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.InternalServerError });
+
+        // Act
+        var act = async () => await _client.GetActivitiesAsync(_testId, TestContext.Current.CancellationToken);
+
+        // Assert
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
+    }
+
+    [Fact(DisplayName = "GetActivitiesAsync should throw RemoteCollaboratorUnavailableException on network failure.")]
+    public async Task GetActivitiesAsync_ThrowsOnNetworkError()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Timeout"));
+
+        // Act
+        var act = async () => await _client.GetActivitiesAsync(_testId, TestContext.Current.CancellationToken);
+
+        // Assert
+        // Correct usage of WithInnerException in FluentAssertions
+        (await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>())
+            .WithInnerException<HttpRequestException>();
     }
 }

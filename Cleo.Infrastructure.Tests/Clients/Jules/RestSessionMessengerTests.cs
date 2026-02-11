@@ -1,6 +1,8 @@
 using System.Net;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
+using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -41,5 +43,20 @@ public class RestSessionMessengerTests
                 req.Content!.ReadAsStringAsync().Result.Contains("\"prompt\":\"Make it pop\"")
             ),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "SendMessage: Throws RemoteCollaboratorUnavailableException on failure.")]
+    public async Task SendMessage_ThrowsOnFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
+
+        // Act
+        var act = async () => await _messenger.SendMessageAsync(_id, "Hi", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
     }
 }

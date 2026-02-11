@@ -1,7 +1,17 @@
 using System.CommandLine;
-using System.CommandLine.IO;
+using Cleo.Cli;
 using Cleo.Cli.Commands;
-using FluentAssertions;
+using Cleo.Core.Domain.Ports;
+using Cleo.Core.UseCases.ApprovePlan;
+using Cleo.Core.UseCases.AuthenticateUser;
+using Cleo.Core.UseCases.BrowseHistory;
+using Cleo.Core.UseCases.BrowseSources;
+using Cleo.Core.UseCases.Correspond;
+using Cleo.Core.UseCases.ForgetSession;
+using Cleo.Core.UseCases.InitiateSession;
+using Cleo.Core.UseCases.ListSessions;
+using Cleo.Core.UseCases.RefreshPulse;
+using Cleo.Core.UseCases.ViewPlan;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -9,76 +19,109 @@ using Xunit;
 
 namespace Cleo.Cli.Tests;
 
-public class ProgramTests
+[Collection("ConsoleTests")]
+public class ProgramTests : IDisposable
 {
-    // Note: We can't easily test Program.Main directly with DI container replacement in this style without some refactoring,
-    // but we can test the Command Structure via the BuildRootCommand logic if we extract it or simulate it.
-    // However, the RFC requires a specific test name for "Help".
-    // I will simulate the structure to verify the help output.
+    private readonly StringWriter _stringWriter;
+    private readonly TextWriter _originalOutput;
 
-    [Fact(DisplayName = "Given the root command, when viewing help, then it should display the hierarchical command groups.")]
-    public async Task RootCommand_Help_DisplaysGroups()
+    public ProgramTests()
+    {
+        _stringWriter = new StringWriter();
+        _originalOutput = Console.Out;
+        Console.SetOut(_stringWriter);
+    }
+
+    public void Dispose()
+    {
+        Console.SetOut(_originalOutput);
+        _stringWriter.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    [Fact(DisplayName = "ConfigureServices should register all dependencies successfully.")]
+    public void ConfigureServices_RegistersDependencies()
     {
         // Arrange
-        var console = new TestConsole();
-
-        // Mock all dependencies
         var services = new ServiceCollection();
-        services.AddLogging();
 
-        // Register mocks for all commands
-        // We need to actually instantiate the commands to get their names/descriptions into the root command
-        // But we can mock their dependencies.
+        // Act
+        Program.ConfigureServices(services);
+        using var sp = services.BuildServiceProvider();
+
+        // Assert
+        // Try to resolve the Root dependencies to ensure graph is complete
+        var sessionCmd = sp.GetService<SessionCommand>();
+        Assert.NotNull(sessionCmd);
+
+        var configCmd = sp.GetService<ConfigCommand>();
+        Assert.NotNull(configCmd);
+    }
+
+    [Fact(DisplayName = "Given --help argument, Program.Main should execute and return success (0).")]
+    public async Task Main_Help_ReturnsSuccess()
+    {
+        // Act
+        var result = await Program.Main(new[] { "--help" });
+
+        // Debugging
+        if (result != 0)
+        {
+            _originalOutput.WriteLine($"Captured Output from Main failure:\n{_stringWriter}");
+        }
+
+        // Assert
+        Assert.Equal(0, result);
+    }
+
+    [Fact(DisplayName = "BuildRootCommand should wire up all top-level commands.")]
+    public void BuildRootCommand_WiresUpCommands()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // 1. Register Real Commands (Leafs & Groups)
+        services.AddTransient<AuthCommand>();
+        services.AddTransient<ListCommand>();
+        services.AddTransient<NewCommand>();
+        services.AddTransient<StatusCommand>();
+        services.AddTransient<ReposCommand>();
+        services.AddTransient<TalkCommand>();
+        services.AddTransient<ApproveCommand>();
+        services.AddTransient<ForgetCommand>();
 
         services.AddTransient<SessionCommand>();
         services.AddTransient<LogCommand>();
         services.AddTransient<PlanCommand>();
-        services.AddTransient<TalkCommand>();
         services.AddTransient<ConfigCommand>();
 
-        // Leaf commands mocks
-        services.AddTransient(_ => new Mock<NewCommand>(
-            new Mock<Cleo.Core.UseCases.ListSessions.IListSessionsUseCase>().Object, // Wrong use case but types matter for ctor? No, NewCommand takes nothing? Let's check.
-            // NewCommand likely takes dependencies. Let's mock them properly or create dummy mocks.
-            // Actually, best is to use Moq for the Leaf Commands and return a dummy Command object from Build().
-            // But SessionCommand takes NewCommand in constructor.
-             new Mock<ILogger<NewCommand>>().Object
-        ).Object);
+        // 3. Register Mocked Dependencies (Infrastructure Ports & Use Cases)
+        services.AddLogging();
+        services.AddTransient(_ => new Mock<IAuthenticateUserUseCase>().Object);
+        services.AddTransient(_ => new Mock<ICredentialStore>().Object);
+        services.AddTransient(_ => new Mock<IListSessionsUseCase>().Object);
+        services.AddTransient(_ => new Mock<IRefreshPulseUseCase>().Object);
+        services.AddTransient(_ => new Mock<IBrowseSourcesUseCase>().Object);
+        services.AddTransient(_ => new Mock<ICorrespondUseCase>().Object);
+        services.AddTransient(_ => new Mock<IApprovePlanUseCase>().Object);
+        services.AddTransient(_ => new Mock<IForgetSessionUseCase>().Object);
+        services.AddTransient(_ => new Mock<IBrowseHistoryUseCase>().Object);
+        services.AddTransient(_ => new Mock<IViewPlanUseCase>().Object);
 
-        // This is getting complicated to mock the entire tree just for help.
-        // Easier approach: Manually construct the RootCommand with the Groups for this test,
-        // mirroring Program.cs logic but with lightweight mocks.
+        // Special handling for concrete use cases that are dependencies
+        services.AddTransient(_ => new InitiateSessionUseCase(new Mock<IJulesSessionClient>().Object, new Mock<ISessionWriter>().Object));
 
-        var sessionGroup = new Command("session", "Core lifecycle management and pulse checks 💓");
-        var logGroup = new Command("log", "Historical audit trail and artifact archaeology 🏺");
-        var planGroup = new Command("plan", "Authoritative roadmap visibility and gating 🗺️");
-        var talkCommand = new Command("talk", "Direct guidance and feedback stream 🗣️");
-        var configGroup = new Command("config", "Infrastructure, identity, and context management 🛡️");
-
-        var rootCommand = new RootCommand("🏛️ Cleo: The God-Tier Engineering Assistant")
-        {
-            sessionGroup,
-            logGroup,
-            planGroup,
-            talkCommand,
-            configGroup
-        };
+        var sp = services.BuildServiceProvider();
 
         // Act
-        await rootCommand.InvokeAsync("-h", console);
+        var root = Program.BuildRootCommand(sp);
 
         // Assert
-        var output = console.Out.ToString();
-        output.Should().Contain("session");
-        output.Should().Contain("log");
-        output.Should().Contain("plan");
-        output.Should().Contain("talk");
-        output.Should().Contain("config");
-
-        // Verify descriptions
-        output.Should().Contain("Core lifecycle management");
-        output.Should().Contain("Historical audit trail");
-        output.Should().Contain("Authoritative roadmap visibility");
-        output.Should().Contain("Infrastructure, identity");
+        Assert.NotNull(root);
+        Assert.Contains(root.Children, c => c.Name == "session");
+        Assert.Contains(root.Children, c => c.Name == "log");
+        Assert.Contains(root.Children, c => c.Name == "plan");
+        Assert.Contains(root.Children, c => c.Name == "talk");
+        Assert.Contains(root.Children, c => c.Name == "config");
     }
 }

@@ -1,6 +1,8 @@
 using System.Net;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
+using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -37,8 +39,22 @@ public class RestSessionControllerTests
             ItExpr.Is<HttpRequestMessage>(req => 
                 req.Method == HttpMethod.Post && 
                 req.RequestUri!.ToString().EndsWith(":approvePlan")
-                // Future-proof: If we add an Approval DTO later, we verify it here.
             ),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "ApprovePlan: Throws RemoteCollaboratorUnavailableException on failure.")]
+    public async Task ApprovePlan_ThrowsOnFailure()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.InternalServerError });
+
+        // Act
+        var act = async () => await _controller.ApprovePlanAsync(_id, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
     }
 }
