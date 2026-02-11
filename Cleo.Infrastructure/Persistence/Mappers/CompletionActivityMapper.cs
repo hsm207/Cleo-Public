@@ -24,14 +24,15 @@ internal sealed class CompletionActivityMapper : IActivityPersistenceMapper
             completed.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
-    {
-        var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
-        return new CompletionActivity(
-            id, 
-            timestamp,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
-    }
+        public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+
+        {
+
+            var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
+
+            return new CompletionActivity(id, timestamp, originator, dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+
+        }
 
     private sealed record CompletionPayloadDto(List<ArtifactEnvelope> Evidence);
 }

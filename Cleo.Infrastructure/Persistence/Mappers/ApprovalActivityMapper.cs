@@ -31,6 +31,7 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
         return new ApprovalActivity(
             id, 
             timestamp, 
+            originator,
             dto?.PlanId ?? "unknown",
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }

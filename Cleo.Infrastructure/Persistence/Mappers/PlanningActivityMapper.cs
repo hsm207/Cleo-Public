@@ -34,6 +34,7 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
         return new PlanningActivity(
             id, 
             timestamp, 
+            originator,
             dto?.PlanId ?? "unknown",
             dto?.Steps?.Select(s => new PlanStep(s.Index, s.Title, s.Description)).ToList() ?? new List<PlanStep>(),
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
