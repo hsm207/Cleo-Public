@@ -56,7 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IArtifactPersistenceMapper, LegacyCommandMapper>();
         services.AddSingleton<IArtifactPersistenceMapper, ChangeSetMapper>();
         services.AddSingleton<IArtifactPersistenceMapper, LegacyPatchMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, VisualSnapshotMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, MediaMapper>();
 
         services.AddSingleton<ActivityMapperFactory>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.PlanningActivityMapper>();

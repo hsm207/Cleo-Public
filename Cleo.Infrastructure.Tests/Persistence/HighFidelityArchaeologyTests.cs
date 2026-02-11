@@ -20,7 +20,7 @@ public class HighFidelityArchaeologyTests
         services.AddSingleton<ArtifactMapperFactory>();
         services.AddSingleton<IArtifactPersistenceMapper, BashOutputMapper>();
         services.AddSingleton<IArtifactPersistenceMapper, ChangeSetMapper>();
-        services.AddSingleton<IArtifactPersistenceMapper, VisualSnapshotMapper>();
+        services.AddSingleton<IArtifactPersistenceMapper, MediaMapper>();
 
         services.AddSingleton<ActivityMapperFactory>();
         services.AddSingleton<IActivityPersistenceMapper, PlanningActivityMapper>();
@@ -67,7 +67,7 @@ public class HighFidelityArchaeologyTests
         {
             new BashOutput("ls -la", "total 0", 0),
             new ChangeSet("repo", new GitPatch("diff", "base", "msg")),
-            new VisualSnapshot("image/png", "base64-data")
+            new MediaArtifact("image/png", "base64-data")
         };
         var original = new ProgressActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Testing with evidence", null, evidence);
 
@@ -80,7 +80,7 @@ public class HighFidelityArchaeologyTests
         hydrated!.Evidence.Should().HaveCount(3);
         hydrated.Evidence.OfType<BashOutput>().First().Command.Should().Be("ls -la");
         hydrated.Evidence.OfType<ChangeSet>().First().Patch.UniDiff.Should().Be("diff");
-        hydrated.Evidence.OfType<VisualSnapshot>().First().MimeType.Should().Be("image/png");
+        hydrated.Evidence.OfType<MediaArtifact>().First().MimeType.Should().Be("image/png");
     }
 
     [Fact(DisplayName = "Persistence is decoupled from C# class names via stable discriminators 🧱🛡️")]

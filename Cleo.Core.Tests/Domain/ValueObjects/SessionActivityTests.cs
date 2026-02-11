@@ -28,7 +28,7 @@ public class SessionActivityTests
     public void ProgressActivityShouldSummarizeMultipleArtifacts()
     {
         var output = new BashOutput("echo", "hi", 0);
-        var snapshot = new VisualSnapshot("img/png", "data");
+        var snapshot = new MediaArtifact("img/png", "data");
         var activity = new ProgressActivity("id", Now, ActivityOriginator.Agent, "", null, new Artifact[] { output, snapshot });
 
         Assert.Equal("\n          📦 " + output.GetSummary() + "\n          📦 " + snapshot.GetSummary(), activity.GetContentSummary());

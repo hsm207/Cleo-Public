@@ -92,21 +92,21 @@ internal sealed class LegacyPatchMapper : IArtifactPersistenceMapper
     private sealed record PatchPayloadDto(string UniDiff, string BaseCommitId, string? SuggestedCommitMessage);
 }
 
-internal sealed class VisualSnapshotMapper : IArtifactPersistenceMapper
+internal sealed class MediaMapper : IArtifactPersistenceMapper
 {
-    public string TypeKey => "MEDIA"; // Reusing MEDIA key as the payload is compatible (MimeType, Data)
-    public bool CanHandle(Artifact artifact) => artifact is VisualSnapshot;
+    public string TypeKey => "MEDIA"; 
+    public bool CanHandle(Artifact artifact) => artifact is MediaArtifact;
 
     public string Serialize(Artifact artifact)
     {
-        var media = (VisualSnapshot)artifact;
+        var media = (MediaArtifact)artifact;
         return JsonSerializer.Serialize(new MediaPayloadDto(media.MimeType, media.Data));
     }
 
     public Artifact Deserialize(string json)
     {
         var dto = JsonSerializer.Deserialize<MediaPayloadDto>(json);
-        return new VisualSnapshot(dto?.MimeType ?? "", dto?.Data ?? "");
+        return new MediaArtifact(dto?.MimeType ?? "", dto?.Data ?? "");
     }
 
     private sealed record MediaPayloadDto(string MimeType, string Data);

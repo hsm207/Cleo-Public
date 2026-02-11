@@ -25,7 +25,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         {
             new BashOutputMapper(),
             new ChangeSetMapper(),
-            new VisualSnapshotMapper()
+            new MediaMapper()
         });
 
         // Register Activity mapping 🔌🏺
