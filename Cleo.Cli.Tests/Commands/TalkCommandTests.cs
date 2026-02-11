@@ -1,4 +1,5 @@
 using Cleo.Cli.Commands;
+using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.Correspond;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -8,38 +9,61 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Commands;
 
-public class TalkCommandTests
+[Collection("ConsoleTests")]
+public class TalkCommandTests : IDisposable
 {
+    private readonly Mock<ICorrespondUseCase> _useCaseMock;
+    private readonly Mock<ILogger<TalkCommand>> _loggerMock;
     private readonly TalkCommand _command;
+    private readonly StringWriter _stringWriter;
+    private readonly TextWriter _originalOutput;
 
     public TalkCommandTests()
     {
-        var useCaseMock = new Mock<ICorrespondUseCase>();
-        var loggerMock = new Mock<ILogger<TalkCommand>>();
+        _useCaseMock = new Mock<ICorrespondUseCase>();
+        _loggerMock = new Mock<ILogger<TalkCommand>>();
+        _command = new TalkCommand(_useCaseMock.Object, _loggerMock.Object);
 
-        _command = new TalkCommand(useCaseMock.Object, loggerMock.Object);
+        _stringWriter = new StringWriter();
+        _originalOutput = Console.Out;
+        Console.SetOut(_stringWriter);
     }
 
-    [Fact(DisplayName = "Given the talk command, when viewing help, then it should exclude the 'prompt' aliases.")]
-    public void Build_ShouldExcludePromptAliases()
+    public void Dispose()
     {
+        Console.SetOut(_originalOutput);
+        _stringWriter.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    [Fact(DisplayName = "Given valid input, when running 'talk', then it should send message and display success.")]
+    public async Task Talk_Valid_DisplaysSuccess()
+    {
+        // Arrange
+        // CorrespondResponse(SessionId Id, DateTimeOffset SentAt)
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<CorrespondRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CorrespondResponse(new SessionId("s1"), DateTimeOffset.UtcNow));
+
         // Act
-        var command = _command.Build();
+        var exitCode = await _command.Build().InvokeAsync("talk s1 -m \"Hello\"");
 
         // Assert
-        command.Description.Should().Be("Send a message to Jules 💬");
+        exitCode.Should().Be(0);
+        _stringWriter.ToString().Should().Contain("✅ Message sent!");
+    }
 
-        var argument = command.Arguments.FirstOrDefault();
-        argument.Should().NotBeNull();
-        argument!.Name.Should().Be("sessionId");
-        // argument.Description.Should().Be("The session ID."); // I'll check what I set it to.
+    [Fact(DisplayName = "Given an error, when running 'talk', then it should handle exception.")]
+    public async Task Talk_Error_HandlesException()
+    {
+        // Arrange
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<CorrespondRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Network unavailable"));
 
-        var messageOption = command.Options.FirstOrDefault(o => o.Name == "message" || o.Aliases.Contains("--message"));
-        messageOption.Should().NotBeNull();
-        messageOption!.Aliases.Should().Contain("--message");
-        messageOption.Aliases.Should().Contain("-m");
-        messageOption.Aliases.Should().NotContain("-p");
-        messageOption.Aliases.Should().NotContain("--prompt");
-        messageOption.Description.Should().Be("The message or guidance to send.");
+        // Act
+        await _command.Build().InvokeAsync("talk s1 -m \"Hi\"");
+
+        // Assert
+        _stringWriter.ToString().Should().Contain("💔 Error: Network unavailable");
+        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 }

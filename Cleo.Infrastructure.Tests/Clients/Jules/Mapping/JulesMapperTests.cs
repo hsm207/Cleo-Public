@@ -101,8 +101,6 @@ public class JulesMapperTests
     public void UnknownActivityMapper_ShouldMap_Safely()
     {
         // Arrange
-        // Using a payload type that has no specific mapper in this test context,
-        // but physically fits the DTO structure.
         var payload = new JulesProgressUpdatedPayloadDto("Weird", "Stuff");
         var metadata = new JulesActivityMetadataDto("act-unknown", "rem-unknown", "Strange event", TestTimeStr, "system", null);
         var dto = new JulesActivityDto(metadata, payload);
@@ -116,5 +114,39 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<MessageActivity>().Subject;
         activity.Text.Should().Contain("Unknown activity type received");
         activity.Text.Should().Contain("Strange event");
+    }
+
+    [Fact(DisplayName = "Given a planApproved DTO, ApprovalActivityMapper should map it to an ApprovalActivity.")]
+    public void ApprovalActivityMapper_ShouldMap_PlanApproved()
+    {
+        // Arrange
+        var payload = new JulesPlanApprovedPayloadDto("plan-123");
+        var metadata = new JulesActivityMetadataDto("act-app", "rem-app", null, TestTimeStr, "user", null);
+        var dto = new JulesActivityDto(metadata, payload);
+
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.ApprovalActivityMapper();
+
+        // Act
+        var result = mapper.Map(dto);
+
+        // Assert
+        var activity = result.Should().BeOfType<ApprovalActivity>().Subject;
+        activity.PlanId.Should().Be("plan-123");
+        activity.Originator.Should().Be(ActivityOriginator.User);
+    }
+
+    [Theory(DisplayName = "ActivityOriginatorMapper should map various role strings correctly.")]
+    [InlineData("USER", ActivityOriginator.User)]
+    [InlineData("user", ActivityOriginator.User)]
+    [InlineData("AGENT", ActivityOriginator.Agent)]
+    [InlineData("agent", ActivityOriginator.Agent)]
+    [InlineData("SYSTEM", ActivityOriginator.System)]
+    [InlineData("system", ActivityOriginator.System)]
+    [InlineData("unknown", ActivityOriginator.User)] // Default
+    [InlineData(null, ActivityOriginator.User)] // Default
+    public void ActivityOriginatorMapper_ShouldMapCorrectly(string? input, ActivityOriginator expected)
+    {
+        var result = ActivityOriginatorMapper.Map(input);
+        result.Should().Be(expected);
     }
 }
