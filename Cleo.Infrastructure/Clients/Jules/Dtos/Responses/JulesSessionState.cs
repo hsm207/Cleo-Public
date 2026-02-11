@@ -10,6 +10,8 @@ public enum JulesSessionState
 {
     [JsonStringEnumMemberName("STATE_UNSPECIFIED")]
     StateUnspecified,
+    [JsonStringEnumMemberName("STARTING_UP")]
+    StartingUp,
     [JsonStringEnumMemberName("QUEUED")]
     Queued,
     [JsonStringEnumMemberName("PLANNING")]
