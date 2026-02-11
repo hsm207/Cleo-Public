@@ -20,7 +20,7 @@ public sealed class BrowseHistoryUseCaseTests
     {
         // Arrange
         var sessionId = new SessionId("sessions/active-session");
-        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Did a thing");
+        var activity = new ProgressActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Did a thing");
         _archivist.History[sessionId] = new List<SessionActivity> { activity };
 
         var request = new BrowseHistoryRequest(sessionId);

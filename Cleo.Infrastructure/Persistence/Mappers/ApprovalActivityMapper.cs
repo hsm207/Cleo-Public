@@ -21,6 +21,7 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
     {
         var approval = (ApprovalActivity)activity;
         return JsonSerializer.Serialize(new ApprovalPayloadDto(
+            approval.RemoteId,
             approval.PlanId,
             approval.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
@@ -28,13 +29,16 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
     {
         var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json);
+        var remoteId = dto?.RemoteId ?? id;
+
         return new ApprovalActivity(
             id, 
+            remoteId,
             timestamp, 
             originator,
             dto?.PlanId ?? "unknown",
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
-    private sealed record ApprovalPayloadDto(string PlanId, List<ArtifactEnvelope> Evidence);
+    private sealed record ApprovalPayloadDto(string? RemoteId, string PlanId, List<ArtifactEnvelope> Evidence);
 }

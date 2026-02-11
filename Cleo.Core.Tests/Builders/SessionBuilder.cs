@@ -6,9 +6,11 @@ namespace Cleo.Core.Tests.Builders;
 internal sealed class SessionBuilder
 {
     private SessionId _id = new("sessions/test-123");
+    private string _remoteId = "remote-123";
     private TaskDescription _task = new("Fix the universe");
     private SourceContext _source = new("org/repo", "main");
     private SessionPulse _pulse = new(SessionStatus.StartingUp, "Starting...");
+    private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private Uri? _dashboardUri = new("https://jules.com/sessions/test-123");
 
     public SessionBuilder WithId(string id)
@@ -31,6 +33,6 @@ internal sealed class SessionBuilder
 
     public Session Build()
     {
-        return new Session(_id, _task, _source, _pulse, _dashboardUri);
+        return new Session(_id, _remoteId, _task, _source, _pulse, _createdAt, dashboardUri: _dashboardUri);
     }
 }

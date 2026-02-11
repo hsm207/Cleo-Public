@@ -12,6 +12,7 @@ internal sealed class CompletionActivityMapper : IJulesActivityMapper
     public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesSessionCompletedPayloadDto;
     
     public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(
+        dto.Metadata.Name,
         dto.Metadata.Id, 
         DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
         ActivityOriginatorMapper.Map(dto.Metadata.Originator),
