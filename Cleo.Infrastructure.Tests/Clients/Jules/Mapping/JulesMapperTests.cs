@@ -77,4 +77,44 @@ public class JulesMapperTests
         activity.Text.Should().Be("Hello Agent");
         activity.Originator.Should().Be(ActivityOriginator.User);
     }
+
+    [Fact(DisplayName = "Given a sessionFailed DTO, FailureActivityMapper should map it to a FailureActivity.")]
+    public void FailureActivityMapper_ShouldMap_SessionFailed()
+    {
+        // Arrange
+        var payload = new JulesSessionFailedPayloadDto("Critical Error");
+        var metadata = new JulesActivityMetadataDto("act-fail", "rem-fail", null, TestTimeStr, "system", null);
+        var dto = new JulesActivityDto(metadata, payload);
+
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.FailureActivityMapper();
+
+        // Act
+        var result = mapper.Map(dto);
+
+        // Assert
+        var activity = result.Should().BeOfType<FailureActivity>().Subject;
+        activity.Reason.Should().Be("Critical Error");
+        activity.Originator.Should().Be(ActivityOriginator.System);
+    }
+
+    [Fact(DisplayName = "Given an unknown activity type, UnknownActivityMapper should map it to a generic MessageActivity.")]
+    public void UnknownActivityMapper_ShouldMap_Safely()
+    {
+        // Arrange
+        // Using a payload type that has no specific mapper in this test context,
+        // but physically fits the DTO structure.
+        var payload = new JulesProgressUpdatedPayloadDto("Weird", "Stuff");
+        var metadata = new JulesActivityMetadataDto("act-unknown", "rem-unknown", "Strange event", TestTimeStr, "system", null);
+        var dto = new JulesActivityDto(metadata, payload);
+
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.UnknownActivityMapper();
+
+        // Act
+        var result = mapper.Map(dto);
+
+        // Assert
+        var activity = result.Should().BeOfType<MessageActivity>().Subject;
+        activity.Text.Should().Contain("Unknown activity type received");
+        activity.Text.Should().Contain("Strange event");
+    }
 }
