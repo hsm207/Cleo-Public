@@ -64,10 +64,11 @@ public record MessageActivity(
 public record PlanningActivity(
     string Id, 
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string PlanId, 
     IReadOnlyCollection<PlanStep> Steps,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
@@ -81,9 +82,10 @@ public record PlanStep(int Index, string Title, string Description);
 public record ApprovalActivity(
     string Id, 
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string PlanId,
     IReadOnlyCollection<Artifact>? Evidence = null)
-    : SessionActivity(Id, Timestamp, ActivityOriginator.User, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
 }
@@ -94,10 +96,11 @@ public record ApprovalActivity(
 public record ProgressActivity(
     string Id, 
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string Title,
     string? Description = null,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     private const string Indent = "          "; // Indent to match "- [HH:mm] "
 
@@ -134,8 +137,9 @@ public record ProgressActivity(
 public record CompletionActivity(
     string Id, 
     DateTimeOffset Timestamp,
+    ActivityOriginator Originator,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.System, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary()
     {
@@ -154,9 +158,10 @@ public record CompletionActivity(
 public record FailureActivity(
     string Id, 
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string Reason,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.System, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
 }
