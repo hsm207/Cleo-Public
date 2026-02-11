@@ -8,26 +8,35 @@ namespace Cleo.Core.Tests.Domain.Entities;
 public class SessionTests
 {
     private static readonly SessionId Id = new("sessions/123");
+    private const string RemoteId = "remote-123";
     private static readonly TaskDescription Task = (TaskDescription)"Fix login";
     private static readonly SourceContext Source = new("sources/repo", "main");
     private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp, "Starting...");
+    private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
+
+    private static Session CreateSession()
+    {
+        return new Session(Id, RemoteId, Task, Source, InitialPulse, Now);
+    }
 
     [Fact(DisplayName = "Session should record 'SessionAssigned' when created.")]
     public void ConstructorShouldRecordEvent()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
 
         var events = session.DomainEvents;
         Assert.Single(events);
         var sessionAssigned = Assert.IsType<SessionAssigned>(events.First());
         Assert.Equal(Id, sessionAssigned.SessionId);
         Assert.Equal(Task, sessionAssigned.Task);
+        Assert.Equal(RemoteId, session.RemoteId);
+        Assert.Equal(Now, session.CreatedAt);
     }
 
     [Fact(DisplayName = "Session should update pulse and record 'StatusHeartbeatReceived'.")]
     public void UpdatePulseShouldRecordEvent()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var newPulse = new SessionPulse(SessionStatus.InProgress, "Working hard!");
 
         session.UpdatePulse(newPulse);
@@ -40,7 +49,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should record 'FeedbackRequested' when pulse status is 'AwaitingFeedback'.")]
     public void UpdatePulseShouldSignalFeedbackRequest()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var feedbackPulse = new SessionPulse(SessionStatus.AwaitingFeedback, "What color should the button be?");
 
         session.UpdatePulse(feedbackPulse);
@@ -52,8 +61,8 @@ public class SessionTests
     [Fact(DisplayName = "Session should add activities to the Session Log.")]
     public void AddActivityShouldUpdateLog()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
-        var activity = new MessageActivity("act/1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Hello!");
+        var session = CreateSession();
+        var activity = new MessageActivity("act/1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Hello!");
 
         session.AddActivity(activity);
 
@@ -64,11 +73,11 @@ public class SessionTests
     [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when an activity with a ChangeSet is added.")]
     public void AddingChangeSetEvidenceShouldUpdateSolution()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var patch = new GitPatch("diff-content", "base-commit");
         var changeSet = new ChangeSet("sources/repo", patch);
         var evidence = new List<Artifact> { changeSet };
-        var activity = new ProgressActivity("act/2", DateTimeOffset.UtcNow, "Done", evidence);
+        var activity = new ProgressActivity("act/2", "remote-act-2", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence);
 
         session.AddActivity(activity);
 
@@ -80,7 +89,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should allow adding user feedback via convenience method.")]
     public void AddFeedbackShouldCreateMessageActivity()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         
         session.AddFeedback("This looks great!", "act/3");
 
@@ -92,7 +101,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should record FeedbackRequested with detail when pulse status is AwaitingFeedback.")]
     public void UpdatePulseShouldRecordFeedbackDetail()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var detail = "Which file should I edit?";
         var feedbackPulse = new SessionPulse(SessionStatus.AwaitingFeedback, detail);
 
@@ -105,7 +114,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should allow clearing domain events.")]
     public void ClearDomainEventsShouldWork()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         Assert.NotEmpty(session.DomainEvents);
 
         session.ClearDomainEvents();
@@ -131,13 +140,13 @@ public class SessionTests
     [Fact(DisplayName = "Session should record all activity types in the log.")]
     public void AddActivityShouldSupportAllTypes()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
-        session.AddActivity(new MessageActivity("a2", now, ActivityOriginator.User, "msg"));
-        session.AddActivity(new ProgressActivity("a3", now, "working"));
-        session.AddActivity(new FailureActivity("a4", now, "error"));
+        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep("step-1", 0, "T", "D") }));
+        session.AddActivity(new MessageActivity("a2", "r2", now, ActivityOriginator.User, "msg"));
+        session.AddActivity(new ProgressActivity("a3", "r3", now, ActivityOriginator.Agent, "working"));
+        session.AddActivity(new FailureActivity("a4", "r4", now, ActivityOriginator.System, "error"));
 
         Assert.Equal(4, session.SessionLog.Count);
     }
@@ -145,7 +154,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should update pulse and record events for all statuses.")]
     public void UpdatePulseShouldHandleAllStatuses()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         
         // Test normal transition
         session.UpdatePulse(new SessionPulse(SessionStatus.InProgress, "Detail"));
@@ -163,7 +172,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should handle all possible status heartbeats.")]
     public void UpdatePulseShouldExerciseAllStatuses()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         
         foreach (SessionStatus status in Enum.GetValues<SessionStatus>())
         {
@@ -206,7 +215,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should expose all properties correctly.")]
     public void PropertiesShouldBeReadable()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         Assert.Equal(Id, session.Id);
         Assert.Equal(Task, session.Task);
         Assert.Equal(Source, session.Source);
@@ -218,7 +227,7 @@ public class SessionTests
     [Fact(DisplayName = "Session should throw ArgumentNullException if method arguments are null.")]
     public void MethodsShouldValidateArgs()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         
         Assert.Throws<ArgumentNullException>(() => session.UpdatePulse(null!));
         Assert.Throws<ArgumentNullException>(() => session.AddActivity(null!));
@@ -251,23 +260,24 @@ public class SessionTests
     [Fact(DisplayName = "Session should throw ArgumentNullException if constructor arguments are null.")]
     public void ConstructorShouldValidateArgs()
     {
-        Assert.Throws<ArgumentNullException>(() => new Session(null!, Task, Source, InitialPulse));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, null!, Source, InitialPulse));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, Task, null!, InitialPulse));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, Task, Source, null!));
+        Assert.Throws<ArgumentNullException>(() => new Session(null!, RemoteId, Task, Source, InitialPulse, Now));
+        Assert.Throws<ArgumentNullException>(() => new Session(Id, null!, Task, Source, InitialPulse, Now));
+        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, null!, Source, InitialPulse, Now));
+        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, Task, null!, InitialPulse, Now));
+        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, Task, Source, null!, Now));
     }
 
     [Fact(DisplayName = "GetSignificantHistory should exclude non-significant activities.")]
     public void GetSignificantHistoryShouldFilter()
     {
-        var session = new Session(Id, Task, Source, InitialPulse);
+        var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
-        session.AddActivity(new ProgressActivity("a2", now, "working")); // Not significant
-        session.AddActivity(new MessageActivity("a3", now, ActivityOriginator.User, "msg"));
-        session.AddActivity(new ProgressActivity("a4", now, "working more")); // Not significant
-        session.AddActivity(new CompletionActivity("a5", now));
+        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep("s1", 0, "T", "D") }));
+        session.AddActivity(new ProgressActivity("a2", "r2", now, ActivityOriginator.Agent, "working")); // Not significant
+        session.AddActivity(new MessageActivity("a3", "r3", now, ActivityOriginator.User, "msg"));
+        session.AddActivity(new ProgressActivity("a4", "r4", now, ActivityOriginator.Agent, "working more")); // Not significant
+        session.AddActivity(new CompletionActivity("a5", "r5", now, ActivityOriginator.System));
 
         var significantHistory = session.GetSignificantHistory();
 

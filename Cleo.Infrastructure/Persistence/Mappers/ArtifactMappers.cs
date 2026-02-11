@@ -24,23 +24,6 @@ internal sealed class BashOutputMapper : IArtifactPersistenceMapper
     private sealed record BashPayloadDto(string Command, string Output, int ExitCode);
 }
 
-// Handles legacy "COMMAND" types by mapping them to BashOutput
-internal sealed class LegacyCommandMapper : IArtifactPersistenceMapper
-{
-    public string TypeKey => "COMMAND";
-    public bool CanHandle(Artifact artifact) => false; // Only for reading
-
-    public string Serialize(Artifact artifact) => throw new NotSupportedException();
-
-    public Artifact Deserialize(string json)
-    {
-        var dto = JsonSerializer.Deserialize<CommandPayloadDto>(json);
-        return new BashOutput(dto?.Command ?? "", dto?.Output ?? "", dto?.ExitCode ?? -1);
-    }
-
-    private sealed record CommandPayloadDto(string Command, string Output, int ExitCode);
-}
-
 internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
 {
     public string TypeKey => "CHANGESET";
@@ -70,43 +53,21 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
     private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage);
 }
 
-// Handles legacy "PATCH" types by mapping them to ChangeSet (with unknown source)
-internal sealed class LegacyPatchMapper : IArtifactPersistenceMapper
+internal sealed class MediaMapper : IArtifactPersistenceMapper
 {
-    public string TypeKey => "PATCH";
-    public bool CanHandle(Artifact artifact) => false; // Only for reading
-
-    public string Serialize(Artifact artifact) => throw new NotSupportedException();
-
-    public Artifact Deserialize(string json)
-    {
-        var dto = JsonSerializer.Deserialize<PatchPayloadDto>(json);
-        return new ChangeSet(
-            "legacy-source", 
-            new GitPatch(
-                dto?.UniDiff ?? "", 
-                dto?.BaseCommitId ?? "", 
-                dto?.SuggestedCommitMessage));
-    }
-
-    private sealed record PatchPayloadDto(string UniDiff, string BaseCommitId, string? SuggestedCommitMessage);
-}
-
-internal sealed class VisualSnapshotMapper : IArtifactPersistenceMapper
-{
-    public string TypeKey => "MEDIA"; // Reusing MEDIA key as the payload is compatible (MimeType, Data)
-    public bool CanHandle(Artifact artifact) => artifact is VisualSnapshot;
+    public string TypeKey => "MEDIA"; 
+    public bool CanHandle(Artifact artifact) => artifact is MediaArtifact;
 
     public string Serialize(Artifact artifact)
     {
-        var media = (VisualSnapshot)artifact;
+        var media = (MediaArtifact)artifact;
         return JsonSerializer.Serialize(new MediaPayloadDto(media.MimeType, media.Data));
     }
 
     public Artifact Deserialize(string json)
     {
         var dto = JsonSerializer.Deserialize<MediaPayloadDto>(json);
-        return new VisualSnapshot(dto?.MimeType ?? "", dto?.Data ?? "");
+        return new MediaArtifact(dto?.MimeType ?? "", dto?.Data ?? "");
     }
 
     private sealed record MediaPayloadDto(string MimeType, string Data);

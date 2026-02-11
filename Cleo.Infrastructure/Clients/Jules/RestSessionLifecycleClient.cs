@@ -35,14 +35,14 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(options);
 
-        var request = new JulesCreateSessionRequest(
+        var request = new JulesCreateSessionRequestDto(
             (string)task,
             new JulesSourceContextDto(
                 source.Repository,
                 new JulesGithubRepoContextDto(source.StartingBranch)),
             options.Title,
             options.RequirePlanApproval,
-            options.Mode == AutomationMode.AutoCreatePullRequest ? "AUTO_CREATE_PR" : "NONE"
+            options.Mode == AutomationMode.AutoCreatePr ? "AUTO_CREATE_PR" : "AUTOMATION_MODE_UNSPECIFIED"
         );
 
         try
@@ -50,7 +50,7 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
             var response = await _httpClient.PostAsJsonAsync("v1alpha/sessions", request, cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             return JulesMapper.Map(dto!, task, _statusMapper);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)

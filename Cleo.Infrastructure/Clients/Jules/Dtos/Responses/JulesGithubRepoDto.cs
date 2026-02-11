@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record GithubRepoContextDto(
-    [property: JsonPropertyName("startingBranch")] string StartingBranch
+public sealed record JulesGithubRepoDto(
+    [property: JsonPropertyName("owner")] string Owner,
+    [property: JsonPropertyName("repo")] string Repo
 );

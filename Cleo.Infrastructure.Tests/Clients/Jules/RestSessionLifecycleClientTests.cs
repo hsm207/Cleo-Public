@@ -28,10 +28,10 @@ public class RestSessionLifecycleClientTests
         // Arrange
         var task = new TaskDescription("Refactor the world");
         var source = new SourceContext("cleo-repo", "main");
-        var options = new SessionCreationOptions(AutomationMode.AutoCreatePullRequest, "Refactor Session", true);
+        var options = new SessionCreationOptions(AutomationMode.AutoCreatePr, "Refactor Session", true);
         
         // The mock response
-        var responseDto = new JulesSessionResponse("session-1", "id", "state", "QUEUED", new SourceContextDto("repo", new GithubRepoContextDto("main")), null, true, "AUTO_CREATE_PR", null, null);
+        var responseDto = new JulesSessionResponseDto("session-1", "id", JulesSessionState.Queued, "Refactor the world", new JulesSourceContextDto("repo", new JulesGithubRepoContextDto("main")), null, true, JulesAutomationMode.AutoCreatePr, null, null);
         
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -60,7 +60,7 @@ public class RestSessionLifecycleClientTests
     {
         var json = req.Content!.ReadAsStringAsync().Result;
         // This assertion proves we aren't using anonymous objects anymore. 
-        // We expect specific serialized field names from 'JulesCreateSessionRequest'.
+        // We expect specific serialized field names from 'JulesCreateSessionRequestDto'.
         return json.Contains($"\"prompt\":\"{expectedPrompt}\"") && 
                json.Contains($"\"automationMode\":\"{expectedMode}\"");
     }

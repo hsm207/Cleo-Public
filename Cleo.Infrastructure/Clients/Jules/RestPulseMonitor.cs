@@ -33,7 +33,7 @@ public sealed class RestPulseMonitor : IPulseMonitor
             var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto == null) throw new InvalidOperationException("Failed to retrieve session pulse.");
 
             return JulesMapper.MapPulse(dto, _statusMapper);
@@ -54,7 +54,7 @@ public sealed class RestPulseMonitor : IPulseMonitor
             var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto == null) throw new InvalidOperationException("Failed to retrieve session.");
 
             return JulesMapper.Map(dto, originalTask, _statusMapper);

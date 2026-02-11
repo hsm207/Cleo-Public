@@ -5,6 +5,7 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using Cleo.Infrastructure.Tests.Jules;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -43,19 +44,19 @@ public class RestJulesActivityClientTests
     public async Task GetActivitiesAsync_ShouldMapActivitiesWithArtifacts()
     {
         // Arrange
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow.ToString("O");
         
         // 1. Progress activity with Bash Evidence ⚔️
-        var progressDto = new JulesActivityDto("prog", "1", null, now, "agent", 
-            new[] { new ArtifactDto(null, null, new BashOutputDto("ls", "files", 0)) }, 
-            null, null, null, null, new ProgressUpdatedDto("Working", "Running tests"), null, null);
+        var progressDto = JulesDtoTestFactory.Create("prog", "1", null, now, "agent", 
+            new List<JulesArtifactDto> { new JulesArtifactDto(null, null, new JulesBashOutputDto("ls", "files", 0)) },
+            progressUpdated: new JulesProgressUpdatedDto("Working", "Running tests"));
             
         // 2. Completion activity with Code Proposal 🎁
-        var completionDto = new JulesActivityDto("done", "2", null, now, "system", 
-            new[] { new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("patch", "base", null)), null, null) }, 
-            null, null, null, null, null, new SessionCompletedDto(), null);
+        var completionDto = JulesDtoTestFactory.Create("done", "2", null, now, "system", 
+            new List<JulesArtifactDto> { new JulesArtifactDto(new JulesChangeSetDto("src", new JulesGitPatchDto("patch", "base", null)), null, null) },
+            sessionCompleted: new JulesSessionCompletedDto());
 
-        var response = new ListActivitiesResponse(new[] { progressDto, completionDto }, null);
+        var response = new JulesListActivitiesResponseDto(new JulesActivityDto[] { progressDto, completionDto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -84,7 +85,7 @@ public class RestJulesActivityClientTests
     public async Task GetActivitiesAsync_ShouldReturnEmptyOnNull()
     {
         // Arrange
-        var response = new ListActivitiesResponse(null, null);
+        var response = new JulesListActivitiesResponseDto(null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -106,7 +107,7 @@ public class RestJulesActivityClientTests
     {
         // Arrange
         var archivist = (ISessionArchivist)_client;
-        var response = new ListActivitiesResponse(Array.Empty<JulesActivityDto>(), null);
+        var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
