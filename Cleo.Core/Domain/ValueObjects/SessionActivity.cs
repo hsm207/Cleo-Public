@@ -95,7 +95,7 @@ public record ApprovalActivity(
 }
 
 /// <summary>
-/// A moment-in-time heartbeat showing current status and progress.
+/// A moment-in-time heartbeat showing current status, progress, and internal reasoning.
 /// </summary>
 public record ProgressActivity(
     string Id, 
@@ -107,19 +107,31 @@ public record ProgressActivity(
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
+    /// <summary>
+    /// The high-level intent or state (e.g., "Working...", "Code Review").
+    /// Maps to the API 'title' field.
+    /// </summary>
+    public string Intent => Title;
+
+    /// <summary>
+    /// The agent's internal monologue or reasoning signal.
+    /// Maps to the API 'description' field.
+    /// </summary>
+    public string? Thought => Description;
+
     private const string Indent = "          "; // Indent to match "- [HH:mm] "
 
     public override string GetContentSummary()
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append(Title);
+        sb.Append(Intent);
 
-        if (!string.IsNullOrWhiteSpace(Description))
+        if (!string.IsNullOrWhiteSpace(Thought))
         {
             sb.AppendLine();
             sb.Append(Indent);
             sb.Append("💭 ");
-            sb.Append(Description.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
+            sb.Append(Thought.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
         }
 
         if (Evidence.Count > 0)
@@ -133,7 +145,24 @@ public record ProgressActivity(
         return sb.ToString();
     }
 
-    public override bool IsSignificant => false;
+    /// <summary>
+    /// Determines if the activity is significant based on the Narrative Intelligence Policy.
+    /// Significant if it contains a Thought (Reasoning Signal) or Evidence (Outcome Signal).
+    /// </summary>
+    public override bool IsSignificant
+    {
+        get
+        {
+            // Reasoning Signal: Has a non-empty thought/description
+            if (!string.IsNullOrWhiteSpace(Thought)) return true;
+
+            // Outcome Signal: Has tangible artifacts
+            if (Evidence.Count > 0) return true;
+
+            // Trace Signal: Pure system/status heartbeat
+            return false;
+        }
+    }
 }
 
 /// <summary>

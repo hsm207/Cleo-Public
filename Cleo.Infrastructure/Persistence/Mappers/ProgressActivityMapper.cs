@@ -20,6 +20,7 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
     public string SerializePayload(SessionActivity activity)
     {
         var progress = (ProgressActivity)activity;
+        // RFC 009: We explicitly serialize the 'Thought' (Description) field
         return JsonSerializer.Serialize(new ProgressPayloadDto(
             progress.RemoteId,
             progress.Title,
@@ -39,7 +40,7 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
             timestamp, 
             originator,
             dto?.Title ?? string.Empty,
-            dto?.Description,
+            dto?.Description, // Restores the agent's thought
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
