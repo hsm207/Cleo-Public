@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record PlanDto(
+public sealed record JulesPlanDto(
     [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("steps")] IReadOnlyList<PlanStepDto>? Steps,
+    [property: JsonPropertyName("steps")] IReadOnlyList<JulesPlanStepDto>? Steps,
     [property: JsonPropertyName("createTime")] string? CreateTime
 )
 {

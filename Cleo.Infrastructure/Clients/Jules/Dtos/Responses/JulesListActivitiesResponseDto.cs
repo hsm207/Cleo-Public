@@ -7,7 +7,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 /// <summary>
 /// Response message for the activities.list RPC.
 /// </summary>
-public sealed record ListActivitiesResponse(
+public sealed record JulesListActivitiesResponseDto(
     [property: JsonPropertyName("activities")] JulesActivityDto[]? Activities,
     [property: JsonPropertyName("nextPageToken")] string? NextPageToken
 );

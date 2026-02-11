@@ -28,7 +28,7 @@ public class ViewPlanUseCase : IViewPlanUseCase
             return ViewPlanResponse.Empty();
         }
 
-        var steps = plan.Steps.Select(s => new PlanStepDto(s.Index, s.Title, s.Description)).ToList();
+        var steps = plan.Steps.Select(s => new PlanStepModel(s.Index, s.Title, s.Description)).ToList();
 
         return new ViewPlanResponse(true, plan.PlanId, plan.Timestamp, steps);
     }

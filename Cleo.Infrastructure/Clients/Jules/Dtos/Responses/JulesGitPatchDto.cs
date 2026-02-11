@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record GitPatchDto(
+public sealed record JulesGitPatchDto(
     [property: JsonPropertyName("unidiffPatch")] string? UnidiffPatch,
     [property: JsonPropertyName("baseCommitId")] string? BaseCommitId,
     [property: JsonPropertyName("suggestedCommitMessage")] string? SuggestedCommitMessage

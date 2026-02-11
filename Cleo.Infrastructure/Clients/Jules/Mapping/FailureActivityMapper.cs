@@ -9,11 +9,11 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class FailureActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is SessionFailedPayload;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesSessionFailedPayloadDto;
     
     public SessionActivity Map(JulesActivityDto dto)
     {
-        var payload = (SessionFailedPayload)dto.Payload;
+        var payload = (JulesSessionFailedPayloadDto)dto.Payload;
         return new FailureActivity(
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 

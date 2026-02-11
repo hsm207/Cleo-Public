@@ -12,7 +12,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    public static Session Map(JulesSessionResponse dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
+    public static Session Map(JulesSessionResponseDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
     {
         ArgumentNullException.ThrowIfNull(dto);
         ArgumentNullException.ThrowIfNull(statusMapper);
@@ -53,7 +53,7 @@ internal static class JulesMapper
         return session;
     }
 
-    public static SessionPulse MapPulse(JulesSessionResponse dto, ISessionStatusMapper statusMapper)
+    public static SessionPulse MapPulse(JulesSessionResponseDto dto, ISessionStatusMapper statusMapper)
     {
         ArgumentNullException.ThrowIfNull(dto);
         ArgumentNullException.ThrowIfNull(statusMapper);
