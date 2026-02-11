@@ -25,7 +25,7 @@ public sealed class RestSessionMessenger : ISessionMessenger
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
-        var request = new JulesSendMessageRequest(message);
+        var request = new JulesSendMessageRequestDto(message);
         
         try
         {

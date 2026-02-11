@@ -48,15 +48,15 @@ public class RestJulesActivityClientTests
         
         // 1. Progress activity with Bash Evidence ⚔️
         var progressDto = JulesDtoTestFactory.Create("prog", "1", null, now, "agent", 
-            new List<ArtifactDto> { new ArtifactDto(null, null, new BashOutputDto("ls", "files", 0)) }, 
-            progressUpdated: new ProgressUpdatedDto("Working", "Running tests"));
+            new List<JulesArtifactDto> { new JulesArtifactDto(null, null, new JulesBashOutputDto("ls", "files", 0)) },
+            progressUpdated: new JulesProgressUpdatedDto("Working", "Running tests"));
             
         // 2. Completion activity with Code Proposal 🎁
         var completionDto = JulesDtoTestFactory.Create("done", "2", null, now, "system", 
-            new List<ArtifactDto> { new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("patch", "base", null)), null, null) }, 
-            sessionCompleted: new SessionCompletedDto());
+            new List<JulesArtifactDto> { new JulesArtifactDto(new JulesChangeSetDto("src", new JulesGitPatchDto("patch", "base", null)), null, null) },
+            sessionCompleted: new JulesSessionCompletedDto());
 
-        var response = new ListActivitiesResponse(new JulesActivityDto[] { progressDto, completionDto }, null);
+        var response = new JulesListActivitiesResponseDto(new JulesActivityDto[] { progressDto, completionDto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -85,7 +85,7 @@ public class RestJulesActivityClientTests
     public async Task GetActivitiesAsync_ShouldReturnEmptyOnNull()
     {
         // Arrange
-        var response = new ListActivitiesResponse(null, null);
+        var response = new JulesListActivitiesResponseDto(null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -107,7 +107,7 @@ public class RestJulesActivityClientTests
     {
         // Arrange
         var archivist = (ISessionArchivist)_client;
-        var response = new ListActivitiesResponse(Array.Empty<JulesActivityDto>(), null);
+        var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

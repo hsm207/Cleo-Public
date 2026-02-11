@@ -7,12 +7,12 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 /// <summary>
 /// Data transfer object representing a Jules engineering session.
 /// </summary>
-public sealed record JulesSessionResponse(
+public sealed record JulesSessionResponseDto(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("state")] JulesSessionState State,
     [property: JsonPropertyName("prompt")] string Prompt,
-    [property: JsonPropertyName("sourceContext")] SourceContextDto SourceContext,
+    [property: JsonPropertyName("sourceContext")] JulesSourceContextDto SourceContext,
     [property: JsonPropertyName("url")] Uri? Url,
     [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval,
     [property: JsonPropertyName("automationMode")] JulesAutomationMode? AutomationMode,
@@ -22,7 +22,7 @@ public sealed record JulesSessionResponse(
 );
 
 public sealed record JulesOutputDto(
-    [property: JsonPropertyName("changeSet")] ChangeSetDto? ChangeSet,
+    [property: JsonPropertyName("changeSet")] JulesChangeSetDto? ChangeSet,
     [property: JsonPropertyName("pullRequest")] PullRequestDto? PullRequest
 );
 

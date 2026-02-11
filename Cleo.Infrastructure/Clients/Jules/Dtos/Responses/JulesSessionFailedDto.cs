@@ -3,10 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record BashOutputDto(
-    [property: JsonPropertyName("command")] string? Command,
-    [property: JsonPropertyName("output")] string? Output,
-    [property: JsonPropertyName("exitCode")] int? ExitCode
+public sealed record JulesSessionFailedDto(
+    [property: JsonPropertyName("reason")] string? Reason
 )
 {
     [JsonExtensionData]

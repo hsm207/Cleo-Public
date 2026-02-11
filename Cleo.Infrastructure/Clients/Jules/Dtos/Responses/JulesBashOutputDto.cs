@@ -3,8 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record PlanGeneratedDto(
-    [property: JsonPropertyName("plan")] PlanDto Plan
+public sealed record JulesBashOutputDto(
+    [property: JsonPropertyName("command")] string? Command,
+    [property: JsonPropertyName("output")] string? Output,
+    [property: JsonPropertyName("exitCode")] int? ExitCode
 )
 {
     [JsonExtensionData]

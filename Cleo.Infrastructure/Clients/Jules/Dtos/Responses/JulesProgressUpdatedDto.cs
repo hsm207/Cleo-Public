@@ -3,8 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record PlanApprovedDto(
-    [property: JsonPropertyName("planId")] string? PlanId
+public sealed record JulesProgressUpdatedDto(
+    [property: JsonPropertyName("title")] string? Title,
+    [property: JsonPropertyName("description")] string? Description
 )
 {
     [JsonExtensionData]

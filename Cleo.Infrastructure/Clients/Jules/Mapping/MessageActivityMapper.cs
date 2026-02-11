@@ -9,7 +9,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class MessageActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is AgentMessagedPayload || dto.Payload is UserMessagedPayload;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesAgentMessagedPayloadDto || dto.Payload is JulesUserMessagedPayloadDto;
 
     public SessionActivity Map(JulesActivityDto dto)
     {
@@ -18,8 +18,8 @@ internal sealed class MessageActivityMapper : IJulesActivityMapper
         
         var text = dto.Payload switch
         {
-            AgentMessagedPayload amp => amp.AgentMessage,
-            UserMessagedPayload ump => ump.UserMessage,
+            JulesAgentMessagedPayloadDto amp => amp.AgentMessage,
+            JulesUserMessagedPayloadDto ump => ump.UserMessage,
             _ => string.Empty
         };
 

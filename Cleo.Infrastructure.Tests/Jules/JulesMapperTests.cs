@@ -18,8 +18,8 @@ public sealed class JulesMapperTests
         var sut = new PlanningActivityMapper();
         var dto = JulesDtoTestFactory.Create(
             "name", "id", "desc", Now, "agent", 
-            planGenerated: new PlanGeneratedDto(new PlanDto("plan-1", new[] {
-                new PlanStepDto("s1", "Title", "Desc", 0)
+            planGenerated: new JulesPlanGeneratedDto(new JulesPlanDto("plan-1", new[] {
+                new JulesPlanStepDto("s1", "Title", "Desc", 0)
             }, Now)));
 
         sut.CanMap(dto).Should().BeTrue();
@@ -36,7 +36,7 @@ public sealed class JulesMapperTests
         var sut = new ProgressActivityMapper();
         var dto = JulesDtoTestFactory.Create(
             "name", "id", "desc", Now, "agent",
-            progressUpdated: new ProgressUpdatedDto("Cooking", "Still at it"));
+            progressUpdated: new JulesProgressUpdatedDto("Cooking", "Still at it"));
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
@@ -51,7 +51,7 @@ public sealed class JulesMapperTests
         var sut = new FailureActivityMapper();
         var dto = JulesDtoTestFactory.Create(
             "name", "id", "desc", Now, "system",
-            sessionFailed: new SessionFailedDto("Quota Exceeded"));
+            sessionFailed: new JulesSessionFailedDto("Quota Exceeded"));
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
@@ -66,7 +66,7 @@ public sealed class JulesMapperTests
         var sut = new CompletionActivityMapper();
         var dto = JulesDtoTestFactory.Create(
             "name", "id", "desc", Now, "system",
-            sessionCompleted: new SessionCompletedDto());
+            sessionCompleted: new JulesSessionCompletedDto());
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
@@ -80,7 +80,7 @@ public sealed class JulesMapperTests
         var sut = new ApprovalActivityMapper();
         var dto = JulesDtoTestFactory.Create(
             "name", "id", "desc", Now, "user",
-            planApproved: new PlanApprovedDto("plan-cake"));
+            planApproved: new JulesPlanApprovedDto("plan-cake"));
 
         sut.CanMap(dto).Should().BeTrue();
         var result = sut.Map(dto);
@@ -93,8 +93,8 @@ public sealed class JulesMapperTests
     public void Map_ShouldHandleNewMessageFields()
     {
         var sut = new MessageActivityMapper();
-        var userDto = JulesDtoTestFactory.Create("n", "1", "d", Now, "user", userMessaged: new UserMessagedDto("User Hi"));
-        var agentDto = JulesDtoTestFactory.Create("n", "2", "d", Now, "agent", agentMessaged: new AgentMessagedDto("Agent Yo"));
+        var userDto = JulesDtoTestFactory.Create("n", "1", "d", Now, "user", userMessaged: new JulesUserMessagedDto("User Hi"));
+        var agentDto = JulesDtoTestFactory.Create("n", "2", "d", Now, "agent", agentMessaged: new JulesAgentMessagedDto("Agent Yo"));
 
         ((MessageActivity)sut.Map(userDto)).Text.Should().Be("User Hi");
         ((MessageActivity)sut.Map(agentDto)).Text.Should().Be("Agent Yo");
@@ -104,13 +104,13 @@ public sealed class JulesMapperTests
     public void Map_ShouldAttachArtifactsToActivity()
     {
         var sut = new ProgressActivityMapper();
-        var artifacts = new List<ArtifactDto> {
-            new ArtifactDto(null, null, new BashOutputDto("ls", "out", 0)),
-            new ArtifactDto(new ChangeSetDto("src", new GitPatchDto("diff", "base", null)), null, null)
+        var artifacts = new List<JulesArtifactDto> {
+            new JulesArtifactDto(null, null, new JulesBashOutputDto("ls", "out", 0)),
+            new JulesArtifactDto(new JulesChangeSetDto("src", new JulesGitPatchDto("diff", "base", null)), null, null)
         };
         var dto = JulesDtoTestFactory.Create(
             "n", "1", "d", Now, "agent",
-            progressUpdated: new ProgressUpdatedDto("T", "D"),
+            progressUpdated: new JulesProgressUpdatedDto("T", "D"),
             artifacts: artifacts);
 
         var result = sut.Map(dto);
