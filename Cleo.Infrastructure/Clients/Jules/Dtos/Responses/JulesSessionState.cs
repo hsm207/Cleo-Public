@@ -8,22 +8,22 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum JulesSessionState
 {
-    [JsonPropertyName("STATE_UNSPECIFIED")]
+    [JsonStringEnumMemberName("STATE_UNSPECIFIED")]
     StateUnspecified,
-    [JsonPropertyName("QUEUED")]
+    [JsonStringEnumMemberName("QUEUED")]
     Queued,
-    [JsonPropertyName("PLANNING")]
+    [JsonStringEnumMemberName("PLANNING")]
     Planning, // Deprecated but still in discovery
-    [JsonPropertyName("AWAITING_PLAN_APPROVAL")]
+    [JsonStringEnumMemberName("AWAITING_PLAN_APPROVAL")]
     AwaitingPlanApproval,
-    [JsonPropertyName("AWAITING_USER_FEEDBACK")]
+    [JsonStringEnumMemberName("AWAITING_USER_FEEDBACK")]
     AwaitingUserFeedback,
-    [JsonPropertyName("IN_PROGRESS")]
+    [JsonStringEnumMemberName("IN_PROGRESS")]
     InProgress,
-    [JsonPropertyName("PAUSED")]
+    [JsonStringEnumMemberName("PAUSED")]
     Paused,
-    [JsonPropertyName("FAILED")]
+    [JsonStringEnumMemberName("FAILED")]
     Failed,
-    [JsonPropertyName("COMPLETED")]
+    [JsonStringEnumMemberName("COMPLETED")]
     Completed
 }
