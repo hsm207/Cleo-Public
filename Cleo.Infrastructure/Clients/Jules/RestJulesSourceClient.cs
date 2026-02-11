@@ -23,7 +23,7 @@ public sealed class RestJulesSourceClient : IJulesSourceClient, ISourceCatalog
         var response = await _httpClient.GetAsync(new Uri("v1alpha/sources", UriKind.Relative), cancellationToken).ConfigureAwait(false);
         await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-        var dto = await response.Content.ReadFromJsonAsync<ListSourcesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+        var dto = await response.Content.ReadFromJsonAsync<JulesListSourcesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
         if (dto?.Sources == null) return Array.Empty<SessionSource>();
 
         return dto.Sources

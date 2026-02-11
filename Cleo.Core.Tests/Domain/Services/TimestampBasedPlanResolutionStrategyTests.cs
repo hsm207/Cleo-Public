@@ -13,7 +13,7 @@ public class TimestampBasedPlanResolutionStrategyTests
     {
         var activities = new List<SessionActivity>
         {
-            new ProgressActivity("act/1", DateTimeOffset.UtcNow, "working...")
+            new ProgressActivity("act/1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "working...")
         };
 
         var result = _strategy.ResolvePlan(activities);
@@ -24,7 +24,7 @@ public class TimestampBasedPlanResolutionStrategyTests
     [Fact(DisplayName = "ResolvePlan should return the single planning activity if only one exists.")]
     public void ResolvePlanShouldReturnSinglePlan()
     {
-        var plan = new PlanningActivity("act/2", DateTimeOffset.UtcNow, "plan-1", Array.Empty<PlanStep>());
+        var plan = new PlanningActivity("act/2", "r2", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-1", Array.Empty<PlanStep>());
         var activities = new List<SessionActivity> { plan };
 
         var result = _strategy.ResolvePlan(activities);
@@ -36,13 +36,13 @@ public class TimestampBasedPlanResolutionStrategyTests
     public void ResolvePlanShouldReturnLatestByTimestamp()
     {
         var now = DateTimeOffset.UtcNow;
-        var olderPlan = new PlanningActivity("act/old", now.AddHours(-1), "old-plan", Array.Empty<PlanStep>());
-        var newerPlan = new PlanningActivity("act/new", now, "new-plan", Array.Empty<PlanStep>());
+        var olderPlan = new PlanningActivity("act/old", "r-old", now.AddHours(-1), ActivityOriginator.Agent, "old-plan", Array.Empty<PlanStep>());
+        var newerPlan = new PlanningActivity("act/new", "r-new", now, ActivityOriginator.Agent, "new-plan", Array.Empty<PlanStep>());
 
         var activities = new List<SessionActivity>
         {
             olderPlan,
-            new ProgressActivity("act/p", now.AddMinutes(30), "working..."),
+            new ProgressActivity("act/p", "r-p", now.AddMinutes(30), ActivityOriginator.Agent, "working..."),
             newerPlan
         };
 

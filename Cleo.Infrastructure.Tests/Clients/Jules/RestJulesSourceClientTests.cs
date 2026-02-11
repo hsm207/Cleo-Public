@@ -27,8 +27,8 @@ public class RestJulesSourceClientTests
     public async Task ListSourcesAsync_ShouldReturnSources()
     {
         // Arrange
-        var dto = new JulesSourceDto("sources/123", "123", new GithubRepoDto("owner", "repo"));
-        var response = new ListSourcesResponse(new[] { dto }, null);
+        var dto = new JulesSourceDto("sources/123", "123", new JulesGithubRepoDto("owner", "repo"));
+        var response = new JulesListSourcesResponseDto(new[] { dto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -54,7 +54,7 @@ public class RestJulesSourceClientTests
     {
         // Arrange
         var dto = new JulesSourceDto("sources/123", "123", null);
-        var response = new ListSourcesResponse(new[] { dto }, null);
+        var response = new JulesListSourcesResponseDto(new[] { dto }, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -78,7 +78,7 @@ public class RestJulesSourceClientTests
     public async Task ListSourcesAsync_ShouldReturnEmptyOnNull()
     {
         // Arrange
-        var response = new ListSourcesResponse(null, null);
+        var response = new JulesListSourcesResponseDto(null, null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -100,7 +100,7 @@ public class RestJulesSourceClientTests
     {
         // Arrange
         var catalog = (ISourceCatalog)_client;
-        var response = new ListSourcesResponse(Array.Empty<JulesSourceDto>(), null);
+        var response = new JulesListSourcesResponseDto(Array.Empty<JulesSourceDto>(), null);
 
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

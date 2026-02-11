@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -39,12 +40,28 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
             var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesListActivitiesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto?.Activities != null)
             {
-                var mapped = dto.Activities
-                    .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
-                        ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."));
+                // TODO: Refactor this inline lambda to use a factory or better error handling
+                var mapped = new List<SessionActivity>();
+                foreach (var a in dto.Activities)
+                {
+                    var mapper = _mappers.FirstOrDefault(m => m.CanMap(a));
+                    if (mapper != null)
+                    {
+                        mapped.Add(mapper.Map(a));
+                    }
+                    else
+                    {
+                        mapped.Add(new MessageActivity(
+                            a.Metadata.Name,
+                            a.Metadata.Id,
+                            DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture),
+                            ActivityOriginator.System,
+                            $"Unknown activity type '{a.Metadata.Name}' received."));
+                    }
+                }
                 
                 allActivities.AddRange(mapped);
             }

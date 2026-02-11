@@ -25,11 +25,11 @@ public class RegistrySessionPersistenceTests : IDisposable
         {
             new BashOutputMapper(),
             new ChangeSetMapper(),
-            new VisualSnapshotMapper()
+            new MediaMapper()
         });
 
         // Register Activity mapping 🔌🏺
-        _activityFactory = new ActivityMapperFactory(new IActivityPersistenceMapper[]
+        var activityMappers = new IActivityPersistenceMapper[]
         {
             new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapperFactory),
@@ -37,7 +37,8 @@ public class RegistrySessionPersistenceTests : IDisposable
             new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory)
-        });
+        };
+        _activityFactory = new ActivityMapperFactory(activityMappers);
 
         var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
@@ -53,8 +54,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Arrange
         var id = new SessionId("sessions/real-vibes-1");
         var dashboardUri = new Uri("https://jules.ai/sessions/1");
-        var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), dashboardUri);
-        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Initial thought");
+        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
+        var activity = new ProgressActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Initial thought");
         session.AddActivity(activity);
 
         // Act
@@ -81,8 +82,8 @@ public class RegistrySessionPersistenceTests : IDisposable
     {
         // Arrange
         var id = new SessionId("sessions/update-test");
-        var initial = new Session(id, new TaskDescription("Initial"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
-        var updated = new Session(id, new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed));
+        var initial = new Session(id, "remote-2", new TaskDescription("Initial"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        var updated = new Session(id, "remote-2", new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed), DateTimeOffset.UtcNow);
 
         // Act
         await _writer.RememberAsync(initial, TestContext.Current.CancellationToken);
@@ -99,7 +100,7 @@ public class RegistrySessionPersistenceTests : IDisposable
     {
         // Arrange
         var id = new SessionId("sessions/delete-me");
-        var session = new Session(id, new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
+        var session = new Session(id, "remote-3", new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
         // Act
         await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
@@ -140,7 +141,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
 
         var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
-        var session = new Session(new SessionId("s"), new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp));
+        var session = new Session(new SessionId("s"), "r", new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
         try
         {

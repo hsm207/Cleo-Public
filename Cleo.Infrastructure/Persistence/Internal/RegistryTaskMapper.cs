@@ -26,11 +26,20 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 
     public Session MapToDomain(RegisteredSessionDto dto)
     {
+        // Note: The registry is a simple store and might not have all the new metadata yet.
+        // We'll use defaults for now, but this highlights a potential gap in persistence if we want to store these fields.
+        // However, the registry seems to be local cache/history.
         var session = new Session(
             new SessionId(dto.SessionId),
+            dto.SessionId, // Fallback RemoteId to SessionId for legacy persisted sessions
             (TaskDescription)dto.TaskDescription,
             new SourceContext(dto.Repository, dto.Branch),
             new SessionPulse(SessionStatus.StartingUp), // Status remains ephemeral
+            DateTimeOffset.UtcNow, // Fallback for legacy persisted sessions
+            null,
+            null,
+            null,
+            AutomationMode.Unspecified,
             dto.DashboardUri);
 
         foreach (var envelope in dto.History ?? Enumerable.Empty<ActivityEnvelopeDto>())

@@ -59,7 +59,7 @@ public class PlanCommandTests : IDisposable
         var sessionId = "test-session";
         var planId = "PLAN-123";
         var timestamp = DateTimeOffset.UtcNow;
-        var steps = new List<PlanStepDto>
+        var steps = new List<PlanStepModel>
         {
             new(1, "Step One", "Desc 1"),
             new(2, "Step Two", "Desc 2")

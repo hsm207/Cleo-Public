@@ -21,8 +21,9 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
     {
         var planning = (PlanningActivity)activity;
         var dto = new PlanningPayloadDto(
+            planning.RemoteId,
             planning.PlanId,
-            planning.Steps.Select(s => new PlanStepDto(s.Index, s.Title, s.Description)).ToList(),
+            planning.Steps.Select(s => new JulesPlanStepDto(s.Id, s.Index, s.Title, s.Description)).ToList(),
             planning.Evidence.Select(_artifactFactory.ToEnvelope).ToList());
         
         return JsonSerializer.Serialize(dto);
@@ -31,14 +32,19 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
     {
         var dto = JsonSerializer.Deserialize<PlanningPayloadDto>(json);
+        // Fallback RemoteId to id for legacy data
+        var remoteId = dto?.RemoteId ?? id;
+
         return new PlanningActivity(
             id, 
+            remoteId,
             timestamp, 
+            originator,
             dto?.PlanId ?? "unknown",
-            dto?.Steps?.Select(s => new PlanStep(s.Index, s.Title, s.Description)).ToList() ?? new List<PlanStep>(),
+            dto?.Steps?.Select(s => new PlanStep(s.Id ?? Guid.NewGuid().ToString(), s.Index, s.Title, s.Description)).ToList() ?? new List<PlanStep>(),
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
-    private sealed record PlanningPayloadDto(string PlanId, List<PlanStepDto> Steps, List<ArtifactEnvelope> Evidence);
-    private sealed record PlanStepDto(int Index, string Title, string Description);
+    private sealed record PlanningPayloadDto(string? RemoteId, string PlanId, List<JulesPlanStepDto> Steps, List<ArtifactEnvelope> Evidence);
+    private sealed record JulesPlanStepDto(string? Id, int Index, string Title, string Description);
 }

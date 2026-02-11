@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
@@ -8,7 +9,12 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class CompletionActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.SessionCompleted is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesSessionCompletedPayloadDto;
     
-    public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(dto.Id, dto.CreateTime, ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
+    public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(
+        dto.Metadata.Name,
+        dto.Metadata.Id, 
+        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+        ActivityOriginatorMapper.Map(dto.Metadata.Originator),
+        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
 }

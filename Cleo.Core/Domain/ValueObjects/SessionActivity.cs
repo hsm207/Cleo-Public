@@ -24,6 +24,7 @@ public abstract record Artifact
 /// </summary>
 public abstract record SessionActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     IReadOnlyCollection<Artifact> Evidence)
@@ -49,11 +50,12 @@ public abstract record SessionActivity(
 /// </summary>
 public record MessageActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator, 
     string Text,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => Text;
 }
@@ -63,54 +65,104 @@ public record MessageActivity(
 /// </summary>
 public record PlanningActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string PlanId, 
     IReadOnlyCollection<PlanStep> Steps,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
 }
 
-public record PlanStep(int Index, string Title, string Description);
+public record PlanStep(string Id, int Index, string Title, string Description);
 
 /// <summary>
 /// A formal approval of a proposed plan.
 /// </summary>
 public record ApprovalActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string PlanId,
     IReadOnlyCollection<Artifact>? Evidence = null)
-    : SessionActivity(Id, Timestamp, ActivityOriginator.User, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
 }
 
 /// <summary>
-/// A moment-in-time heartbeat showing current status and progress.
+/// A moment-in-time heartbeat showing current status, progress, and internal reasoning.
 /// </summary>
 public record ProgressActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
-    string Detail,
+    ActivityOriginator Originator,
+    string Title,
+    string? Description = null,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.Agent, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
+    /// <summary>
+    /// The high-level intent or state (e.g., "Working...", "Code Review").
+    /// Maps to the API 'title' field.
+    /// </summary>
+    public string Intent => Title;
+
+    /// <summary>
+    /// The agent's internal monologue or reasoning signal.
+    /// Maps to the API 'description' field.
+    /// </summary>
+    public string? Thought => Description;
+
+    private const string Indent = "          "; // Indent to match "- [HH:mm] "
+
     public override string GetContentSummary()
     {
-        if (!string.IsNullOrWhiteSpace(Detail)) return Detail;
-        
-        if (Evidence.Count > 0)
+        var sb = new System.Text.StringBuilder();
+        sb.Append(Intent);
+
+        if (!string.IsNullOrWhiteSpace(Thought))
         {
-            return string.Join(" | ", Evidence.Select(e => e.GetSummary()));
+            sb.AppendLine();
+            sb.Append(Indent);
+            sb.Append("💭 ");
+            sb.Append(Thought.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
         }
 
-        return string.Empty;
+        if (Evidence.Count > 0)
+        {
+            sb.AppendLine();
+            sb.Append(Indent);
+            sb.Append("📦 ");
+            sb.Append(string.Join($"\n{Indent}📦 ", Evidence.Select(e => e.GetSummary())));
+        }
+
+        return sb.ToString();
     }
 
-    public override bool IsSignificant => false;
+    /// <summary>
+    /// Determines if the activity is significant based on the Narrative Intelligence Policy.
+    /// Significant if it contains a Thought (Reasoning Signal) or Evidence (Outcome Signal).
+    /// </summary>
+    public override bool IsSignificant
+    {
+        get
+        {
+            // Reasoning Signal: Has a non-empty thought/description
+            if (!string.IsNullOrWhiteSpace(Thought)) return true;
+
+            // Outcome Signal: Has tangible artifacts
+            if (Evidence.Count > 0) return true;
+
+            // Trace Signal: Pure system/status heartbeat
+            return false;
+        }
+    }
 }
 
 /// <summary>
@@ -118,9 +170,11 @@ public record ProgressActivity(
 /// </summary>
 public record CompletionActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp,
+    ActivityOriginator Originator,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.System, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary()
     {
@@ -138,10 +192,12 @@ public record CompletionActivity(
 /// </summary>
 public record FailureActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
+    ActivityOriginator Originator,
     string Reason,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, ActivityOriginator.System, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
 }

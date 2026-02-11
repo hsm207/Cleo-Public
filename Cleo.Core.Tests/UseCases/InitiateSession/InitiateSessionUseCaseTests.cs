@@ -38,7 +38,7 @@ public class InitiateSessionUseCaseTests
         var savedSession = _sessionWriter.SavedSessions.Values.Single();
         Assert.Equal(result.Id, savedSession.Id);
         Assert.Equal("Fix the bug", _julesClient.LastOptions?.Title);
-        Assert.Equal(AutomationMode.AutoCreatePullRequest, _julesClient.LastOptions?.Mode);
+        Assert.Equal(AutomationMode.AutoCreatePr, _julesClient.LastOptions?.Mode);
     }
 
     [Fact(DisplayName = "InitiateSessionUseCase should use the user-provided title if available.")]
@@ -104,10 +104,12 @@ public class InitiateSessionUseCaseTests
             LastOptions = options;
             var session = new Session(
                 new SessionId("sessions/fake-123"),
+                "remote-fake-123",
                 task,
                 source,
                 new SessionPulse(SessionStatus.StartingUp, "Fake Start"),
-                new Uri("https://fake.jules.com/123")
+                DateTimeOffset.UtcNow,
+                dashboardUri: new Uri("https://fake.jules.com/123")
             );
             return Task.FromResult(session);
         }

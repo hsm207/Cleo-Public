@@ -1,4 +1,5 @@
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
 namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
@@ -7,19 +8,18 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
 {
-    private static readonly Dictionary<string, SessionStatus> StatusMap = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<JulesSessionState, SessionStatus> StatusMap = new()
     {
-        ["QUEUED"] = SessionStatus.StartingUp,
-        ["STARTING_UP"] = SessionStatus.StartingUp,
-        ["PLANNING"] = SessionStatus.Planning,
-        ["IN_PROGRESS"] = SessionStatus.InProgress,
-        ["AWAITING_USER_FEEDBACK"] = SessionStatus.AwaitingFeedback,
-        ["AWAITING_PLAN_APPROVAL"] = SessionStatus.AwaitingPlanApproval,
-        ["PAUSED"] = SessionStatus.InProgress,
-        ["COMPLETED"] = SessionStatus.Completed,
-        ["FAILED"] = SessionStatus.Failed
+        [JulesSessionState.Queued] = SessionStatus.StartingUp,
+        [JulesSessionState.Planning] = SessionStatus.Planning,
+        [JulesSessionState.InProgress] = SessionStatus.InProgress,
+        [JulesSessionState.AwaitingUserFeedback] = SessionStatus.AwaitingFeedback,
+        [JulesSessionState.AwaitingPlanApproval] = SessionStatus.AwaitingPlanApproval,
+        [JulesSessionState.Paused] = SessionStatus.InProgress,
+        [JulesSessionState.Completed] = SessionStatus.Completed,
+        [JulesSessionState.Failed] = SessionStatus.Failed
     };
 
-    public SessionStatus Map(string? state) => 
-        (state != null && StatusMap.TryGetValue(state, out var status)) ? status : SessionStatus.InProgress;
+    public SessionStatus Map(JulesSessionState? state) => 
+        (state.HasValue && StatusMap.TryGetValue(state.Value, out var status)) ? status : SessionStatus.InProgress;
 }

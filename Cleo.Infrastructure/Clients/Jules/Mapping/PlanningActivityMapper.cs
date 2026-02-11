@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
@@ -8,12 +9,18 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class PlanningActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.PlanGenerated is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesPlanGeneratedPayloadDto;
     
-    public SessionActivity Map(JulesActivityDto dto) => new PlanningActivity(
-        dto.Id, 
-        dto.CreateTime, 
-        dto.PlanGenerated!.Plan.Id ?? "unknown",
-        dto.PlanGenerated!.Plan.Steps.Select(s => new PlanStep(s.Index, s.Title, s.Description ?? string.Empty)).ToList(),
-        ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        var payload = (JulesPlanGeneratedPayloadDto)dto.Payload;
+        return new PlanningActivity(
+            dto.Metadata.Name,
+            dto.Metadata.Id, 
+            DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+            ActivityOriginatorMapper.Map(dto.Metadata.Originator),
+            payload.Plan.Id ?? "unknown",
+            payload.Plan.Steps?.Select(s => new PlanStep(s.Id, s.Index ?? 0, s.Title ?? string.Empty, s.Description ?? string.Empty)).ToList() ?? new List<PlanStep>(),
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+    }
 }

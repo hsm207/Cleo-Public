@@ -25,6 +25,9 @@ internal sealed class LogCommand
         // Subcommand: view (was activities)
         command.AddCommand(BuildViewCommand());
 
+        // Implementing Recursive Signaling 🧠✨
+        command.Description += " More specialized subcommands available. Use --help to explore further.";
+
         return command;
     }
 
@@ -84,7 +87,7 @@ internal sealed class LogCommand
     {
         foreach (var activity in history)
         {
-            Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+            RenderActivity(activity);
         }
         Console.WriteLine($"Showing all {history.Count} activities.");
     }
@@ -129,8 +132,7 @@ internal sealed class LogCommand
                 Console.WriteLine($"... [{gap} heartbeats hidden] ...");
             }
 
-            var activity = history[currentIndex];
-            Console.WriteLine($"- [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+            RenderActivity(history[currentIndex]);
             lastDisplayedIndex = currentIndex;
         }
 
@@ -139,4 +141,34 @@ internal sealed class LogCommand
 
         Console.WriteLine($"Showing {displayedCount} of {totalSignificantCount} significant activities ({totalHeartbeatsHidden} total heartbeats hidden). Use --all to see the full history.");
     }
+
+    /// <summary>
+    /// Renders a single activity using the UX Goddess Design (RFC 009).
+    /// </summary>
+    private static void RenderActivity(SessionActivity activity)
+    {
+        var symbol = GetSymbol(activity);
+
+        // Header line: Symbol + Timestamp + Core Content
+        Console.WriteLine($"{symbol} [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+    }
+
+    private static string GetSymbol(SessionActivity activity) => activity switch
+    {
+        MessageActivity m when m.Originator == ActivityOriginator.User => "👤", // User Command
+        MessageActivity m when m.Originator == ActivityOriginator.Agent => "👸", // Agent Message
+        MessageActivity => "💬", // Fallback for other messages
+
+        PlanningActivity => "🗺️", // Plan Generated
+
+        ProgressActivity p when !string.IsNullOrWhiteSpace(p.Thought) => "🧠", // Agent Thought (Reasoning Signal)
+        ProgressActivity p when p.Evidence.Count > 0 => "📦", // Artifact Impact (Outcome Signal)
+        ProgressActivity => "📡", // Pulse/Heartbeat (Trace Signal)
+
+        ApprovalActivity => "✅", // Approval
+        CompletionActivity => "🏁", // Success
+        FailureActivity => "💥", // Failure
+
+        _ => "🔹" // Default
+    };
 }
