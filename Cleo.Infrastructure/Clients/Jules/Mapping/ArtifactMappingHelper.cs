@@ -5,7 +5,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
 internal static class ArtifactMappingHelper
 {
-    public static IReadOnlyCollection<Artifact> MapArtifacts(ArtifactDto[]? dtos)
+    public static IReadOnlyCollection<Artifact> MapArtifacts(IReadOnlyList<ArtifactDto>? dtos)
     {
         if (dtos == null) return Array.Empty<Artifact>();
 
@@ -27,7 +27,7 @@ internal static class ArtifactMappingHelper
                 artifacts.Add(new BashOutput(
                     dto.BashOutput.Command ?? string.Empty, 
                     dto.BashOutput.Output ?? string.Empty, 
-                    dto.BashOutput.ExitCode));
+                    dto.BashOutput.ExitCode ?? 0));
             }
             else if (dto.Media != null)
             {

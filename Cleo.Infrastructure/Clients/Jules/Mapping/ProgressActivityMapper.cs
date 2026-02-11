@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
@@ -8,12 +9,13 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class ProgressActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.ProgressUpdated is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload.ProgressUpdated is not null;
     
     public SessionActivity Map(JulesActivityDto dto) => new ProgressActivity(
-        dto.Id, 
-        dto.CreateTime, 
-        dto.ProgressUpdated!.Title,
-        dto.ProgressUpdated.Description,
-        ArtifactMappingHelper.MapArtifacts(dto.Artifacts));
+        dto.Metadata.Id, 
+        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+        ActivityOriginatorMapper.Map(dto.Metadata.Originator),
+        dto.Payload.ProgressUpdated!.Title ?? string.Empty,
+        dto.Payload.ProgressUpdated.Description,
+        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
 }

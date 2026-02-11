@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
@@ -12,6 +13,6 @@ internal sealed class UnknownActivityMapper : IJulesActivityMapper
 
     public SessionActivity Map(JulesActivityDto dto)
     {
-        return new MessageActivity(dto.Id, dto.CreateTime, ActivityOriginator.System, $"Unknown activity type received: {dto.Description}");
+        return new MessageActivity(dto.Metadata.Id, DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), ActivityOriginator.System, $"Unknown activity type received: {dto.Metadata.Description}");
     }
 }

@@ -39,6 +39,7 @@ internal static class JulesMapper
             session.AddActivity(new CompletionActivity(
                 $"output-{session.Id.Value}", 
                 DateTimeOffset.UtcNow, 
+                ActivityOriginator.System,
                 evidence));
         }
 
@@ -62,7 +63,7 @@ internal static class JulesMapper
         return new SessionPulse(status, detail);
     }
 
-    private static string GetFriendlyStatusDetail(SessionStatus status, string rawState) => status switch
+    private static string GetFriendlyStatusDetail(SessionStatus status, JulesSessionState rawState) => status switch
     {
         SessionStatus.StartingUp => "The collaboration is spinning up... 🚀",
         SessionStatus.Planning => "Jules is mapping out her thoughts... 🧠",

@@ -31,6 +31,7 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
         return new FailureActivity(
             id, 
             timestamp, 
+            originator,
             dto?.Reason ?? "Unknown failure",
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }

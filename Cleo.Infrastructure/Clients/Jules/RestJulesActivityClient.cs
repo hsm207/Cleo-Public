@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -44,7 +45,7 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
             {
                 var mapped = dto.Activities
                     .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
-                        ?? new MessageActivity(a.Id, a.CreateTime, ActivityOriginator.System, $"Unknown activity type '{a.Name}' received."));
+                        ?? new MessageActivity(a.Metadata.Id, DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture), ActivityOriginator.System, $"Unknown activity type '{a.Metadata.Name}' received."));
                 
                 allActivities.AddRange(mapped);
             }

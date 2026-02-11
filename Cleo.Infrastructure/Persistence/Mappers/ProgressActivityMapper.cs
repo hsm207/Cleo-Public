@@ -32,6 +32,7 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
         return new ProgressActivity(
             id, 
             timestamp, 
+            originator,
             dto?.Title ?? string.Empty,
             dto?.Description,
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
