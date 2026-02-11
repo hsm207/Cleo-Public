@@ -20,14 +20,17 @@ internal static class JulesDtoTestFactory
         SessionFailedDto? sessionFailed = null)
     {
         var metadata = new JulesActivityMetadata(id, name, description, createTime, originator, artifacts);
-        var payload = new JulesActivityPayload(
-            progressUpdated,
-            planGenerated,
-            planApproved,
-            userMessaged,
-            agentMessaged,
-            sessionCompleted,
-            sessionFailed);
+        
+        JulesActivityPayload payload = null!;
+
+        if (progressUpdated != null) payload = new ProgressUpdatedPayload(progressUpdated.Title, progressUpdated.Description);
+        else if (planGenerated != null) payload = new PlanGeneratedPayload(planGenerated.Plan);
+        else if (planApproved != null) payload = new PlanApprovedPayload(planApproved.PlanId);
+        else if (userMessaged != null) payload = new UserMessagedPayload(userMessaged.UserMessage);
+        else if (agentMessaged != null) payload = new AgentMessagedPayload(agentMessaged.AgentMessage);
+        else if (sessionCompleted != null) payload = new SessionCompletedPayload();
+        else if (sessionFailed != null) payload = new SessionFailedPayload(sessionFailed.Reason);
+        else payload = new ProgressUpdatedPayload("Fallback", "Synthetic test payload");
 
         return new JulesActivityDto(metadata, payload);
     }

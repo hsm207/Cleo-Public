@@ -9,15 +9,20 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class MessageActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload.AgentMessaged is not null || dto.Payload.UserMessaged is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is AgentMessagedPayload || dto.Payload is UserMessagedPayload;
 
     public SessionActivity Map(JulesActivityDto dto)
     {
         // Use the Metadata Originator as the source of truth, but fallback to payload type inference if needed
         var originator = ActivityOriginatorMapper.Map(dto.Metadata.Originator);
         
-        var text = dto.Payload.AgentMessaged?.AgentMessage ?? dto.Payload.UserMessaged?.UserMessage ?? string.Empty;
+        var text = dto.Payload switch
+        {
+            AgentMessagedPayload amp => amp.AgentMessage,
+            UserMessagedPayload ump => ump.UserMessage,
+            _ => string.Empty
+        };
 
-        return new MessageActivity(dto.Metadata.Id, DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), originator, text, ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+        return new MessageActivity(dto.Metadata.Id, DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), originator, text ?? string.Empty, ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
     }
 }

@@ -9,12 +9,16 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class ApprovalActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload.PlanApproved is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is PlanApprovedPayload;
     
-    public SessionActivity Map(JulesActivityDto dto) => new ApprovalActivity(
-        dto.Metadata.Id, 
-        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
-        ActivityOriginatorMapper.Map(dto.Metadata.Originator),
-        dto.Payload.PlanApproved!.PlanId ?? "unknown",
-        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        var payload = (PlanApprovedPayload)dto.Payload;
+        return new ApprovalActivity(
+            dto.Metadata.Id, 
+            DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+            ActivityOriginatorMapper.Map(dto.Metadata.Originator),
+            payload.PlanId ?? "unknown",
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+    }
 }

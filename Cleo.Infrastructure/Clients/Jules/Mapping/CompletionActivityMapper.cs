@@ -9,7 +9,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class CompletionActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload.SessionCompleted is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is SessionCompletedPayload;
     
     public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(
         dto.Metadata.Id, 

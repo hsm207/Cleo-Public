@@ -9,12 +9,16 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 internal sealed class FailureActivityMapper : IJulesActivityMapper
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload.SessionFailed is not null;
+    public bool CanMap(JulesActivityDto dto) => dto.Payload is SessionFailedPayload;
     
-    public SessionActivity Map(JulesActivityDto dto) => new FailureActivity(
-        dto.Metadata.Id, 
-        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
-        ActivityOriginatorMapper.Map(dto.Metadata.Originator),
-        dto.Payload.SessionFailed!.Reason ?? "Unknown failure",
-        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+    public SessionActivity Map(JulesActivityDto dto)
+    {
+        var payload = (SessionFailedPayload)dto.Payload;
+        return new FailureActivity(
+            dto.Metadata.Id, 
+            DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+            ActivityOriginatorMapper.Map(dto.Metadata.Originator),
+            payload.Reason ?? "Unknown failure",
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+    }
 }
