@@ -40,7 +40,7 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
             var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
-            var dto = await response.Content.ReadFromJsonAsync<ListActivitiesResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var dto = await response.Content.ReadFromJsonAsync<JulesListActivitiesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto?.Activities != null)
             {
                 var mapped = dto.Activities

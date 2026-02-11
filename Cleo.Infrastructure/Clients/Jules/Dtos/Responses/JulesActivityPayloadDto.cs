@@ -7,52 +7,52 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 /// The specific event payload of a Jules activity.
 /// This hierarchy uses polymorphism to handle the 'OneOf' structure of the API.
 /// </summary>
-public abstract record JulesActivityPayload
+public abstract record JulesActivityPayloadDto
 {
     // Captures any unknown properties within the payload object for perfect fidelity 🛡️💎
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; init; }
 }
 
-public sealed record ProgressUpdatedPayload(
+public sealed record JulesProgressUpdatedPayloadDto(
     [property: JsonPropertyName("title")] string? Title,
     [property: JsonPropertyName("description")] string? Description
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record PlanGeneratedPayload(
-    [property: JsonPropertyName("plan")] PlanDto Plan
-) : JulesActivityPayload;
+public sealed record JulesPlanGeneratedPayloadDto(
+    [property: JsonPropertyName("plan")] JulesPlanDto Plan
+) : JulesActivityPayloadDto;
 
-public sealed record PlanApprovedPayload(
+public sealed record JulesPlanApprovedPayloadDto(
     [property: JsonPropertyName("planId")] string? PlanId
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record UserMessagedPayload(
+public sealed record JulesUserMessagedPayloadDto(
     [property: JsonPropertyName("userMessage")] string? UserMessage
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record AgentMessagedPayload(
+public sealed record JulesAgentMessagedPayloadDto(
     [property: JsonPropertyName("agentMessage")] string? AgentMessage
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record SessionCompletedPayload : JulesActivityPayload;
+public sealed record JulesSessionCompletedPayloadDto : JulesActivityPayloadDto;
 
-public sealed record SessionFailedPayload(
+public sealed record JulesSessionFailedPayloadDto(
     [property: JsonPropertyName("reason")] string? Reason
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record CodeChangesPayload(
+public sealed record JulesCodeChangesPayloadDto(
     [property: JsonPropertyName("source")] string? Source,
-    [property: JsonPropertyName("gitPatch")] GitPatchDto? GitPatch
-) : JulesActivityPayload;
+    [property: JsonPropertyName("gitPatch")] JulesGitPatchDto? GitPatch
+) : JulesActivityPayloadDto;
 
-public sealed record BashOutputPayload(
+public sealed record JulesBashOutputPayloadDto(
     [property: JsonPropertyName("command")] string? Command,
     [property: JsonPropertyName("output")] string? Output,
     [property: JsonPropertyName("exitCode")] int? ExitCode
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;
 
-public sealed record MediaPayload(
+public sealed record JulesMediaPayloadDto(
     [property: JsonPropertyName("data")] string? Data,
     [property: JsonPropertyName("mimeType")] string? MimeType
-) : JulesActivityPayload;
+) : JulesActivityPayloadDto;

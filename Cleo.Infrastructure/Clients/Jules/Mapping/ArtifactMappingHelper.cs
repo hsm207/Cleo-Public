@@ -5,7 +5,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
 internal static class ArtifactMappingHelper
 {
-    public static IReadOnlyCollection<Artifact> MapArtifacts(IReadOnlyList<ArtifactDto>? dtos)
+    public static IReadOnlyCollection<Artifact> MapArtifacts(IReadOnlyList<JulesArtifactDto>? dtos)
     {
         if (dtos == null) return Array.Empty<Artifact>();
 

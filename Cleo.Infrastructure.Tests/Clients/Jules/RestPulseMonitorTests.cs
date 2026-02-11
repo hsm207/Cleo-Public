@@ -27,7 +27,7 @@ public class RestPulseMonitorTests
     public async Task GetPulse_IsIsolatedAndCorrect()
     {
         // Arrange
-        var dto = new JulesSessionResponse("session-123", "id", JulesSessionState.InProgress, "prompt", new SourceContextDto("repo", null), null, true, JulesAutomationMode.AutomationModeUnspecified, null, null);
+        var dto = new JulesSessionResponseDto("session-123", "id", JulesSessionState.InProgress, "prompt", new JulesSourceContextDto("repo", null), null, true, JulesAutomationMode.AutomationModeUnspecified, null, null);
         
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

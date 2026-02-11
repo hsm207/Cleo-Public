@@ -10,8 +10,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 /// </summary>
 [JsonConverter(typeof(JulesActivityConverter))]
 public sealed record JulesActivityDto(
-    JulesActivityMetadata Metadata,
-    JulesActivityPayload Payload
+    JulesActivityMetadataDto Metadata,
+    JulesActivityPayloadDto Payload
 );
 
 /// <summary>
@@ -22,16 +22,16 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
 {
     private static readonly Dictionary<string, Type> PayloadTypeMap = new()
     {
-        ["progressUpdated"] = typeof(ProgressUpdatedPayload),
-        ["planGenerated"] = typeof(PlanGeneratedPayload),
-        ["planApproved"] = typeof(PlanApprovedPayload),
-        ["userMessaged"] = typeof(UserMessagedPayload),
-        ["agentMessaged"] = typeof(AgentMessagedPayload),
-        ["sessionCompleted"] = typeof(SessionCompletedPayload),
-        ["sessionFailed"] = typeof(SessionFailedPayload),
-        ["codeChanges"] = typeof(CodeChangesPayload),
-        ["bashOutput"] = typeof(BashOutputPayload),
-        ["media"] = typeof(MediaPayload)
+        ["progressUpdated"] = typeof(JulesProgressUpdatedPayloadDto),
+        ["planGenerated"] = typeof(JulesPlanGeneratedPayloadDto),
+        ["planApproved"] = typeof(JulesPlanApprovedPayloadDto),
+        ["userMessaged"] = typeof(JulesUserMessagedPayloadDto),
+        ["agentMessaged"] = typeof(JulesAgentMessagedPayloadDto),
+        ["sessionCompleted"] = typeof(JulesSessionCompletedPayloadDto),
+        ["sessionFailed"] = typeof(JulesSessionFailedPayloadDto),
+        ["codeChanges"] = typeof(JulesCodeChangesPayloadDto),
+        ["bashOutput"] = typeof(JulesBashOutputPayloadDto),
+        ["media"] = typeof(JulesMediaPayloadDto)
     };
 
     public override JulesActivityDto? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -41,22 +41,22 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
         if (node == null) return null;
 
         // 2. Deserialize the common Metadata (Envelope) fields 🧱
-        var metadata = node.Deserialize<JulesActivityMetadata>(options);
+        var metadata = node.Deserialize<JulesActivityMetadataDto>(options);
         if (metadata == null) return null;
 
         // 3. Detect which Payload is present based on property keys 👃💎
-        JulesActivityPayload? payload = null;
+        JulesActivityPayloadDto? payload = null;
         foreach (var entry in PayloadTypeMap)
         {
             if (node.ContainsKey(entry.Key))
             {
-                payload = node[entry.Key].Deserialize(entry.Value, options) as JulesActivityPayload;
+                payload = node[entry.Key].Deserialize(entry.Value, options) as JulesActivityPayloadDto;
                 break;
             }
         }
 
         // 4. Fallback to a generic payload if none found (keeps things robust) 🛡️
-        payload ??= new ProgressUpdatedPayload("Unknown Event", "The API sent an activity type that Cleo doesn't recognize yet.");
+        payload ??= new JulesProgressUpdatedPayloadDto("Unknown Event", "The API sent an activity type that Cleo doesn't recognize yet.");
 
         return new JulesActivityDto(metadata, payload);
     }

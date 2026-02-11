@@ -22,7 +22,7 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
         var planning = (PlanningActivity)activity;
         var dto = new PlanningPayloadDto(
             planning.PlanId,
-            planning.Steps.Select(s => new PlanStepDto(s.Index, s.Title, s.Description)).ToList(),
+            planning.Steps.Select(s => new JulesPlanStepDto(s.Index, s.Title, s.Description)).ToList(),
             planning.Evidence.Select(_artifactFactory.ToEnvelope).ToList());
         
         return JsonSerializer.Serialize(dto);
@@ -40,6 +40,6 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
-    private sealed record PlanningPayloadDto(string PlanId, List<PlanStepDto> Steps, List<ArtifactEnvelope> Evidence);
-    private sealed record PlanStepDto(int Index, string Title, string Description);
+    private sealed record PlanningPayloadDto(string PlanId, List<JulesPlanStepDto> Steps, List<ArtifactEnvelope> Evidence);
+    private sealed record JulesPlanStepDto(int Index, string Title, string Description);
 }

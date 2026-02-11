@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
-public sealed record UserMessagedDto(
+public sealed record JulesUserMessagedDto(
     [property: JsonPropertyName("userMessage")] string? UserMessage
 )
 {
