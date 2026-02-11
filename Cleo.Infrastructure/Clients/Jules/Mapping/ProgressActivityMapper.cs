@@ -15,6 +15,7 @@ internal sealed class ProgressActivityMapper : IJulesActivityMapper
     {
         var payload = (JulesProgressUpdatedPayloadDto)dto.Payload;
         return new ProgressActivity(
+            dto.Metadata.Name,
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),

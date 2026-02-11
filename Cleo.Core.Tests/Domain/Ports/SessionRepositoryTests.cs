@@ -9,15 +9,18 @@ namespace Cleo.Core.Tests.Domain.Ports;
 public class SessionRepositoryTests
 {
     private readonly SessionId _testId = new("sessions/123");
+    private readonly string _testRemoteId = "remote-123";
     private readonly Session _testSession;
 
     public SessionRepositoryTests()
     {
         _testSession = new Session(
             _testId,
+            _testRemoteId,
             new TaskDescription("Test"),
             new SourceContext("repo", "main"),
-            new SessionPulse(SessionStatus.StartingUp));
+            new SessionPulse(SessionStatus.StartingUp),
+            DateTimeOffset.UtcNow);
     }
 
     [Fact(DisplayName = "The ISessionReader port should define a clear contract for reading operations on sessions.")]

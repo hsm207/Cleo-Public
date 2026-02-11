@@ -37,7 +37,7 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
         ArgumentNullException.ThrowIfNull(request);
 
         // 1. Apply Business Policy: Every session must result in a PR and require explicit developer approval.
-        var mode = AutomationMode.AutoCreatePullRequest;
+        var mode = AutomationMode.AutoCreatePr;
         const bool RequireApproval = true;
 
         // 2. Apply Business Policy: Title Generation / Fallback
@@ -62,7 +62,7 @@ public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateS
         return new InitiateSessionResponse(
             session.Id,
             session.DashboardUri,
-            options.Mode == AutomationMode.AutoCreatePullRequest
+            options.Mode == AutomationMode.AutoCreatePr
         );
     }
 

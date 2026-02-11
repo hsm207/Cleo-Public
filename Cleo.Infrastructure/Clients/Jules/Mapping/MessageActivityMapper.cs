@@ -23,6 +23,12 @@ internal sealed class MessageActivityMapper : IJulesActivityMapper
             _ => string.Empty
         };
 
-        return new MessageActivity(dto.Metadata.Id, DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), originator, text ?? string.Empty, ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+        return new MessageActivity(
+            dto.Metadata.Name,
+            dto.Metadata.Id,
+            DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture),
+            originator,
+            text ?? string.Empty,
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
     }
 }

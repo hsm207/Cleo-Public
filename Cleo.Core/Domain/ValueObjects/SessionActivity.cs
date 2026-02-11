@@ -24,6 +24,7 @@ public abstract record Artifact
 /// </summary>
 public abstract record SessionActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     IReadOnlyCollection<Artifact> Evidence)
@@ -49,11 +50,12 @@ public abstract record SessionActivity(
 /// </summary>
 public record MessageActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator, 
     string Text,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => Text;
 }
@@ -63,29 +65,31 @@ public record MessageActivity(
 /// </summary>
 public record PlanningActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string PlanId, 
     IReadOnlyCollection<PlanStep> Steps,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
 }
 
-public record PlanStep(int Index, string Title, string Description);
+public record PlanStep(string Id, int Index, string Title, string Description);
 
 /// <summary>
 /// A formal approval of a proposed plan.
 /// </summary>
 public record ApprovalActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string PlanId,
     IReadOnlyCollection<Artifact>? Evidence = null)
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
 }
@@ -95,12 +99,13 @@ public record ApprovalActivity(
 /// </summary>
 public record ProgressActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string Title,
     string? Description = null,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     private const string Indent = "          "; // Indent to match "- [HH:mm] "
 
@@ -136,10 +141,11 @@ public record ProgressActivity(
 /// </summary>
 public record CompletionActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp,
     ActivityOriginator Originator,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary()
     {
@@ -157,11 +163,12 @@ public record CompletionActivity(
 /// </summary>
 public record FailureActivity(
     string Id, 
+    string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string Reason,
     IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
 }

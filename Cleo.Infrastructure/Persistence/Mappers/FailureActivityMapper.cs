@@ -21,6 +21,7 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
     {
         var failure = (FailureActivity)activity;
         return JsonSerializer.Serialize(new FailurePayloadDto(
+            failure.RemoteId,
             failure.Reason,
             failure.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
@@ -28,13 +29,16 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
     {
         var dto = JsonSerializer.Deserialize<FailurePayloadDto>(json);
+        var remoteId = dto?.RemoteId ?? id;
+
         return new FailureActivity(
             id, 
+            remoteId,
             timestamp, 
             originator,
             dto?.Reason ?? "Unknown failure",
             dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
     }
 
-    private sealed record FailurePayloadDto(string Reason, List<ArtifactEnvelope> Evidence);
+    private sealed record FailurePayloadDto(string? RemoteId, string Reason, List<ArtifactEnvelope> Evidence);
 }

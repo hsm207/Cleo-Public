@@ -15,11 +15,12 @@ internal sealed class PlanningActivityMapper : IJulesActivityMapper
     {
         var payload = (JulesPlanGeneratedPayloadDto)dto.Payload;
         return new PlanningActivity(
+            dto.Metadata.Name,
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
             payload.Plan.Id ?? "unknown",
-            payload.Plan.Steps?.Select(s => new PlanStep(s.Index ?? 0, s.Title ?? string.Empty, s.Description ?? string.Empty)).ToList() ?? new List<PlanStep>(),
+            payload.Plan.Steps?.Select(s => new PlanStep(s.Id, s.Index ?? 0, s.Title ?? string.Empty, s.Description ?? string.Empty)).ToList() ?? new List<PlanStep>(),
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
     }
 }
