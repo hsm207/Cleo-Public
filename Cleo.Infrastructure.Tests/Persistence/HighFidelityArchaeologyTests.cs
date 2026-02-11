@@ -116,4 +116,70 @@ public class HighFidelityArchaeologyTests
         session.EvaluatedStance.Should().Be(Stance.AwaitingPlanApproval); // Logical Override! 🧠🔥
         session.DeliveryStatus.Should().Be(DeliveryStatus.Unfulfilled); // The Truth! 💎
     }
+
+    [Fact(DisplayName = "Round-Trip: CompletionActivity preserves success signal 🏁")]
+    public void CompletionActivity_PreservesSuccessSignal_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var evidence = new List<Artifact> { new BashOutput("echo done", "done", 0) };
+        var original = new CompletionActivity("comp-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, evidence);
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (CompletionActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.Evidence.Should().HaveCount(1);
+        hydrated.Evidence.First().Should().BeOfType<BashOutput>();
+    }
+
+    [Fact(DisplayName = "Round-Trip: FailureActivity preserves reason and context 💥")]
+    public void FailureActivity_PreservesReason_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var original = new FailureActivity("fail-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.System, "Critical Error 500");
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (FailureActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.Reason.Should().Be("Critical Error 500");
+    }
+
+    [Fact(DisplayName = "Round-Trip: MessageActivity preserves dialogue 💬")]
+    public void MessageActivity_PreservesDialogue_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var original = new MessageActivity("msg-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.User, "Hello Cleo!");
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (MessageActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.Text.Should().Be("Hello Cleo!");
+    }
+
+    [Fact(DisplayName = "Round-Trip: ApprovalActivity preserves plan reference ✅")]
+    public void ApprovalActivity_PreservesPlanReference_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var original = new ApprovalActivity("app-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.User, "plan-123");
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (ApprovalActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.PlanId.Should().Be("plan-123");
+    }
 }
