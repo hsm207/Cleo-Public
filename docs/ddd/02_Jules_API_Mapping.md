@@ -10,7 +10,9 @@ This document ensures that our clean, developer-centric domain model correctly t
 | :--- | :--- | :--- |
 | **Task** | `prompt` (string) | The primary instruction for the session. |
 | **Source** | `SourceContext` | Combines repo name and starting branch. |
-| **TaskId** | `id` | The `{session}` part of `sessions/{session}`. |
+| **TaskId** | `id` / `name` | Captured as `RemoteId` and `Id`. |
+| **Metadata** | `title`, `createTime`, `updateTime` | Captured as `Title`, `CreatedAt`, `UpdatedAt`. |
+| **Policy** | `requirePlanApproval`, `automationMode` | Captured as `RequiresPlanApproval` and `Mode`. |
 | **Stance** | `state` (enum) | Maps to physical state, with logical overrides. See [04](04_Collaborator_Stance_and_Delivery.md). |
 | **Talk** | `sendMessage` / `activities` | `userMessaged` and `agentMessaged` activity types. |
 | **Artifacts** | `artifacts[]` | Individual units of data (Patches, Media, etc). |
