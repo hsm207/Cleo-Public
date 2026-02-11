@@ -126,6 +126,88 @@ public class JulesDtoSerializationTests
         payload.Data.Should().Be("base64data");
     }
 
+    [Fact(DisplayName = "Given a JSON with 'planGenerated' payload, it should deserialize correctly.")]
+    public void JulesActivityConverter_ShouldDeserialize_PlanGenerated()
+    {
+        // Arrange
+        var json = """
+        {
+          "id": "act-plan",
+          "name": "rem-plan",
+          "createTime": "2023-10-27T12:20:00Z",
+          "originator": "agent",
+          "planGenerated": {
+            "plan": {
+              "id": "plan-123",
+              "steps": [
+                { "id": "s1", "index": 0, "title": "step 1", "description": "do it" }
+              ]
+            }
+          }
+        }
+        """;
+
+        // Act
+        var result = JsonSerializer.Deserialize<JulesActivityDto>(json, Options);
+
+        // Assert
+        result.Should().NotBeNull();
+        var payload = result!.Payload.Should().BeOfType<JulesPlanGeneratedPayloadDto>().Subject;
+        payload.Plan.Id.Should().Be("plan-123");
+        payload.Plan.Steps.Should().HaveCount(1);
+        payload.Plan.Steps[0].Title.Should().Be("step 1");
+    }
+
+    [Fact(DisplayName = "Given a JSON with 'planApproved' payload, it should deserialize correctly.")]
+    public void JulesActivityConverter_ShouldDeserialize_PlanApproved()
+    {
+        // Arrange
+        var json = """
+        {
+          "id": "act-app",
+          "name": "rem-app",
+          "createTime": "2023-10-27T12:25:00Z",
+          "originator": "user",
+          "planApproved": {
+            "planId": "plan-123"
+          }
+        }
+        """;
+
+        // Act
+        var result = JsonSerializer.Deserialize<JulesActivityDto>(json, Options);
+
+        // Assert
+        result.Should().NotBeNull();
+        var payload = result!.Payload.Should().BeOfType<JulesPlanApprovedPayloadDto>().Subject;
+        payload.PlanId.Should().Be("plan-123");
+    }
+
+    [Fact(DisplayName = "Given a JSON with 'sessionFailed' payload, it should deserialize correctly.")]
+    public void JulesActivityConverter_ShouldDeserialize_SessionFailed()
+    {
+        // Arrange
+        var json = """
+        {
+          "id": "act-fail",
+          "name": "rem-fail",
+          "createTime": "2023-10-27T12:30:00Z",
+          "originator": "system",
+          "sessionFailed": {
+            "reason": "Something broke"
+          }
+        }
+        """;
+
+        // Act
+        var result = JsonSerializer.Deserialize<JulesActivityDto>(json, Options);
+
+        // Assert
+        result.Should().NotBeNull();
+        var payload = result!.Payload.Should().BeOfType<JulesSessionFailedPayloadDto>().Subject;
+        payload.Reason.Should().Be("Something broke");
+    }
+
     [Fact(DisplayName = "Given a DTO, it should serialize back to the correct JSON structure (Round-Trip).")]
     public void JulesActivityConverter_ShouldSerialize_Correctly()
     {
