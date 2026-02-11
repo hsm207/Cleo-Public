@@ -10,12 +10,12 @@ namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 public sealed record JulesSessionResponse(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("id")] string Id,
-    [property: JsonPropertyName("state")] string State,
+    [property: JsonPropertyName("state")] JulesSessionState State,
     [property: JsonPropertyName("prompt")] string Prompt,
     [property: JsonPropertyName("sourceContext")] SourceContextDto SourceContext,
     [property: JsonPropertyName("url")] Uri? Url,
     [property: JsonPropertyName("requirePlanApproval")] bool? RequirePlanApproval,
-    [property: JsonPropertyName("automationMode")] string? AutomationMode,
+    [property: JsonPropertyName("automationMode")] JulesAutomationMode? AutomationMode,
     [property: JsonPropertyName("createTime")] DateTimeOffset? CreateTime,
     [property: JsonPropertyName("updateTime")] DateTimeOffset? UpdateTime,
     [property: JsonPropertyName("outputs")] JulesOutputDto[]? Outputs = null
