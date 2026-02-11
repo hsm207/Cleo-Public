@@ -29,11 +29,11 @@ public class SessionPlanResolutionTests
     {
         // Given
         var session = new Session(Id, Task, Source, InitialPulse);
-        var plan = new PlanningActivity("plan-1", DateTimeOffset.UtcNow, "p1", Array.Empty<PlanStep>());
+        var plan = new PlanningActivity("plan-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "p1", Array.Empty<PlanStep>());
 
-        session.AddActivity(new ProgressActivity("prog-1", DateTimeOffset.UtcNow.AddMinutes(1), "working..."));
+        session.AddActivity(new ProgressActivity("prog-1", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, "working..."));
         session.AddActivity(plan);
-        session.AddActivity(new ProgressActivity("prog-2", DateTimeOffset.UtcNow.AddMinutes(2), "still working..."));
+        session.AddActivity(new ProgressActivity("prog-2", DateTimeOffset.UtcNow.AddMinutes(2), ActivityOriginator.Agent, "still working..."));
 
         // When
         var result = session.GetLatestPlan();
@@ -50,13 +50,13 @@ public class SessionPlanResolutionTests
         var session = new Session(Id, Task, Source, InitialPulse);
         var now = DateTimeOffset.UtcNow;
 
-        var planAlpha = new PlanningActivity("plan-alpha", now, "alpha", Array.Empty<PlanStep>());
-        var planBeta = new PlanningActivity("plan-beta", now.AddHours(1), "beta", Array.Empty<PlanStep>());
+        var planAlpha = new PlanningActivity("plan-alpha", now, ActivityOriginator.Agent, "alpha", Array.Empty<PlanStep>());
+        var planBeta = new PlanningActivity("plan-beta", now.AddHours(1), ActivityOriginator.Agent, "beta", Array.Empty<PlanStep>());
 
         session.AddActivity(planAlpha);
-        session.AddActivity(new ProgressActivity("prog-1", now.AddMinutes(30), "working on alpha"));
+        session.AddActivity(new ProgressActivity("prog-1", now.AddMinutes(30), ActivityOriginator.Agent, "working on alpha"));
         session.AddActivity(planBeta); // This is the latest one
-        session.AddActivity(new ProgressActivity("prog-2", now.AddHours(2), "working on beta"));
+        session.AddActivity(new ProgressActivity("prog-2", now.AddHours(2), ActivityOriginator.Agent, "working on beta"));
 
         // When
         var result = session.GetLatestPlan();

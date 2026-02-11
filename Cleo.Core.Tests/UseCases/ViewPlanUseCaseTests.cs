@@ -70,7 +70,7 @@ public class ViewPlanUseCaseTests
         );
 
         var steps = new List<PlanStep> { new(1, "Step 1", "Desc") };
-        var planActivity = new PlanningActivity("act-1", DateTimeOffset.UtcNow, "PLAN-A", steps);
+        var planActivity = new PlanningActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "PLAN-A", steps);
 
         session.AddActivity(planActivity);
 

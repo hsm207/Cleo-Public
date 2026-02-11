@@ -29,7 +29,7 @@ public sealed class RefreshPulseUseCaseTests
         var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
 
-        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Remotely synchronized activity");
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Remotely synchronized activity");
         _activityClient.Activities.Add(activity);
 
         var request = new RefreshPulseRequest(sessionId);

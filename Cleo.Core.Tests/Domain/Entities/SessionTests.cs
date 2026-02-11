@@ -68,7 +68,7 @@ public class SessionTests
         var patch = new GitPatch("diff-content", "base-commit");
         var changeSet = new ChangeSet("sources/repo", patch);
         var evidence = new List<Artifact> { changeSet };
-        var activity = new ProgressActivity("act/2", DateTimeOffset.UtcNow, "Done", evidence);
+        var activity = new ProgressActivity("act/2", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence);
 
         session.AddActivity(activity);
 
@@ -134,10 +134,10 @@ public class SessionTests
         var session = new Session(Id, Task, Source, InitialPulse);
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep(0, "T", "D") }));
         session.AddActivity(new MessageActivity("a2", now, ActivityOriginator.User, "msg"));
-        session.AddActivity(new ProgressActivity("a3", now, "working"));
-        session.AddActivity(new FailureActivity("a4", now, "error"));
+        session.AddActivity(new ProgressActivity("a3", now, ActivityOriginator.Agent, "working"));
+        session.AddActivity(new FailureActivity("a4", now, ActivityOriginator.System, "error"));
 
         Assert.Equal(4, session.SessionLog.Count);
     }
@@ -263,11 +263,11 @@ public class SessionTests
         var session = new Session(Id, Task, Source, InitialPulse);
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", now, "plan-1", new[] { new PlanStep(0, "T", "D") }));
-        session.AddActivity(new ProgressActivity("a2", now, "working")); // Not significant
+        session.AddActivity(new PlanningActivity("a1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep(0, "T", "D") }));
+        session.AddActivity(new ProgressActivity("a2", now, ActivityOriginator.Agent, "working")); // Not significant
         session.AddActivity(new MessageActivity("a3", now, ActivityOriginator.User, "msg"));
-        session.AddActivity(new ProgressActivity("a4", now, "working more")); // Not significant
-        session.AddActivity(new CompletionActivity("a5", now));
+        session.AddActivity(new ProgressActivity("a4", now, ActivityOriginator.Agent, "working more")); // Not significant
+        session.AddActivity(new CompletionActivity("a5", now, ActivityOriginator.System));
 
         var significantHistory = session.GetSignificantHistory();
 
