@@ -7,18 +7,20 @@ using Moq;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
 
-public class RegistrySessionPersistenceTests
+public class RegistrySessionPersistenceTests : IDisposable
 {
-    private readonly string _testPath = "/sessions/registry.json";
+    private readonly string _tempFile;
     private readonly Mock<IRegistryPathProvider> _pathProviderMock = new();
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
     private readonly ActivityMapperFactory _activityFactory;
-    private readonly FakeFileSystem _fileSystem;
+    private readonly PhysicalFileSystem _fileSystem;
 
     public RegistrySessionPersistenceTests()
     {
-        _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_testPath);
+        // Use a unique file path for each test instance to ensure isolation 🌍✨
+        _tempFile = Path.Combine(Path.GetTempPath(), $"Cleo_Test_Registry_{Guid.NewGuid():N}.json");
+        _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_tempFile);
 
         // Register Artifact mapping 🔌📎
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
@@ -42,10 +44,20 @@ public class RegistrySessionPersistenceTests
 
         var mapper = new RegistryTaskMapper(_activityFactory);
         var serializer = new JsonRegistrySerializer();
-        _fileSystem = new FakeFileSystem();
+        _fileSystem = new PhysicalFileSystem(); // Use the REAL file system as demanded! 💎
 
         _reader = new RegistrySessionReader(_pathProviderMock.Object, mapper, serializer, _fileSystem);
         _writer = new RegistrySessionWriter(_pathProviderMock.Object, mapper, serializer, _fileSystem);
+    }
+
+    public void Dispose()
+    {
+        // Clean up the fixture 🧹
+        if (File.Exists(_tempFile))
+        {
+            File.Delete(_tempFile);
+        }
+        GC.SuppressFinalize(this);
     }
 
     [Fact(DisplayName = "RegistrySessionWriter should save a session and Reader should retrieve it.")]
@@ -71,8 +83,8 @@ public class RegistrySessionPersistenceTests
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
         
         // Verify file actually exists and has content
-        Assert.True(_fileSystem.FileExists(_testPath));
-        var json = await _fileSystem.ReadAllTextAsync(_testPath, CancellationToken.None);
+        Assert.True(File.Exists(_tempFile));
+        var json = await File.ReadAllTextAsync(_tempFile);
         Assert.Contains("Real world testing", json);
         Assert.Contains("Initial thought", json);
     }
@@ -121,12 +133,12 @@ public class RegistrySessionPersistenceTests
         Assert.Empty(result);
         
         // Now test empty file
-        await _fileSystem.WriteAllTextAsync(_testPath, "[]", CancellationToken.None);
+        await File.WriteAllTextAsync(_tempFile, "[]");
         result = await _reader.ListAsync(TestContext.Current.CancellationToken);
         Assert.Empty(result);
         
         // Now test whitespace
-        await _fileSystem.WriteAllTextAsync(_testPath, "   ", CancellationToken.None);
+        await File.WriteAllTextAsync(_tempFile, "   ");
         result = await _reader.ListAsync(TestContext.Current.CancellationToken);
         Assert.Empty(result);
     }
@@ -135,20 +147,49 @@ public class RegistrySessionPersistenceTests
     public async Task Writer_ShouldCreateDirectory()
     {
         // Arrange
-        var nestedDir = "/sessions/nested";
-        var nestedFile = $"{nestedDir}/registry.json";
+        var nestedDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var nestedFile = Path.Combine(nestedDir, "registry.json");
         var mockPath = new Mock<IRegistryPathProvider>();
         mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
-        var fakeFs = new FakeFileSystem();
 
-        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), fakeFs);
+        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
         var session = new Session(new SessionId("s"), "r", new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
-        // Act
-        await writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        try
+        {
+            // Act
+            await writer.RememberAsync(session, TestContext.Current.CancellationToken);
 
-        // Assert
-        Assert.True(fakeFs.DirectoryExists(nestedDir));
-        Assert.True(fakeFs.FileExists(nestedFile));
+            // Assert
+            Assert.True(Directory.Exists(nestedDir));
+            Assert.True(File.Exists(nestedFile));
+        }
+        finally
+        {
+            if (Directory.Exists(nestedDir)) Directory.Delete(nestedDir, true);
+        }
+    }
+
+    [Fact(DisplayName = "PhysicalFileSystem should delegate to System.IO.")]
+    public async Task PhysicalFileSystem_DelegatesCorrectly()
+    {
+        var fs = new PhysicalFileSystem();
+        var path = Path.GetTempFileName();
+        try
+        {
+            await fs.WriteAllTextAsync(path, "Hello", CancellationToken.None);
+            Assert.True(fs.FileExists(path));
+            Assert.Equal("Hello", await fs.ReadAllTextAsync(path, CancellationToken.None));
+
+            // Check directory delegation
+            var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            fs.CreateDirectory(dir);
+            Assert.True(fs.DirectoryExists(dir));
+            Directory.Delete(dir);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
     }
 }
