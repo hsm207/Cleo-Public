@@ -157,4 +157,41 @@ public class RestJulesActivityClientTests
         (await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>())
             .WithInnerException<HttpRequestException>();
     }
+
+    [Fact(DisplayName = "GetActivitiesAsync should follow pagination links.")]
+    public async Task GetActivitiesAsync_FollowsPagination()
+    {
+        // Arrange
+        var page1 = new JulesListActivitiesResponseDto(
+            new[] { JulesDtoTestFactory.Create("act-1", "rem-1", "desc", DateTimeOffset.UtcNow.ToString("O"), "agent", null) },
+            "next-page-token");
+
+        var page2 = new JulesListActivitiesResponseDto(
+            new[] { JulesDtoTestFactory.Create("act-2", "rem-2", "desc", DateTimeOffset.UtcNow.ToString("O"), "agent", null) },
+            null);
+
+        _handlerMock.Protected()
+            .SetupSequence<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = JsonContent.Create(page1) })
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = JsonContent.Create(page2) });
+
+        // Act
+        var result = await _client.GetActivitiesAsync(_testId, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Should().HaveCount(2);
+        // Mapping maps Name -> Id, and Id -> RemoteId.
+        // JulesDtoTestFactory creates DTO with name="rem-1" and id="act-1".
+        // JulesMapper maps Name (rem-1) to Domain.Id, and Id (act-1) to Domain.RemoteId.
+        // So the Domain Id should be "rem-1" (the Name from DTO).
+        result.First().Id.Should().Be("rem-1");
+        result.Last().Id.Should().Be("rem-2");
+
+        // Verify second call had the token
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(2),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+    }
 }
