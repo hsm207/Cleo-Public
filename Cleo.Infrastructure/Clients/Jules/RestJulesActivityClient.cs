@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Net.Sockets;
+using Cleo.Core.Domain.Entities; // Needed?
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
@@ -26,51 +29,54 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var allActivities = new List<SessionActivity>();
-        string? nextPageToken = null;
-
-        do
+        try
         {
-            var uri = $"v1alpha/{id.Value}/activities";
-            if (nextPageToken != null)
-            {
-                uri += $"?pageToken={nextPageToken}";
-            }
+            var allActivities = new List<SessionActivity>();
+            string? nextPageToken = null;
 
-            var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
-            await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
-
-            var dto = await response.Content.ReadFromJsonAsync<JulesListActivitiesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (dto?.Activities != null)
+            do
             {
-                // TODO: Refactor this inline lambda to use a factory or better error handling
-                var mapped = new List<SessionActivity>();
-                foreach (var a in dto.Activities)
+                var uri = $"v1alpha/{id.Value}/activities";
+                if (nextPageToken != null)
                 {
-                    var mapper = _mappers.FirstOrDefault(m => m.CanMap(a));
-                    if (mapper != null)
+                    uri += $"?pageToken={nextPageToken}";
+                }
+
+                var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
+                await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
+
+                var dto = await response.Content.ReadFromJsonAsync<JulesListActivitiesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
+                if (dto?.Activities != null)
+                {
+                    foreach (var a in dto.Activities)
                     {
-                        mapped.Add(mapper.Map(a));
-                    }
-                    else
-                    {
-                        mapped.Add(new MessageActivity(
-                            a.Metadata.Name,
-                            a.Metadata.Id,
-                            DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture),
-                            ActivityOriginator.System,
-                            $"Unknown activity type '{a.Metadata.Name}' received."));
+                        var mapper = _mappers.FirstOrDefault(m => m.CanMap(a));
+                        if (mapper != null)
+                        {
+                            allActivities.Add(mapper.Map(a));
+                        }
+                        else
+                        {
+                            allActivities.Add(new MessageActivity(
+                                a.Metadata.Name,
+                                a.Metadata.Id,
+                                DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture),
+                                ActivityOriginator.System,
+                                $"Unknown activity type '{a.Metadata.Name}' received."));
+                        }
                     }
                 }
-                
-                allActivities.AddRange(mapped);
-            }
 
-            nextPageToken = dto?.NextPageToken;
+                nextPageToken = dto?.NextPageToken;
 
-        } while (nextPageToken != null);
+            } while (nextPageToken != null);
 
-        return allActivities.AsReadOnly();
+            return allActivities.AsReadOnly();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or SocketException)
+        {
+            throw new RemoteCollaboratorUnavailableException("Failed to retrieve activities due to connectivity issues.", ex);
+        }
     }
 
     async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)

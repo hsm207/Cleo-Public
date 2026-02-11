@@ -36,7 +36,7 @@ internal static class Program
         }
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    internal static void ConfigureServices(IServiceCollection services)
     {
         // Infrastructure 🏗️
         services.AddCleoInfrastructure(DefaultJulesBaseUrl);
