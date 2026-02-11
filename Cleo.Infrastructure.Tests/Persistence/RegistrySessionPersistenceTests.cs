@@ -54,7 +54,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var id = new SessionId("sessions/real-vibes-1");
         var dashboardUri = new Uri("https://jules.ai/sessions/1");
         var session = new Session(id, new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), dashboardUri);
-        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, "Initial thought");
+        var activity = new ProgressActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Initial thought");
         session.AddActivity(activity);
 
         // Act
