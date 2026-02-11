@@ -28,7 +28,7 @@ public class RestSessionLifecycleClientTests
         // Arrange
         var task = new TaskDescription("Refactor the world");
         var source = new SourceContext("cleo-repo", "main");
-        var options = new SessionCreationOptions(AutomationMode.AutoCreatePullRequest, "Refactor Session", true);
+        var options = new SessionCreationOptions(AutomationMode.AutoCreatePr, "Refactor Session", true);
         
         // The mock response
         var responseDto = new JulesSessionResponseDto("session-1", "id", JulesSessionState.Queued, "Refactor the world", new JulesSourceContextDto("repo", new JulesGithubRepoContextDto("main")), null, true, JulesAutomationMode.AutoCreatePr, null, null);

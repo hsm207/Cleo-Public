@@ -42,9 +42,11 @@ public class ViewPlanUseCaseTests
         var sessionId = new SessionId("session-no-plan");
         var session = new Session(
             sessionId,
+            "remote-1",
             new TaskDescription("Task"),
             new SourceContext("owner/repo", "main"),
-            new SessionPulse(SessionStatus.StartingUp, "Just started")
+            new SessionPulse(SessionStatus.StartingUp, "Just started"),
+            DateTimeOffset.UtcNow
         );
 
         _readerMock.Setup(r => r.RecallAsync(sessionId, TestContext.Current.CancellationToken))
@@ -64,13 +66,15 @@ public class ViewPlanUseCaseTests
         var sessionId = new SessionId("session-with-plan");
         var session = new Session(
             sessionId,
+            "remote-2",
             new TaskDescription("Task"),
             new SourceContext("owner/repo", "main"),
-            new SessionPulse(SessionStatus.Planning, "Planning")
+            new SessionPulse(SessionStatus.Planning, "Planning"),
+            DateTimeOffset.UtcNow
         );
 
-        var steps = new List<PlanStep> { new(1, "Step 1", "Desc") };
-        var planActivity = new PlanningActivity("act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "PLAN-A", steps);
+        var steps = new List<PlanStep> { new("s1", 1, "Step 1", "Desc") };
+        var planActivity = new PlanningActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "PLAN-A", steps);
 
         session.AddActivity(planActivity);
 

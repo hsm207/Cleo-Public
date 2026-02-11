@@ -7,7 +7,7 @@ namespace Cleo.Core.Domain.ValueObjects;
 /// <param name="Title">An optional human-friendly name for the session.</param>
 /// <param name="RequirePlanApproval">Whether the agent must wait for explicit plan approval before starting work.</param>
 public record SessionCreationOptions(
-    AutomationMode Mode = AutomationMode.None,
+    AutomationMode Mode = AutomationMode.Unspecified,
     string? Title = null,
     bool RequirePlanApproval = true
 );
