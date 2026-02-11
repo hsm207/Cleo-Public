@@ -1,9 +1,12 @@
-#pragma warning disable CA1819 // Properties should not return arrays (Allowed for DTOs)
-
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 
 public sealed record AgentMessagedDto(
-    [property: JsonPropertyName("agentMessage")] string AgentMessage
-);
+    [property: JsonPropertyName("agentMessage")] string? AgentMessage
+)
+{
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; init; }
+}
