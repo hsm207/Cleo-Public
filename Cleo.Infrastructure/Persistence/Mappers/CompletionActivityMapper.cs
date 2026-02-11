@@ -21,18 +21,22 @@ internal sealed class CompletionActivityMapper : IActivityPersistenceMapper
     {
         var completed = (CompletionActivity)activity;
         return JsonSerializer.Serialize(new CompletionPayloadDto(
+            completed.RemoteId,
             completed.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-        public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    {
+        var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
+        var remoteId = dto?.RemoteId ?? id;
 
-        {
+        return new CompletionActivity(
+            id,
+            remoteId,
+            timestamp,
+            originator,
+            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+    }
 
-            var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
-
-            return new CompletionActivity(id, timestamp, originator, dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
-
-        }
-
-    private sealed record CompletionPayloadDto(List<ArtifactEnvelope> Evidence);
+    private sealed record CompletionPayloadDto(string? RemoteId, List<ArtifactEnvelope> Evidence);
 }

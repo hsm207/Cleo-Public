@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using System.Globalization;
 using System.Linq;
 
 namespace Cleo.Infrastructure.Clients.Jules;
@@ -18,12 +19,19 @@ internal static class JulesMapper
         ArgumentNullException.ThrowIfNull(statusMapper);
 
         var pulse = MapPulse(dto, statusMapper);
+        var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
         var session = new Session(
             new SessionId(dto.Name),
+            dto.Id,
             originalTask,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
             pulse,
+            ParseDateTime(dto.CreateTime),
+            dto.UpdateTime != null ? ParseDateTime(dto.UpdateTime) : null,
+            dto.Title,
+            dto.RequirePlanApproval,
+            automationMode,
             dto.Url
         );
 
@@ -38,6 +46,7 @@ internal static class JulesMapper
             // Attach the patch to a synthetic completion activity to mark delivery
             session.AddActivity(new CompletionActivity(
                 $"output-{session.Id.Value}", 
+                "remote-output-id",
                 DateTimeOffset.UtcNow, 
                 ActivityOriginator.System,
                 evidence));
@@ -75,4 +84,10 @@ internal static class JulesMapper
         SessionStatus.Failed => "Something went wrong during execution. 🥀",
         _ => $"Session is {rawState}"
     };
+
+    private static DateTimeOffset ParseDateTime(string? date)
+    {
+        if (string.IsNullOrEmpty(date)) return DateTimeOffset.UtcNow;
+        return DateTimeOffset.Parse(date, CultureInfo.InvariantCulture);
+    }
 }

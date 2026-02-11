@@ -43,9 +43,25 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
             var dto = await response.Content.ReadFromJsonAsync<JulesListActivitiesResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto?.Activities != null)
             {
-                var mapped = dto.Activities
-                    .Select(a => _mappers.FirstOrDefault(m => m.CanMap(a))?.Map(a) 
-                        ?? new MessageActivity(a.Metadata.Id, DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture), ActivityOriginator.System, $"Unknown activity type '{a.Metadata.Name}' received."));
+                // TODO: Refactor this inline lambda to use a factory or better error handling
+                var mapped = new List<SessionActivity>();
+                foreach (var a in dto.Activities)
+                {
+                    var mapper = _mappers.FirstOrDefault(m => m.CanMap(a));
+                    if (mapper != null)
+                    {
+                        mapped.Add(mapper.Map(a));
+                    }
+                    else
+                    {
+                        mapped.Add(new MessageActivity(
+                            a.Metadata.Name,
+                            a.Metadata.Id,
+                            DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture),
+                            ActivityOriginator.System,
+                            $"Unknown activity type '{a.Metadata.Name}' received."));
+                    }
+                }
                 
                 allActivities.AddRange(mapped);
             }

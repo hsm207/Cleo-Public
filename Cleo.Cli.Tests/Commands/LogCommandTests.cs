@@ -45,7 +45,7 @@ public class LogCommandTests : IDisposable
         var timestamp = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>
         {
-            new MessageActivity("msg-1", timestamp, ActivityOriginator.User, "Hello Jules!")
+            new MessageActivity("msg-1", "remote-1", timestamp, ActivityOriginator.User, "Hello Jules!")
         };
 
         SetupUseCase(sessionId.Value, history);
@@ -69,10 +69,10 @@ public class LogCommandTests : IDisposable
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>
         {
-            new MessageActivity("msg-1", now, ActivityOriginator.User, "Start"), // Sig
-            new ProgressActivity("prog-1", now, ActivityOriginator.Agent, "working"), // Non-Sig (Gap)
-            new ProgressActivity("prog-2", now, ActivityOriginator.Agent, "working more"), // Non-Sig
-            new MessageActivity("msg-2", now, ActivityOriginator.Agent, "Done") // Sig
+            new MessageActivity("msg-1", "remote-1", now, ActivityOriginator.User, "Start"), // Sig
+            new ProgressActivity("prog-1", "remote-2", now, ActivityOriginator.Agent, "working"), // Non-Sig (Gap)
+            new ProgressActivity("prog-2", "remote-3", now, ActivityOriginator.Agent, "working more"), // Non-Sig
+            new MessageActivity("msg-2", "remote-4", now, ActivityOriginator.Agent, "Done") // Sig
         };
         // Total Sig: 2. Limit: 10. Displayed: 2. Truncated: 0. Hidden Heartbeats: 2. Gap between msg-1 and msg-2 is 2.
 
@@ -99,13 +99,13 @@ public class LogCommandTests : IDisposable
         var history = new List<SessionActivity>();
 
         // 5 truncated sigs
-        for (int i = 0; i < 5; i++) history.Add(new MessageActivity($"old-{i}", now, ActivityOriginator.User, $"Old {i}"));
+        for (int i = 0; i < 5; i++) history.Add(new MessageActivity($"old-{i}", $"r-{i}", now, ActivityOriginator.User, $"Old {i}"));
 
         // 50 heartbeats
-        for (int i = 0; i < 50; i++) history.Add(new ProgressActivity($"noise-{i}", now, ActivityOriginator.Agent, $"Noise {i}"));
+        for (int i = 0; i < 50; i++) history.Add(new ProgressActivity($"noise-{i}", $"rn-{i}", now, ActivityOriginator.Agent, $"Noise {i}"));
 
         // 10 displayed sigs
-        for (int i = 0; i < 10; i++) history.Add(new MessageActivity($"new-{i}", now, ActivityOriginator.User, $"New {i}"));
+        for (int i = 0; i < 10; i++) history.Add(new MessageActivity($"new-{i}", $"rnw-{i}", now, ActivityOriginator.User, $"New {i}"));
 
         SetupUseCase(sessionId, history);
 
@@ -135,13 +135,13 @@ public class LogCommandTests : IDisposable
         var history = new List<SessionActivity>();
 
         // 10 truncated sigs
-        for(int i=0; i<10; i++) history.Add(new MessageActivity($"old-{i}", now, ActivityOriginator.User, $"Old {i}"));
+        for(int i=0; i<10; i++) history.Add(new MessageActivity($"old-{i}", $"r-{i}", now, ActivityOriginator.User, $"Old {i}"));
 
         // 20 heartbeats
-        for(int i=0; i<20; i++) history.Add(new ProgressActivity($"noise-{i}", now, ActivityOriginator.Agent, $"Noise {i}"));
+        for(int i=0; i<20; i++) history.Add(new ProgressActivity($"noise-{i}", $"rn-{i}", now, ActivityOriginator.Agent, $"Noise {i}"));
 
         // 5 displayed sigs
-        for(int i=0; i<5; i++) history.Add(new MessageActivity($"new-{i}", now, ActivityOriginator.User, $"New {i}"));
+        for(int i=0; i<5; i++) history.Add(new MessageActivity($"new-{i}", $"rnw-{i}", now, ActivityOriginator.User, $"New {i}"));
 
         SetupUseCase(sessionId, history);
 
@@ -165,9 +165,9 @@ public class LogCommandTests : IDisposable
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>
         {
-            new MessageActivity("msg-1", now, ActivityOriginator.User, "Sig 1"),
-            new ProgressActivity("prog-1", now, ActivityOriginator.Agent, "Noise 1"),
-            new MessageActivity("msg-2", now, ActivityOriginator.User, "Sig 2")
+            new MessageActivity("msg-1", "r-1", now, ActivityOriginator.User, "Sig 1"),
+            new ProgressActivity("prog-1", "r-2", now, ActivityOriginator.Agent, "Noise 1"),
+            new MessageActivity("msg-2", "r-3", now, ActivityOriginator.User, "Sig 2")
         };
 
         SetupUseCase(sessionId, history);

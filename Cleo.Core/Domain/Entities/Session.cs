@@ -13,28 +13,52 @@ public class Session : AggregateRoot
     private readonly List<SessionActivity> _sessionLog = new();
 
     public SessionId Id { get; }
+    public string RemoteId { get; }
+    public string? Title { get; }
     public TaskDescription Task { get; }
     public SourceContext Source { get; }
     public SessionPulse Pulse { get; private set; }
     public ChangeSet? Solution { get; private set; }
     public PullRequest? PullRequest { get; private set; }
     public Uri? DashboardUri { get; }
+    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset? UpdatedAt { get; }
+    public bool? RequiresPlanApproval { get; }
+    public AutomationMode Mode { get; }
     
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
     public IReadOnlyCollection<SessionActivity> GetSignificantHistory() => _sessionLog.Where(a => a.IsSignificant).ToList().AsReadOnly();
 
-    public Session(SessionId id, TaskDescription task, SourceContext source, SessionPulse pulse, Uri? dashboardUri = null)
+    public Session(
+        SessionId id,
+        string remoteId,
+        TaskDescription task,
+        SourceContext source,
+        SessionPulse pulse,
+        DateTimeOffset createdAt,
+        DateTimeOffset? updatedAt = null,
+        string? title = null,
+        bool? requiresPlanApproval = null,
+        AutomationMode mode = AutomationMode.Unspecified,
+        Uri? dashboardUri = null)
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentException.ThrowIfNullOrWhiteSpace(remoteId);
         ArgumentNullException.ThrowIfNull(task);
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(pulse);
 
         Id = id;
+        RemoteId = remoteId;
         Task = task;
         Source = source;
         Pulse = pulse;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
+        Title = title;
+        RequiresPlanApproval = requiresPlanApproval;
+        Mode = mode;
         DashboardUri = dashboardUri;
 
         RecordDomainEvent(new SessionAssigned(id, task));
@@ -120,7 +144,10 @@ public class Session : AggregateRoot
     public void AddFeedback(string feedback, string activityId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(feedback);
-        AddActivity(new MessageActivity(activityId, DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
+        ArgumentException.ThrowIfNullOrWhiteSpace(activityId);
+        // Note: activityId is the local ID for the new activity.
+        // We use a temporary remote ID since this originates locally.
+        AddActivity(new MessageActivity(activityId, "temp-remote-id", DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
     }
 
     public void SetPullRequest(PullRequest pullRequest)

@@ -15,6 +15,7 @@ internal sealed class ApprovalActivityMapper : IJulesActivityMapper
     {
         var payload = (JulesPlanApprovedPayloadDto)dto.Payload;
         return new ApprovalActivity(
+            dto.Metadata.Name,
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
