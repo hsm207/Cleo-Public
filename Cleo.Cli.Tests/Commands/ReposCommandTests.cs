@@ -9,7 +9,6 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Commands;
 
-// Disable parallelization to avoid Console output capture issues
 [Collection("ConsoleTests")]
 public class ReposCommandTests : IDisposable
 {
@@ -34,41 +33,60 @@ public class ReposCommandTests : IDisposable
     {
         Console.SetOut(_originalOutput);
         _stringWriter.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact(DisplayName = "Given available sources, when running 'repos', then it should list them.")]
     public async Task Repos_WithSources_ListsThem()
     {
         // Arrange
+        // SessionSource(Name, Owner, Repo)
         var sources = new List<SessionSource>
         {
-            new("GitHub", "owner", "cleo-cli")
+            new("my-repo", "owner", "my-repo")
         };
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new BrowseSourcesResponse(sources));
 
-        var command = _command.Build();
-
         // Act
-        // SetHandler might be asynchronous and System.CommandLine execution might not await it properly in unit test context if not careful?
-        // But await InvokeAsync should wait.
-        // Let's verify the mock call first.
-        var exitCode = await command.InvokeAsync("");
-
-        _useCaseMock.Verify(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        var exitCode = await _command.Build().InvokeAsync("repos");
 
         // Assert
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
-
-        // If output is empty, maybe Console.WriteLine isn't being captured because System.CommandLine is using a different console abstraction?
-        // Wait, ReposCommand uses Console.WriteLine.
-        // But PlanCommandTests worked and it uses Console.WriteLine too.
-        // Maybe inconsistent state in the test runner due to static Console usage?
-
-        // Let's retry asserting on output.
         output.Should().Contain("🛰️ Available Repositories:");
-        output.Should().Contain("GitHub"); // Check for "GitHub" which is the Source Name in SessionSource(Name, Owner, Repo)
+        output.Should().Contain("my-repo");
+    }
+
+    [Fact(DisplayName = "Given no sources, when running 'repos', then it should display empty message.")]
+    public async Task Repos_NoSources_DisplaysEmptyMessage()
+    {
+        // Arrange
+        var sources = new List<SessionSource>();
+
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BrowseSourcesResponse(sources));
+
+        // Act
+        await _command.Build().InvokeAsync("repos");
+
+        // Assert
+        _stringWriter.ToString().Should().Contain("📭 No sources found");
+    }
+
+    [Fact(DisplayName = "Given an error, when running 'repos', then it should handle exception.")]
+    public async Task Repos_Error_HandlesException()
+    {
+        // Arrange
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("API Down"));
+
+        // Act
+        await _command.Build().InvokeAsync("repos");
+
+        // Assert
+        _stringWriter.ToString().Should().Contain("💔 Error: API Down");
+        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 }

@@ -1,4 +1,5 @@
 using Cleo.Cli.Commands;
+using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ApprovePlan;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -8,30 +9,61 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Commands;
 
-public class ApproveCommandTests
+[Collection("ConsoleTests")]
+public class ApproveCommandTests : IDisposable
 {
+    private readonly Mock<IApprovePlanUseCase> _useCaseMock;
+    private readonly Mock<ILogger<ApproveCommand>> _loggerMock;
     private readonly ApproveCommand _command;
+    private readonly StringWriter _stringWriter;
+    private readonly TextWriter _originalOutput;
 
     public ApproveCommandTests()
     {
-        var useCaseMock = new Mock<IApprovePlanUseCase>();
-        var loggerMock = new Mock<ILogger<ApproveCommand>>();
+        _useCaseMock = new Mock<IApprovePlanUseCase>();
+        _loggerMock = new Mock<ILogger<ApproveCommand>>();
+        _command = new ApproveCommand(_useCaseMock.Object, _loggerMock.Object);
 
-        _command = new ApproveCommand(useCaseMock.Object, loggerMock.Object);
+        _stringWriter = new StringWriter();
+        _originalOutput = Console.Out;
+        Console.SetOut(_stringWriter);
     }
 
-    [Fact(DisplayName = "Given the approve command, when viewing help, then it should use the term 'sessionId'.")]
-    public void Build_ShouldUseSessionIdTerm()
+    public void Dispose()
     {
+        Console.SetOut(_originalOutput);
+        _stringWriter.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    [Fact(DisplayName = "Given valid inputs, when running 'approve', then it should approve the plan and display success.")]
+    public async Task Approve_Valid_DisplaysSuccess()
+    {
+        // Arrange
+        var now = DateTimeOffset.UtcNow;
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ApprovePlanRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApprovePlanResponse(new SessionId("s1"), "p1", now));
+
         // Act
-        var command = _command.Build();
+        var exitCode = await _command.Build().InvokeAsync("approve s1 p1");
 
         // Assert
-        command.Description.Should().Be("Approve a generated plan 👍");
+        exitCode.Should().Be(0);
+        _stringWriter.ToString().Should().Contain("✅ Plan p1 approved");
+    }
 
-        var argument = command.Arguments.FirstOrDefault();
-        argument.Should().NotBeNull();
-        argument!.Name.Should().Be("sessionId");
-        argument.Description.Should().Be("The session ID.");
+    [Fact(DisplayName = "Given an error, when running 'approve', then it should handle exception.")]
+    public async Task Approve_Error_HandlesException()
+    {
+        // Arrange
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ApprovePlanRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Plan not found"));
+
+        // Act
+        await _command.Build().InvokeAsync("approve s1 p1");
+
+        // Assert
+        _stringWriter.ToString().Should().Contain("💔 Error: Plan not found");
+        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 }

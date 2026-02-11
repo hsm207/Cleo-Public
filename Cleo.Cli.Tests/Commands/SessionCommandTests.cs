@@ -1,4 +1,5 @@
 using Cleo.Cli.Commands;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases;
 using Cleo.Core.UseCases.InitiateSession;
 using FluentAssertions;
@@ -16,9 +17,20 @@ public class SessionCommandTests
 
     public SessionCommandTests()
     {
-        // Setup dependencies using IUseCase<TRequest, TResponse> directly where needed
-        var newUseCase = new Mock<IUseCase<InitiateSessionRequest, InitiateSessionResponse>>();
-        var newCommand = new NewCommand(newUseCase.Object, new Mock<ILogger<NewCommand>>().Object);
+        // Mock dependencies for subcommands
+        // NewCommand requires concrete InitiateSessionUseCase, which is tricky to mock if it's not an interface.
+        // Looking at NewCommand.cs, it takes InitiateSessionUseCase (concrete class).
+        // InitiateSessionUseCase takes (IJulesSessionClient, ISessionWriter).
+
+        // Strategy: Create a mock of the dependencies of InitiateSessionUseCase, pass them to a real instance,
+        // OR (preferred for unit test of SessionCommand) mock NewCommand itself if possible?
+        // No, NewCommand is internal sealed.
+        // We must construct a real NewCommand with mocked dependencies.
+
+        var julesClientMock = new Mock<IJulesSessionClient>();
+        var sessionWriterMock = new Mock<ISessionWriter>();
+        var initiateUseCase = new InitiateSessionUseCase(julesClientMock.Object, sessionWriterMock.Object);
+        var newCommand = new NewCommand(initiateUseCase, new Mock<ILogger<NewCommand>>().Object);
 
         var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
         var statusCommand = new StatusCommand(new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object, new Mock<ILogger<StatusCommand>>().Object);
