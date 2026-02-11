@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -16,6 +18,7 @@ public class RestPulseMonitorTests
     private readonly ISessionStatusMapper _statusMapper = new DefaultSessionStatusMapper();
     private readonly RestPulseMonitor _monitor;
     private readonly SessionId _id = new("session-123");
+    private readonly TaskDescription _task = new("Fix bugs");
 
     public RestPulseMonitorTests()
     {
@@ -23,10 +26,11 @@ public class RestPulseMonitorTests
         _monitor = new RestPulseMonitor(httpClient, _statusMapper);
     }
 
-    [Fact(DisplayName = "GetPulse: Returns status without coupling to Creation logic.")]
-    public async Task GetPulse_IsIsolatedAndCorrect()
+    [Fact(DisplayName = "GetSessionPulseAsync: Returns status without coupling to Creation logic.")]
+    public async Task GetSessionPulseAsync_IsIsolatedAndCorrect()
     {
         // Arrange
+        // JulesSessionResponseDto(Name, Id, State, Prompt, SourceContext, Url, RequirePlanApproval, AutomationMode, CreateTime, UpdateTime, Title, Outputs)
         var dto = new JulesSessionResponseDto("session-123", "id", JulesSessionState.InProgress, "prompt", new JulesSourceContextDto("repo", null), null, true, JulesAutomationMode.AutomationModeUnspecified, null, null);
         
         _handlerMock.Protected()
@@ -37,7 +41,7 @@ public class RestPulseMonitorTests
         var result = await _monitor.GetSessionPulseAsync(_id, CancellationToken.None);
 
         // Assert
-        Assert.Equal(SessionStatus.InProgress, result.Status);
+        result.Status.Should().Be(SessionStatus.InProgress);
         
         // Verify we used GET on the correct resource URI
         _handlerMock.Protected().Verify(
@@ -48,5 +52,64 @@ public class RestPulseMonitorTests
                 req.RequestUri!.ToString().Contains("session-123")
             ),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "GetSessionPulseAsync: Throws RemoteCollaboratorUnavailableException on network failure.")]
+    public async Task GetSessionPulseAsync_ThrowsOnNetworkError()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Network down"));
+
+        // Act
+        var act = async () => await _monitor.GetSessionPulseAsync(_id, CancellationToken.None);
+
+        // Assert
+        // Fixed: FluentAssertions syntax for checking inner exception
+        (await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>())
+            .WithInnerException<HttpRequestException>();
+    }
+
+    [Fact(DisplayName = "GetRemoteSessionAsync: Returns mapped session correctly.")]
+    public async Task GetRemoteSessionAsync_ReturnsMappedSession()
+    {
+        // Arrange
+        // JulesSourceContextDto(Source, GithubRepoContext, EnvironmentVariablesEnabled)
+        var sourceDto = new JulesSourceContextDto("source", new JulesGithubRepoContextDto("main"));
+        var dto = new JulesSessionResponseDto("session-123", "rem-1", JulesSessionState.Completed, "Original Prompt", sourceDto, null, true, JulesAutomationMode.AutoCreatePr, null, null);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = JsonContent.Create(dto) });
+
+        // Act
+        var result = await _monitor.GetRemoteSessionAsync(_id, _task, CancellationToken.None);
+
+        // Assert
+        result.Id.Value.Should().Be("session-123");
+        result.RemoteId.Should().Be("rem-1");
+        // JulesMapper currently ignores the DTO's prompt and uses the passed-in original task.
+        // This is arguably correct behavior for "GetRemoteSessionAsync" where we want to re-hydrate
+        // a known session with remote state, but preserve our local task description if it's the source of truth.
+        // However, if the remote has a different prompt, we might want to know.
+        // For now, let's align the test with the current implementation: it keeps the task passed in.
+        result.Task.Value.Should().Be("Fix bugs");
+        result.Pulse.Status.Should().Be(SessionStatus.Completed);
+    }
+
+    [Fact(DisplayName = "GetRemoteSessionAsync: Throws RemoteCollaboratorUnavailableException on non-success status code.")]
+    public async Task GetRemoteSessionAsync_ThrowsOnHttpError()
+    {
+        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable, Content = new StringContent("Service Unavailable") });
+
+        // Act
+        var act = async () => await _monitor.GetRemoteSessionAsync(_id, _task, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
     }
 }
