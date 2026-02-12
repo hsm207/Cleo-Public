@@ -107,6 +107,30 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 
+    [Fact(DisplayName = "RegistrySessionWriter should persist PullRequest data.")]
+    public async Task Writer_ShouldPersist_PullRequest()
+    {
+        // Arrange
+        var id = new SessionId("sessions/pr-persistence");
+        var session = new Session(id, "remote-pr", new TaskDescription("PR Test"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/123"), "Fix bug", "Fixed it");
+        session.SetPullRequest(pr);
+
+        // Act
+        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(result?.PullRequest);
+        Assert.Equal(pr.Url, result!.PullRequest!.Url);
+        Assert.Equal(pr.Title, result.PullRequest.Title);
+        Assert.Equal(pr.Description, result.PullRequest.Description);
+
+        // Verify JSON contains PR data 💾
+        var json = await File.ReadAllTextAsync(_tempFile);
+        Assert.Contains("https://github.com/org/repo/pull/123", json);
+    }
+
     [Fact(DisplayName = "RegistrySessionWriter should delete sessions correctly.")]
     public async Task Writer_ShouldDelete_Session()
     {
