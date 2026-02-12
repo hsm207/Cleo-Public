@@ -440,6 +440,9 @@ public class SessionTests
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Paused, ""));
         Assert.Equal(Stance.Paused, session.EvaluatedStance);
+
+        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingFeedback, ""));
+        Assert.Equal(Stance.AwaitingFeedback, session.EvaluatedStance);
     }
 
     [Fact(DisplayName = "EvaluatedStance should map 'StateUnspecified' and unknown values to 'WTF'.")]
