@@ -33,6 +33,14 @@ public class GitPatchTests
         Assert.Throws<ArgumentNullException>(() => new GitPatch(null!, "sha"));
     }
 
+    [Fact(DisplayName = "GitPatch should throw if baseCommitId is null or whitespace.")]
+    public void ShouldThrowIfBaseCommitIdInvalid()
+    {
+        Assert.Throws<ArgumentNullException>(() => new GitPatch("diff", null!));
+        Assert.Throws<ArgumentException>(() => new GitPatch("diff", ""));
+        Assert.Throws<ArgumentException>(() => new GitPatch("diff", "  "));
+    }
+
     [Fact(DisplayName = "GitPatch should extract unique modified filenames from UniDiff.")]
     public void ShouldExtractFilenames()
     {

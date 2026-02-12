@@ -216,11 +216,32 @@ public class SessionTests
     [Fact(DisplayName = "Session should expose all properties correctly.")]
     public void PropertiesShouldBeReadable()
     {
-        var session = CreateSession();
+        // Use full constructor to hit all properties
+        var session = new Session(
+            Id,
+            RemoteId,
+            Task,
+            Source,
+            InitialPulse,
+            Now,
+            Now.AddMinutes(5),
+            "My Title",
+            true,
+            AutomationMode.AutoCreatePr,
+            new Uri("https://dashboard.com"));
+
         Assert.Equal(Id, session.Id);
+        Assert.Equal(RemoteId, session.RemoteId);
         Assert.Equal(Task, session.Task);
         Assert.Equal(Source, session.Source);
         Assert.Equal(InitialPulse, session.Pulse);
+        Assert.Equal(Now, session.CreatedAt);
+        Assert.Equal(Now.AddMinutes(5), session.UpdatedAt);
+        Assert.Equal("My Title", session.Title);
+        Assert.True(session.RequiresPlanApproval);
+        Assert.Equal(AutomationMode.AutoCreatePr, session.Mode);
+        Assert.Equal(new Uri("https://dashboard.com"), session.DashboardUri);
+
         Assert.Null(session.Solution);
         Assert.Empty(session.SessionLog);
     }
