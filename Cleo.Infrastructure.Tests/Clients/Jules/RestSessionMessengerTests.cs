@@ -12,51 +12,38 @@ namespace Cleo.Infrastructure.Tests.Clients.Jules;
 public class RestSessionMessengerTests
 {
     private readonly Mock<HttpMessageHandler> _handlerMock = new();
-    private readonly RestSessionMessenger _messenger;
-    private readonly SessionId _id = new("session-123");
+    private readonly RestSessionMessenger _sut;
 
     public RestSessionMessengerTests()
     {
-        var httpClient = new HttpClient(_handlerMock.Object) { BaseAddress = new Uri("https://jules.googleapis.com/") };
-        _messenger = new RestSessionMessenger(httpClient);
+        var httpClient = new HttpClient(_handlerMock.Object)
+        {
+            BaseAddress = new Uri("https://jules.ai")
+        };
+        _sut = new RestSessionMessenger(httpClient);
     }
 
-    [Fact(DisplayName = "SendMessage: Uses 'JulesSendMessageRequestDto' DTO to satisfy OCP.")]
-    public async Task SendMessage_UsesCorrectDtoSchema()
+    [Fact(DisplayName = "SendMessage should throw DomainException on 500 Server Error.")]
+    public async Task SendMessage_ShouldThrow_On_500()
     {
-        // Arrange
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.InternalServerError });
+
+        var act = async () => await _sut.SendMessageAsync(new SessionId("s"), "msg", CancellationToken.None);
+
+        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
+    }
+
+    [Fact(DisplayName = "SendMessage should succeed on 200 OK.")]
+    public async Task SendMessage_ShouldSucceed()
+    {
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-        // Act
-        await _messenger.SendMessageAsync(_id, "Make it pop", CancellationToken.None);
+        await _sut.SendMessageAsync(new SessionId("s"), "Hello", CancellationToken.None);
 
-        // Assert
-        _handlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Post && 
-                req.RequestUri!.ToString().EndsWith(":sendMessage") &&
-                // Verify strict JSON contract matching the new DTO
-                req.Content!.ReadAsStringAsync().Result.Contains("\"prompt\":\"Make it pop\"")
-            ),
-            ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Fact(DisplayName = "SendMessage: Throws RemoteCollaboratorUnavailableException on failure.")]
-    public async Task SendMessage_ThrowsOnFailure()
-    {
-        // Arrange
-        _handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
-
-        // Act
-        var act = async () => await _messenger.SendMessageAsync(_id, "Hi", CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
+        _handlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
     }
 }

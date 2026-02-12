@@ -33,7 +33,20 @@ public class RestSessionLifecycleClientTests
         var options = new SessionCreationOptions(AutomationMode.AutoCreatePr, "Refactor Session", true);
         
         // The mock response
-        var responseDto = new JulesSessionResponseDto("session-1", "id", JulesSessionState.Queued, "Refactor the world", new JulesSourceContextDto("repo", new JulesGithubRepoContextDto("main")), null, true, JulesAutomationMode.AutoCreatePr, null, null);
+        var responseDto = new JulesSessionResponseDto(
+            Name: "session-1",
+            Id: "id",
+            State: JulesSessionState.Queued,
+            Prompt: "Refactor the world",
+            SourceContext: new JulesSourceContextDto("repo", new JulesGithubRepoContextDto("main")),
+            Url: null,
+            RequirePlanApproval: true,
+            AutomationMode: JulesAutomationMode.AutoCreatePr,
+            CreateTime: null,
+            UpdateTime: null,
+            Title: null,
+            Outputs: null
+        );
         
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

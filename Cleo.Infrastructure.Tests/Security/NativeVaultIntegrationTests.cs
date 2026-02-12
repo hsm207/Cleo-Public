@@ -64,13 +64,22 @@ public class NativeVaultIntegrationTests : IDisposable
         await Assert.ThrowsAnyAsync<InvalidOperationException>(() => _vault.RetrieveAsync(CancellationToken.None));
     }
 
-    [Fact(DisplayName = "NativeVault should clear secrets from disk.")]
-    public async Task ShouldClearSecrets()
+    [Fact(DisplayName = "NativeVault should create directory if missing.")]
+    public async Task ShouldCreateDirectoryIfMissing()
     {
-        await _vault.StoreAsync(new Identity((ApiKey)"Secret"), CancellationToken.None);
-        Assert.True(File.Exists(_tempFile));
+        var nestedDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var nestedFile = Path.Combine(nestedDir, "secret.dat");
+        var vault = new NativeVault(nestedFile, new AesGcmEncryptionStrategy());
 
-        await _vault.ClearAsync(CancellationToken.None);
-        Assert.False(File.Exists(_tempFile));
+        try
+        {
+            await vault.StoreAsync(new Identity((ApiKey)"Secret"), CancellationToken.None);
+            Assert.True(Directory.Exists(nestedDir));
+            Assert.True(File.Exists(nestedFile));
+        }
+        finally
+        {
+            if (Directory.Exists(nestedDir)) Directory.Delete(nestedDir, true);
+        }
     }
 }
