@@ -15,7 +15,7 @@ public enum ActivityOriginator
 /// </summary>
 public abstract record Artifact
 {
-    public virtual string GetSummary() => "📦 Artifact produced.";
+    public abstract string GetSummary();
 }
 
 /// <summary>
