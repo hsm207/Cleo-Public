@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -55,7 +56,7 @@ public sealed class NativeVault : IVault, ICredentialStore
             var identity = new Identity((ApiKey)decrypted);
             return identity;
         }
-        catch (VaultSecurityException ex)
+        catch (Exception ex) when (ex is VaultSecurityException or CryptographicException)
         {
             throw new InvalidOperationException(
                 $"❌ Critical Error: Unable to decrypt your Jules API Key. " +
