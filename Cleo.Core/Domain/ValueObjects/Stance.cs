@@ -11,6 +11,8 @@ public enum Stance
     AwaitingPlanApproval,
     AwaitingFeedback,
     Working,
+    Paused,
+    Interrupted,
     Broken,
     Idle
 }

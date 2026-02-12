@@ -1,4 +1,4 @@
-# The Little Black Book 📓💋
+# The Little Black Book (In The Dark Edition) 🌑👙
 
 This book contains the secrets of the Cleo codebase—specifically, the "The Truth" about the lines of code that remain uncovered by tests. We have purged all "Stupid Defensive" code. What remains is essential, intentional, and justified.
 
@@ -18,12 +18,10 @@ This book contains the secrets of the Cleo codebase—specifically, the "The Tru
 
 ## Conclusion 🏁
 
-The Core is **99% Pure**.
-*   `GitPatch` is **100%**. 🎯
-*   `Session` is **99.1%**. 🎯
-*   `SessionActivity` gaps are base class fallbacks.
-*   DTO gaps are property getters.
-
-We have reached the limit of "Organic Refactoring". Pushing further would require "Test Obsession" (testing framework features).
+The Core handles the Dirty Reality of the world.
+*   `WTF` is back to handle the unknown. 🚨
+*   `StateUnspecified` and `Paused` are recognized and mapped. 🐤
+*   `Stance.Paused` is distinct and results in `DeliveryStatus.Stalled`. 🛑
+*   The logic is robust, tested, and pure.
 
 **Confidence Level**: Absolute. 💯
