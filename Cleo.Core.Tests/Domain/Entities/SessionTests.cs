@@ -1,5 +1,6 @@
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Events;
+using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Xunit;
 
@@ -287,5 +288,133 @@ public class SessionTests
         Assert.Contains(significantHistory, a => a.Id == "a5");
         Assert.DoesNotContain(significantHistory, a => a.Id == "a2");
         Assert.DoesNotContain(significantHistory, a => a.Id == "a4");
+    }
+
+    [Fact(DisplayName = "EvaluatedStance should override to AwaitingPlanApproval when Idle, no PR, and last significant activity was Planning.")]
+    public void EvaluatedStanceShouldOverrideToAwaitingPlanApproval()
+    {
+        var session = CreateSession();
+        // 1. Last significant activity is Planning
+        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
+
+        // 2. Pulse is Idle (Completed)
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done"));
+
+        // 3. No PR set
+
+        // Assert override logic
+        Assert.Equal(Stance.AwaitingPlanApproval, session.EvaluatedStance);
+    }
+
+    [Fact(DisplayName = "EvaluatedStance should NOT override if PR is present.")]
+    public void EvaluatedStanceShouldNotOverrideIfPrPresent()
+    {
+        var session = CreateSession();
+        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done"));
+        session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
+
+        // Should be Idle because PR is delivered
+        Assert.Equal(Stance.Idle, session.EvaluatedStance);
+    }
+
+    [Fact(DisplayName = "DeliveryStatus should be Delivered if Solution or PR is present.")]
+    public void DeliveryStatusShouldBeDeliveredIfArtifactsPresent()
+    {
+        var session = CreateSession();
+
+        // Case 1: Solution present
+        var patch = new GitPatch("d", "b");
+        var changeSet = new ChangeSet("s", patch);
+        var evidence = new List<Artifact> { changeSet };
+        session.AddActivity(new ProgressActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence));
+
+        Assert.Equal(DeliveryStatus.Delivered, session.DeliveryStatus);
+
+        // Case 2: PR present
+        var session2 = CreateSession();
+        session2.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
+        Assert.Equal(DeliveryStatus.Delivered, session2.DeliveryStatus);
+    }
+
+    [Fact(DisplayName = "DeliveryStatus should be Unfulfilled if Idle and not Delivered.")]
+    public void DeliveryStatusShouldBeUnfulfilledIfIdleAndNotDelivered()
+    {
+        var session = CreateSession();
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done")); // Idle
+
+        Assert.Equal(DeliveryStatus.Unfulfilled, session.DeliveryStatus);
+    }
+
+    [Fact(DisplayName = "DeliveryStatus should be Stalled if Broken or Interrupted.")]
+    public void DeliveryStatusShouldBeStalledIfBroken()
+    {
+        var session = CreateSession();
+        session.UpdatePulse(new SessionPulse(SessionStatus.Failed, "Boom"));
+
+        Assert.Equal(DeliveryStatus.Stalled, session.DeliveryStatus);
+    }
+
+    [Fact(DisplayName = "DeliveryStatus should be Pending if Working.")]
+    public void DeliveryStatusShouldBePendingIfWorking()
+    {
+        var session = CreateSession();
+        session.UpdatePulse(new SessionPulse(SessionStatus.InProgress, "Working"));
+
+        Assert.Equal(DeliveryStatus.Pending, session.DeliveryStatus);
+    }
+
+    [Fact(DisplayName = "SetPullRequest should update property and validate args.")]
+    public void SetPullRequestShouldWork()
+    {
+        var session = CreateSession();
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+
+        session.SetPullRequest(pr);
+
+        Assert.Equal(pr, session.PullRequest);
+        Assert.Throws<ArgumentNullException>(() => session.SetPullRequest(null!));
+    }
+
+    [Fact(DisplayName = "GetLatestPlan should resolve using provided strategy.")]
+    public void GetLatestPlanShouldUseStrategy()
+    {
+        var session = CreateSession();
+        var plan = new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") });
+        session.AddActivity(plan);
+
+        var retrievedPlan = session.GetLatestPlan(); // Default strategy
+        Assert.Equal(plan, retrievedPlan);
+
+        // Mock strategy
+        var strategy = new MockPlanStrategy(plan);
+        var retrievedPlan2 = session.GetLatestPlan(strategy);
+        Assert.Equal(plan, retrievedPlan2);
+    }
+
+    private sealed class MockPlanStrategy : IPlanResolutionStrategy
+    {
+        private readonly PlanningActivity _plan;
+        public MockPlanStrategy(PlanningActivity plan) => _plan = plan;
+        public PlanningActivity? ResolvePlan(IEnumerable<SessionActivity> history) => _plan;
+    }
+
+    [Fact(DisplayName = "EvaluatedStance should map all statuses correctly.")]
+    public void EvaluatedStanceShouldMapAllStatuses()
+    {
+        var session = CreateSession();
+
+        // Just verify a few direct mappings to ensure the switch expression is covered
+        session.UpdatePulse(new SessionPulse(SessionStatus.StartingUp, ""));
+        Assert.Equal(Stance.Queued, session.EvaluatedStance);
+
+        session.UpdatePulse(new SessionPulse(SessionStatus.Planning, ""));
+        Assert.Equal(Stance.Planning, session.EvaluatedStance);
+
+        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingPlanApproval, ""));
+        Assert.Equal(Stance.AwaitingPlanApproval, session.EvaluatedStance);
+
+        session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned, ""));
+        Assert.Equal(Stance.Idle, session.EvaluatedStance);
     }
 }

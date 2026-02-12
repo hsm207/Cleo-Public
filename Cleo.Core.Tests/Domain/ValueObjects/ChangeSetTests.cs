@@ -41,4 +41,69 @@ public class ChangeSetTests
         var changeSet = new ChangeSet("sources/github/hsm207/Cleo", new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c"));
         Assert.Equal("📦 ChangeSet [852ae21]: Updated [file1.cs, README.md]", changeSet.GetSummary());
     }
+
+    [Fact(DisplayName = "ChangeSet should summarize impact magnitude when files exceed narrative threshold.")]
+    public void ShouldSummarizeImpactMagnitude()
+    {
+        // 6 files under same directory
+        var diff = "";
+        for (int i = 0; i < 6; i++)
+        {
+            diff += $"+++ b/src/Common/{i}.cs\n";
+        }
+
+        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        // Short sha is 7 chars. "sha1234" is 7 chars.
+
+        // Common path should be "src/Common"
+        var summary = changeSet.GetSummary();
+        Assert.Equal("📦 ChangeSet [sha1234]: 6 src/Common/* modified", summary);
+    }
+
+    [Fact(DisplayName = "ChangeSet should handle no common path when summarizing impact magnitude.")]
+    public void ShouldSummarizeNoCommonPath()
+    {
+        // 6 files with no common root
+        var diff = "";
+        for (int i = 0; i < 6; i++)
+        {
+            diff += $"+++ b/{i}.cs\n";
+        }
+
+        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+
+        var summary = changeSet.GetSummary();
+        // Common path extract might be empty or "/" depending on implementation.
+        // Implementation logic:
+        // matchingChars starts as "0.cs" (from first file).
+        // Next file "1.cs". Common prefix is empty string.
+        // So commonPath is empty.
+        // If empty, returns "files".
+        Assert.Equal("📦 ChangeSet [sha1234]: 6 files modified", summary);
+    }
+
+    [Fact(DisplayName = "ChangeSet should handle empty file list.")]
+    public void ShouldHandleEmptyFileList()
+    {
+        var diff = ""; // Empty diff -> 0 files
+        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+
+        Assert.Equal("📦 ChangeSet [sha1234]: Produced patch", changeSet.GetSummary());
+    }
+
+    [Fact(DisplayName = "ChangeSet should handle partial common path.")]
+    public void ShouldHandlePartialCommonPath()
+    {
+        // 6 files:
+        // src/A/1.cs
+        // src/B/2.cs
+        // Common is "src/"
+        var diff = "";
+        for (int i = 0; i < 3; i++) diff += $"+++ b/src/A/{i}.cs\n";
+        for (int i = 3; i < 6; i++) diff += $"+++ b/src/B/{i}.cs\n";
+
+        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+
+        Assert.Equal("📦 ChangeSet [sha1234]: 6 src/* modified", changeSet.GetSummary());
+    }
 }
