@@ -46,26 +46,19 @@ internal sealed class AesGcmEncryptionStrategy : IEncryptionStrategy
             throw new VaultSecurityException("Invalid encrypted data length.");
         }
 
-        try
-        {
-            byte[] key = DeriveKey();
-            var nonce = encryptedData.AsSpan(0, NonceSize);
-            var tag = encryptedData.AsSpan(NonceSize, TagSize);
-            var cipherText = encryptedData.AsSpan(NonceSize + TagSize);
-            
-            var plainBytes = new byte[cipherText.Length];
+        byte[] key = DeriveKey();
+        var nonce = encryptedData.AsSpan(0, NonceSize);
+        var tag = encryptedData.AsSpan(NonceSize, TagSize);
+        var cipherText = encryptedData.AsSpan(NonceSize + TagSize);
 
-            using (var aes = new AesGcm(key, TagSize))
-            {
-                aes.Decrypt(nonce, cipherText, tag, plainBytes);
-            }
+        var plainBytes = new byte[cipherText.Length];
 
-            return Encoding.UTF8.GetString(plainBytes);
-        }
-        catch (Exception ex)
+        using (var aes = new AesGcm(key, TagSize))
         {
-            throw new VaultSecurityException("Decryption failed.", ex);
+            aes.Decrypt(nonce, cipherText, tag, plainBytes);
         }
+
+        return Encoding.UTF8.GetString(plainBytes);
     }
 
     private static byte[] DeriveKey()
