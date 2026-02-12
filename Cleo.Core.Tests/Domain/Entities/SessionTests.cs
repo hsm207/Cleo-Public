@@ -404,7 +404,7 @@ public class SessionTests
     {
         var session = CreateSession();
 
-        // Just verify a few direct mappings to ensure the switch expression is covered
+        // Verify key mappings
         session.UpdatePulse(new SessionPulse(SessionStatus.StartingUp, ""));
         Assert.Equal(Stance.Queued, session.EvaluatedStance);
 
@@ -416,15 +416,23 @@ public class SessionTests
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned, ""));
         Assert.Equal(Stance.Idle, session.EvaluatedStance);
+
+        session.UpdatePulse(new SessionPulse(SessionStatus.Paused, ""));
+        Assert.Equal(Stance.Idle, session.EvaluatedStance);
     }
 
-    [Fact(DisplayName = "EvaluatedStance should throw ArgumentOutOfRangeException for unexpected status.")]
-    public void EvaluatedStanceShouldThrowForUnexpectedStatus()
+    [Fact(DisplayName = "EvaluatedStance should map 'StateUnspecified' and unknown values to 'WTF'.")]
+    public void EvaluatedStanceShouldMapUnknownToWtf()
     {
         var session = CreateSession();
+
+        // StateUnspecified -> WTF 🚨
+        session.UpdatePulse(new SessionPulse(SessionStatus.StateUnspecified, "Unknown"));
+        Assert.Equal(Stance.WTF, session.EvaluatedStance);
+
+        // Unknown Int -> WTF 🚨
         var invalidStatus = (SessionStatus)999;
         session.UpdatePulse(new SessionPulse(invalidStatus, "Invalid"));
-
-        Assert.Throws<ArgumentOutOfRangeException>(() => session.EvaluatedStance);
+        Assert.Equal(Stance.WTF, session.EvaluatedStance);
     }
 }
