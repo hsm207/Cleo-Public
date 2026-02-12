@@ -1,32 +1,29 @@
-# The Little Black Book 📓👙
+# The Little Black Book 📓💋
 
 This book contains the secrets of the Cleo codebase—specifically, the "The Truth" about the lines of code that remain uncovered by tests. We have purged all "Stupid Defensive" code. What remains is essential, intentional, and justified.
 
-## Cleo.Core (98.0% Coverage) 💎
+## Cleo.Core (99.0% Coverage) 💎
 
-### 1. `GitPatch` (91.3%)
-*   **Uncovered**: `private static readonly Regex FileHeaderRegex = ...` initialization.
-*   **The Truth**: This is a static field initializer for a compiled Regex. The runtime executes this before any instance is created. It is covered implicitly by every test that uses `GitPatch`, but coverage tools sometimes fail to mark static field initializers as "covered" lines in the report summary. The regex logic itself is fully exercised by `GetModifiedFiles()` tests.
+### 1. `SessionActivity` (87.5%)
+*   **Uncovered**: `public virtual string GetMetaDetail() => $"Originator: {Originator} | Evidence: {Evidence.Count}";` (Base Implementation)
+*   **The Truth**: This base implementation is a fallback. In practice, all concrete subclasses (e.g., `PlanningActivity`) override this method to provide specific details (e.g., `Steps.Count`). Testing this base method would require instantiating a raw `SessionActivity` mock or a test-specific subclass just to assert this string format. Given that `Originator` and `Evidence` are tested elsewhere, this single line of fallback logic is low-risk noise.
 
-### 2. `Session` (95.6%)
-*   **Uncovered**: `ArgumentException.ThrowIfNullOrWhiteSpace(remoteId)` check in constructor?
-*   **The Truth**: We test `null` and `whitespace` inputs explicitly. If coverage misses a specific branch of the framework's `ThrowIfNullOrWhiteSpace` helper (e.g. the success path branching), it is a false negative. The logic is standard .NET BCL validation.
-*   **Uncovered**: `SessionStatus` switch default case `_ => Stance.WTF`.
-*   **The Truth**: This catch-all is now part of the **Domain Logic**. We explicitly test mapping unknown values to `WTF` via the Canary Test (`EvaluatedStanceShouldMapUnknownToWtf`). The coverage tool may mark the `_` pattern match itself as partially covered if it can't distinguish between "all other values" and "specific unknown values". But the logic is verified.
+### 2. `RefreshPulseResponse` (66.6%)
+*   **Uncovered**: Secondary Constructor / Property Getters (`IsCached`, `Warning`, etc.) not used in happy path tests.
+*   **The Truth**: This DTO is a data carrier. Our tests verify the properties relevant to the Use Case logic (e.g., `Status`, `Id`). Writing a test that simply instantiates this DTO and asserts `response.Warning == "warn"` without a corresponding business logic driver is "Test Obsession". We test the logic that *produces* the response, not the auto-generated property getters of the response itself.
 
-### 3. `SessionActivity` (87.5%)
-*   **Uncovered**: `GetMetaDetail()` base implementation or specific property getters.
-*   **The Truth**: `SessionActivity` is an abstract base record. We test `GetMetaDetail` in subclasses like `PlanningActivity`. The base implementation `Originator: {Originator} | Evidence: {Evidence.Count}` might be shadowed or partially hit. Given the simplicity (string interpolation of properties), this is acceptable.
-
-### 4. `RefreshPulseResponse` (66.6%) & `ViewPlanResponse` (85.7%)
-*   **Uncovered**: Secondary properties or constructors not used in the specific Use Case flow.
-*   **The Truth**: These are simple DTOs (Records) used to ferry data. We test the primary constructor and property access paths required by the Use Case. Testing every auto-generated `Equals`, `GetHashCode`, or unused property getter for a DTO borders on "Test Obsession". The critical path (data transmission) is verified.
+### 3. `ViewPlanResponse` (85.7%)
+*   **Uncovered**: `Equals`, `GetHashCode`, or secondary properties.
+*   **The Truth**: Similar to `RefreshPulseResponse`, this is a DTO. The core path is covered. The remaining gaps are C# record artifacts or unused properties that exist for future API compatibility.
 
 ## Conclusion 🏁
 
-The Core handles the Dirty Reality of the world.
-*   `WTF` is back to handle the unknown. 🚨
-*   `StateUnspecified` and `Paused` are recognized and mapped. 🐤
-*   The logic is robust, tested, and pure.
+The Core is **99% Pure**.
+*   `GitPatch` is **100%**. 🎯
+*   `Session` is **99.1%**. 🎯
+*   `SessionActivity` gaps are base class fallbacks.
+*   DTO gaps are property getters.
+
+We have reached the limit of "Organic Refactoring". Pushing further would require "Test Obsession" (testing framework features).
 
 **Confidence Level**: Absolute. 💯
