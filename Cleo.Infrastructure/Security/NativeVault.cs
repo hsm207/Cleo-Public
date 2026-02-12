@@ -56,7 +56,7 @@ public sealed class NativeVault : IVault, ICredentialStore
             var identity = new Identity((ApiKey)decrypted);
             return identity;
         }
-        catch (Exception ex) when (ex is VaultSecurityException or CryptographicException)
+        catch (VaultSecurityException ex)
         {
             throw new InvalidOperationException(
                 $"❌ Critical Error: Unable to decrypt your Jules API Key. " +

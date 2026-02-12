@@ -41,24 +41,26 @@ internal sealed class AesGcmEncryptionStrategy : IEncryptionStrategy
     {
         ArgumentNullException.ThrowIfNull(encryptedData);
 
-        if (encryptedData.Length < NonceSize + TagSize)
+        try
         {
-            throw new VaultSecurityException("Invalid encrypted data length.");
-        }
-
-        byte[] key = DeriveKey();
+            byte[] key = DeriveKey();
         var nonce = encryptedData.AsSpan(0, NonceSize);
         var tag = encryptedData.AsSpan(NonceSize, TagSize);
         var cipherText = encryptedData.AsSpan(NonceSize + TagSize);
 
         var plainBytes = new byte[cipherText.Length];
 
-        using (var aes = new AesGcm(key, TagSize))
-        {
-            aes.Decrypt(nonce, cipherText, tag, plainBytes);
-        }
+            using (var aes = new AesGcm(key, TagSize))
+            {
+                aes.Decrypt(nonce, cipherText, tag, plainBytes);
+            }
 
-        return Encoding.UTF8.GetString(plainBytes);
+            return Encoding.UTF8.GetString(plainBytes);
+        }
+        catch (Exception ex)
+        {
+            throw new VaultSecurityException("Decryption failed.", ex);
+        }
     }
 
     private static byte[] DeriveKey()
