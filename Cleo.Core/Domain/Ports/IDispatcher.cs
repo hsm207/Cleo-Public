@@ -11,9 +11,4 @@ public interface IDispatcher
     /// Dispatches a single domain event to all interested handlers.
     /// </summary>
     Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Dispatches a collection of domain events.
-    /// </summary>
-    Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default);
 }
