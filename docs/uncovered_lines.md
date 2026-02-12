@@ -1,4 +1,4 @@
-# The Little Black Book 📓💋
+# The Little Black Book 📓👙
 
 This book contains the secrets of the Cleo codebase—specifically, the "The Truth" about the lines of code that remain uncovered by tests. We have purged all "Stupid Defensive" code. What remains is essential, intentional, and justified.
 
@@ -11,8 +11,8 @@ This book contains the secrets of the Cleo codebase—specifically, the "The Tru
 ### 2. `Session` (95.6%)
 *   **Uncovered**: `ArgumentException.ThrowIfNullOrWhiteSpace(remoteId)` check in constructor?
 *   **The Truth**: We test `null` and `whitespace` inputs explicitly. If coverage misses a specific branch of the framework's `ThrowIfNullOrWhiteSpace` helper (e.g. the success path branching), it is a false negative. The logic is standard .NET BCL validation.
-*   **Uncovered**: `SessionStatus` switch default case `throw new ArgumentOutOfRangeException(...)`.
-*   **The Truth**: This line defends against future enum expansion. We added `EvaluatedStanceShouldThrowForUnexpectedStatus` to hit this, but if the coverage tool treats the `throw` statement's closing brace or the unreachable return as uncovered, it is a tool artifact. The behavior is verified.
+*   **Uncovered**: `SessionStatus` switch default case `_ => Stance.WTF`.
+*   **The Truth**: This catch-all is now part of the **Domain Logic**. We explicitly test mapping unknown values to `WTF` via the Canary Test (`EvaluatedStanceShouldMapUnknownToWtf`). The coverage tool may mark the `_` pattern match itself as partially covered if it can't distinguish between "all other values" and "specific unknown values". But the logic is verified.
 
 ### 3. `SessionActivity` (87.5%)
 *   **Uncovered**: `GetMetaDetail()` base implementation or specific property getters.
@@ -24,6 +24,9 @@ This book contains the secrets of the Cleo codebase—specifically, the "The Tru
 
 ## Conclusion 🏁
 
-The Core is pure. We have removed unreachable `Stance` enum values (`WTF`, `Interrupted`) and dead logic. We have verified complex state transitions in `Session`. The remaining gaps are artifacts of the .NET runtime (static initializers) or the coverage tool itself.
+The Core handles the Dirty Reality of the world.
+*   `WTF` is back to handle the unknown. 🚨
+*   `StateUnspecified` and `Paused` are recognized and mapped. 🐤
+*   The logic is robust, tested, and pure.
 
 **Confidence Level**: Absolute. 💯

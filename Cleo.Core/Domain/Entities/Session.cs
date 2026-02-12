@@ -179,11 +179,13 @@ public class Session : AggregateRoot
         SessionStatus.StartingUp => Stance.Queued,
         SessionStatus.Planning => Stance.Planning,
         SessionStatus.InProgress => Stance.Working,
+        SessionStatus.Paused => Stance.Idle, // Paused is logically idle
         SessionStatus.AwaitingFeedback => Stance.AwaitingFeedback,
         SessionStatus.AwaitingPlanApproval => Stance.AwaitingPlanApproval,
         SessionStatus.Completed => Stance.Idle,
         SessionStatus.Abandoned => Stance.Idle,
         SessionStatus.Failed => Stance.Broken,
-        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unexpected session status encountered.")
+        // StateUnspecified or unknown values map to WTF 🚨
+        _ => Stance.WTF
     };
 }

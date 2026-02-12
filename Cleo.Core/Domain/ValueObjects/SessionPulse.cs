@@ -5,9 +5,11 @@ namespace Cleo.Core.Domain.ValueObjects;
 /// </summary>
 public enum SessionStatus
 {
+    StateUnspecified, // 0 in protobuf
     StartingUp,
     Planning,
     InProgress,
+    Paused,
     AwaitingFeedback,
     AwaitingPlanApproval,
     Completed,
