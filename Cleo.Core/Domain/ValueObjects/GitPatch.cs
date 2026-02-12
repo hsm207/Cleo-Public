@@ -39,7 +39,6 @@ public record GitPatch
         var matches = FileHeaderRegex.Matches(UniDiff);
         return matches
             .Select(m => m.Groups[1].Value.Trim())
-            .Where(f => f != "/dev/null")
             .Distinct()
             .ToList()
             .AsReadOnly();

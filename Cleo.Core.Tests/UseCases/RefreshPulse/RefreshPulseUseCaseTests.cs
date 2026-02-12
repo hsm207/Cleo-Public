@@ -35,7 +35,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -63,7 +63,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -81,7 +81,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -89,9 +89,51 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
     }
 
+    [Fact(DisplayName = "Given remote session has a PR, when refreshing, then it should sync the PR to local session.")]
+    public async Task ShouldSyncPullRequestWhenPresentOnRemote()
+    {
+        // Arrange
+        var sessionId = new SessionId("sessions/pr-session");
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
+        _sessionReader.Sessions[sessionId] = session;
+
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "Title");
+        _pulseMonitor.RemoteSessionConfigurator = s => s.SetPullRequest(pr);
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(session.PullRequest);
+        Assert.Equal(pr.Title, session.PullRequest.Title);
+    }
+
+    [Fact(DisplayName = "Given session is missing locally AND remote is unreachable, when refreshing, then it should throw InvalidOperationException.")]
+    public async Task ShouldThrowIfSessionNotFoundLocallyAndRemoteUnreachable()
+    {
+        // Arrange
+        var sessionId = new SessionId("sessions/missing-session");
+        _pulseMonitor.ShouldThrow = true;
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(request, TestContext.Current.CancellationToken));
+    }
+
+    [Fact(DisplayName = "Should throw ArgumentNullException if request is null.")]
+    public async Task ShouldValidateRequest()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, TestContext.Current.CancellationToken));
+    }
+
     private sealed class FakePulseMonitor : IPulseMonitor
     {
         public bool ShouldThrow { get; set; }
+        public Action<Session>? RemoteSessionConfigurator { get; set; }
+
         public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
@@ -106,6 +148,9 @@ public sealed class RefreshPulseUseCaseTests
                 .WithTask((string)originalTask)
                 .WithPulse(SessionStatus.InProgress, "All good!")
                 .Build();
+
+            RemoteSessionConfigurator?.Invoke(session);
+
             return Task.FromResult(session);
         }
     }
