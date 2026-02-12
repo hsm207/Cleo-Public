@@ -135,6 +135,36 @@ public class JulesMapperTests
         activity.Originator.Should().Be(ActivityOriginator.User);
     }
 
+    [Fact(DisplayName = "ArtifactMappingHelper should map Media Artifacts correctly.")]
+    public void ArtifactMappingHelper_ShouldMap_MediaArtifact()
+    {
+        // Arrange
+        var mediaDto = new JulesMediaDto("base64data", "image/png");
+        var artifactDto = new JulesArtifactDto(null, mediaDto, null);
+        var artifacts = new List<JulesArtifactDto> { artifactDto };
+
+        // Act
+        // This is static helper logic usually invoked by mappers.
+        // We can test it via a concrete mapper usage or directly if public (it is internal).
+        // Since we are in the same assembly via InternalsVisibleTo (or we invoke it via a mapper flow).
+        // Let's use MessageActivityMapper which uses ArtifactMappingHelper.
+
+        var payload = new JulesAgentMessagedPayloadDto("Look at this!");
+        var metadata = new JulesActivityMetadataDto("act-media", "rem-media", null, TestTimeStr, "agent", artifacts);
+        var dto = new JulesActivityDto(metadata, payload);
+
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.MessageActivityMapper();
+
+        // Act
+        var result = mapper.Map(dto);
+
+        // Assert
+        result.Evidence.Should().HaveCount(1);
+        var media = result.Evidence.First().Should().BeOfType<MediaArtifact>().Subject;
+        media.MimeType.Should().Be("image/png");
+        media.Data.Should().Be("base64data");
+    }
+
     [Theory(DisplayName = "ActivityOriginatorMapper should map various role strings correctly.")]
     [InlineData("USER", ActivityOriginator.User)]
     [InlineData("user", ActivityOriginator.User)]
