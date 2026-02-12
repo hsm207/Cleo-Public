@@ -5,13 +5,11 @@ namespace Cleo.Core.Domain.ValueObjects;
 /// </summary>
 public enum Stance
 {
-    WTF,
     Queued,
     Planning,
     AwaitingPlanApproval,
     AwaitingFeedback,
     Working,
-    Interrupted,
     Broken,
     Idle
 }

@@ -100,7 +100,7 @@ public class Session : AggregateRoot
             }
 
             var stance = EvaluatedStance;
-            if (stance == Stance.Broken || stance == Stance.Interrupted) return DeliveryStatus.Stalled;
+            if (stance == Stance.Broken) return DeliveryStatus.Stalled;
 
             return DeliveryStatus.Pending;
         }
@@ -184,6 +184,6 @@ public class Session : AggregateRoot
         SessionStatus.Completed => Stance.Idle,
         SessionStatus.Abandoned => Stance.Idle,
         SessionStatus.Failed => Stance.Broken,
-        _ => Stance.WTF
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unexpected session status encountered.")
     };
 }

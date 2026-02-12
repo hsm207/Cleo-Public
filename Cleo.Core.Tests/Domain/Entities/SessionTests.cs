@@ -346,7 +346,7 @@ public class SessionTests
         Assert.Equal(DeliveryStatus.Unfulfilled, session.DeliveryStatus);
     }
 
-    [Fact(DisplayName = "DeliveryStatus should be Stalled if Broken or Interrupted.")]
+    [Fact(DisplayName = "DeliveryStatus should be Stalled if Broken.")]
     public void DeliveryStatusShouldBeStalledIfBroken()
     {
         var session = CreateSession();
@@ -416,5 +416,15 @@ public class SessionTests
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned, ""));
         Assert.Equal(Stance.Idle, session.EvaluatedStance);
+    }
+
+    [Fact(DisplayName = "EvaluatedStance should throw ArgumentOutOfRangeException for unexpected status.")]
+    public void EvaluatedStanceShouldThrowForUnexpectedStatus()
+    {
+        var session = CreateSession();
+        var invalidStatus = (SessionStatus)999;
+        session.UpdatePulse(new SessionPulse(invalidStatus, "Invalid"));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => session.EvaluatedStance);
     }
 }
