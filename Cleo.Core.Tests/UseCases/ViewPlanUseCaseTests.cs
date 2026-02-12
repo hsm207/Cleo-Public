@@ -3,42 +3,30 @@ using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ViewPlan;
 using FluentAssertions;
-using Moq;
 using Xunit;
 
 namespace Cleo.Core.Tests.UseCases;
 
 public class ViewPlanUseCaseTests
 {
-    private readonly Mock<ISessionReader> _readerMock;
+    private readonly FakeSessionReader _sessionReader = new();
     private readonly ViewPlanUseCase _useCase;
 
     public ViewPlanUseCaseTests()
     {
-        _readerMock = new Mock<ISessionReader>();
-        _useCase = new ViewPlanUseCase(_readerMock.Object);
+        _useCase = new ViewPlanUseCase(_sessionReader);
     }
 
-    [Fact]
-    public async Task ExecuteAsyncWhenSessionNotFoundReturnsEmpty()
+    [Fact(DisplayName = "Given an unknown session, when viewing the plan, it should return an empty response.")]
+    public async Task ShouldReturnEmptyWhenSessionNotFound()
     {
-        // Arrange
-        var sessionId = new SessionId("unknown");
-        _readerMock.Setup(r => r.RecallAsync(sessionId, TestContext.Current.CancellationToken))
-            .ReturnsAsync((Session?)null);
-
-        // Act
-        // Use default cancellation token for execute call as it's not the SUT behavior under test here
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
-
-        // Assert
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(new SessionId("unknown")), TestContext.Current.CancellationToken);
         response.HasPlan.Should().BeFalse();
     }
 
-    [Fact]
-    public async Task ExecuteAsyncWhenSessionHasNoPlanReturnsEmpty()
+    [Fact(DisplayName = "Given a session with no plan, when viewing the plan, it should return an empty response.")]
+    public async Task ShouldReturnEmptyWhenNoPlan()
     {
-        // Arrange
         var sessionId = new SessionId("session-no-plan");
         var session = new Session(
             sessionId,
@@ -48,21 +36,16 @@ public class ViewPlanUseCaseTests
             new SessionPulse(SessionStatus.StartingUp, "Just started"),
             DateTimeOffset.UtcNow
         );
+        _sessionReader.Sessions[sessionId] = session;
 
-        _readerMock.Setup(r => r.RecallAsync(sessionId, TestContext.Current.CancellationToken))
-            .ReturnsAsync(session);
-
-        // Act
         var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
 
-        // Assert
         response.HasPlan.Should().BeFalse();
     }
 
-    [Fact]
-    public async Task ExecuteAsyncWhenSessionHasPlanReturnsPlanDetails()
+    [Fact(DisplayName = "Given a session with a plan, when viewing the plan, it should return the plan details.")]
+    public async Task ShouldReturnPlanDetails()
     {
-        // Arrange
         var sessionId = new SessionId("session-with-plan");
         var session = new Session(
             sessionId,
@@ -75,19 +58,29 @@ public class ViewPlanUseCaseTests
 
         var steps = new List<PlanStep> { new("s1", 1, "Step 1", "Desc") };
         var planActivity = new PlanningActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "PLAN-A", steps);
-
         session.AddActivity(planActivity);
+        _sessionReader.Sessions[sessionId] = session;
 
-        _readerMock.Setup(r => r.RecallAsync(sessionId, TestContext.Current.CancellationToken))
-            .ReturnsAsync(session);
-
-        // Act
         var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
 
-        // Assert
         response.HasPlan.Should().BeTrue();
         response.PlanId.Should().Be("PLAN-A");
         response.Steps.Should().HaveCount(1);
         response.Steps[0].Title.Should().Be("Step 1");
+    }
+
+    private sealed class FakeSessionReader : ISessionReader
+    {
+        public Dictionary<SessionId, Session> Sessions { get; } = new();
+
+        public Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Sessions.GetValueOrDefault(id));
+        }
+
+        public Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<Session>>(Sessions.Values.ToList());
+        }
     }
 }
