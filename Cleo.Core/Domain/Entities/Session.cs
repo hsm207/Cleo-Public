@@ -100,7 +100,7 @@ public class Session : AggregateRoot
             }
 
             var stance = EvaluatedStance;
-            if (stance == Stance.Broken) return DeliveryStatus.Stalled;
+            if (stance == Stance.Broken || stance == Stance.Interrupted || stance == Stance.Paused) return DeliveryStatus.Stalled;
 
             return DeliveryStatus.Pending;
         }
@@ -179,7 +179,7 @@ public class Session : AggregateRoot
         SessionStatus.StartingUp => Stance.Queued,
         SessionStatus.Planning => Stance.Planning,
         SessionStatus.InProgress => Stance.Working,
-        SessionStatus.Paused => Stance.Idle, // Paused is logically idle
+        SessionStatus.Paused => Stance.Paused, // Paused is now a distinct stance 🛑
         SessionStatus.AwaitingFeedback => Stance.AwaitingFeedback,
         SessionStatus.AwaitingPlanApproval => Stance.AwaitingPlanApproval,
         SessionStatus.Completed => Stance.Idle,
