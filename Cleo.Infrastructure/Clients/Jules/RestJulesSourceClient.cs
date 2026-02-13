@@ -15,7 +15,7 @@ public sealed class RestJulesSourceClient : IJulesSourceClient, ISourceCatalog
 
     public RestJulesSourceClient(HttpClient httpClient)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _httpClient = httpClient;
     }
 
     public async Task<IReadOnlyCollection<SessionSource>> ListSourcesAsync(CancellationToken cancellationToken = default)

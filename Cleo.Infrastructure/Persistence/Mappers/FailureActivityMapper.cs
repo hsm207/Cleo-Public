@@ -10,7 +10,7 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
 
     public FailureActivityMapper(ArtifactMapperFactory artifactFactory)
     {
-        _artifactFactory = artifactFactory ?? throw new ArgumentNullException(nameof(artifactFactory));
+        _artifactFactory = artifactFactory;
     }
 
     public string TypeKey => "FAILED";

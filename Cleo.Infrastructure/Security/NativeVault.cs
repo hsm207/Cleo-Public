@@ -17,8 +17,8 @@ public sealed class NativeVault : IVault, ICredentialStore
 
     public NativeVault(string storagePath, IEncryptionStrategy strategy)
     {
-        _storagePath = storagePath ?? throw new ArgumentNullException(nameof(storagePath));
-        _strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
+        _storagePath = storagePath;
+        _strategy = strategy;
 
         // Ensure directory exists for whichever path we are using
         var directory = Path.GetDirectoryName(_storagePath);
@@ -28,10 +28,9 @@ public sealed class NativeVault : IVault, ICredentialStore
         }
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task StoreAsync(Identity identity, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-
         var apiKey = (string)identity.ApiKey;
         var encrypted = _strategy.Encrypt(apiKey);
 

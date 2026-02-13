@@ -12,7 +12,7 @@ internal sealed partial class JulesLoggingHandler : DelegatingHandler
 
     public JulesLoggingHandler(ILogger<JulesLoggingHandler> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

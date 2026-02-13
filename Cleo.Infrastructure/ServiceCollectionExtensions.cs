@@ -21,9 +21,6 @@ public static class ServiceCollectionExtensions
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Platform is checked via IPlatformProvider.")]
     public static IServiceCollection AddCleoInfrastructure(this IServiceCollection services, Uri julesBaseUrl, IPlatformProvider? platformProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(julesBaseUrl);
-
         // 1. Determine Platform 🌍
         platformProvider ??= new DefaultPlatformProvider();
 

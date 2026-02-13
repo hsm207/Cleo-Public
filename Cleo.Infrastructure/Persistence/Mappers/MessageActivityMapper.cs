@@ -10,7 +10,7 @@ internal sealed class MessageActivityMapper : IActivityPersistenceMapper
 
     public MessageActivityMapper(ArtifactMapperFactory artifactFactory)
     {
-        _artifactFactory = artifactFactory ?? throw new ArgumentNullException(nameof(artifactFactory));
+        _artifactFactory = artifactFactory;
     }
 
     public string TypeKey => "MESSAGE";

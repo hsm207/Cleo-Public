@@ -21,16 +21,14 @@ public sealed class RegistrySessionReader : ISessionReader
         IRegistrySerializer serializer,
         IFileSystem fileSystem)
     {
-        _pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _pathProvider = pathProvider;
+        _mapper = mapper;
+        _serializer = serializer;
+        _fileSystem = fileSystem;
     }
 
     public async Task<Session?> RecallAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-
         var tasks = await LoadRegistryAsync(cancellationToken).ConfigureAwait(false);
         var dto = tasks.FirstOrDefault(t => t.SessionId == id.Value);
 

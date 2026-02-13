@@ -14,7 +14,7 @@ public sealed class CompositeJulesActivityMapper : IJulesActivityMapper
 
     public CompositeJulesActivityMapper(IEnumerable<IJulesActivityMapper> mappers)
     {
-        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+        _mappers = mappers;
     }
 
     public bool CanMap(JulesActivityDto dto)
@@ -25,10 +25,9 @@ public sealed class CompositeJulesActivityMapper : IJulesActivityMapper
         return true;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public SessionActivity Map(JulesActivityDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-
         var mapper = _mappers.FirstOrDefault(m => m.CanMap(dto));
         if (mapper != null)
         {

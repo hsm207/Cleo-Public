@@ -13,7 +13,7 @@ internal sealed class ActivityMapperFactory
 
     public ActivityMapperFactory(IEnumerable<IActivityPersistenceMapper> mappers)
     {
-        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+        _mappers = mappers;
     }
 
     public ActivityEnvelopeDto ToEnvelope(SessionActivity activity)

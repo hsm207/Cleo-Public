@@ -13,8 +13,6 @@ internal sealed class AesGcmEncryptionStrategy : IEncryptionStrategy
 
     public byte[] Encrypt(string plainText)
     {
-        ArgumentNullException.ThrowIfNull(plainText);
-
         byte[] key = DeriveKey();
         byte[] nonce = new byte[NonceSize];
         RandomNumberGenerator.Fill(nonce);

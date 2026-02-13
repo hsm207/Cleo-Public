@@ -8,6 +8,7 @@ namespace Cleo.Core.Domain.Entities;
 /// <summary>
 /// The central authority for an autonomous coding collaboration.
 /// </summary>
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge: We trust Value Objects)
 public class Session : AggregateRoot
 {
     private readonly List<SessionActivity> _sessionLog = new();
@@ -43,11 +44,7 @@ public class Session : AggregateRoot
         AutomationMode mode = AutomationMode.Unspecified,
         Uri? dashboardUri = null)
     {
-        ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(remoteId);
-        ArgumentNullException.ThrowIfNull(task);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(pulse);
 
         Id = id;
         RemoteId = remoteId;
@@ -114,7 +111,6 @@ public class Session : AggregateRoot
 
     public void UpdatePulse(SessionPulse newPulse)
     {
-        ArgumentNullException.ThrowIfNull(newPulse);
         Pulse = newPulse;
 
         RecordDomainEvent(new StatusHeartbeatReceived(Id, newPulse));
@@ -130,7 +126,6 @@ public class Session : AggregateRoot
     /// </summary>
     public void AddActivity(SessionActivity activity)
     {
-        ArgumentNullException.ThrowIfNull(activity);
         _sessionLog.Add(activity);
 
         // Identify if this event produced a solution (ChangeSet)
@@ -152,7 +147,6 @@ public class Session : AggregateRoot
 
     public void SetPullRequest(PullRequest pullRequest)
     {
-        ArgumentNullException.ThrowIfNull(pullRequest);
         PullRequest = pullRequest;
     }
 

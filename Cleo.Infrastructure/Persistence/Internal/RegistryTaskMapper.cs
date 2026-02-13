@@ -10,7 +10,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 
     public RegistryTaskMapper(ActivityMapperFactory activityFactory)
     {
-        _activityFactory = activityFactory ?? throw new ArgumentNullException(nameof(activityFactory));
+        _activityFactory = activityFactory;
     }
 
     public RegisteredSessionDto MapToDto(Session session) => new(

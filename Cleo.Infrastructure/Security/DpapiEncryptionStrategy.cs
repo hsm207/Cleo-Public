@@ -13,14 +13,12 @@ internal sealed class DpapiEncryptionStrategy : IEncryptionStrategy
 {
     public byte[] Encrypt(string plainText)
     {
-        ArgumentNullException.ThrowIfNull(plainText);
         var data = Encoding.UTF8.GetBytes(plainText);
         return ProtectedData.Protect(data, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
     }
 
     public string Decrypt(byte[] cipherText)
     {
-        ArgumentNullException.ThrowIfNull(cipherText);
         try
         {
             var data = ProtectedData.Unprotect(cipherText, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
