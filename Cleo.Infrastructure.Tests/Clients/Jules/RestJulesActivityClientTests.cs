@@ -35,7 +35,8 @@ public class RestJulesActivityClientTests
             new ProgressActivityMapper(),
             new CompletionActivityMapper(),
             new FailureActivityMapper(),
-            new MessageActivityMapper(),
+            new UserMessageActivityMapper(),
+            new AgentMessageActivityMapper(),
             new UnknownActivityMapper()
         };
 
