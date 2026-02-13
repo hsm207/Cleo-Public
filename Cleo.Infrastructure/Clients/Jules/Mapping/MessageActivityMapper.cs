@@ -7,10 +7,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// <summary>
 /// Maps Jules API messaging activities into domain-centric MessageActivity objects.
 /// </summary>
-internal sealed class MessageActivityMapper : IJulesActivityMapper
+internal sealed class MessageActivityMapper : IJulesActivityMapper<JulesAgentMessagedPayloadDto>, IJulesActivityMapper<JulesUserMessagedPayloadDto>
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesAgentMessagedPayloadDto || dto.Payload is JulesUserMessagedPayloadDto;
-
     public SessionActivity Map(JulesActivityDto dto)
     {
         // Use the Metadata Originator as the source of truth, but fallback to payload type inference if needed

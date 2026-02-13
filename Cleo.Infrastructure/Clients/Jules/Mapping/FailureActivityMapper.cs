@@ -7,10 +7,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// <summary>
 /// Maps Jules API 'sessionFailed' activities into domain-centric FailureActivity objects.
 /// </summary>
-internal sealed class FailureActivityMapper : IJulesActivityMapper
+internal sealed class FailureActivityMapper : IJulesActivityMapper<JulesSessionFailedPayloadDto>
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesSessionFailedPayloadDto;
-    
     public SessionActivity Map(JulesActivityDto dto)
     {
         var payload = (JulesSessionFailedPayloadDto)dto.Payload;

@@ -7,10 +7,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// <summary>
 /// Maps Jules API 'progressUpdated' activities into domain-centric ProgressActivity objects.
 /// </summary>
-internal sealed class ProgressActivityMapper : IJulesActivityMapper
+internal sealed class ProgressActivityMapper : IJulesActivityMapper<JulesProgressUpdatedPayloadDto>
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesProgressUpdatedPayloadDto;
-    
     public SessionActivity Map(JulesActivityDto dto)
     {
         var payload = (JulesProgressUpdatedPayloadDto)dto.Payload;

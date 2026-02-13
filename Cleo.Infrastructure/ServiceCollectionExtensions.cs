@@ -68,25 +68,19 @@ public static class ServiceCollectionExtensions
         // Jules Client & Mappers (North Boundary)
         services.AddSingleton<ISessionStatusMapper, DefaultSessionStatusMapper>();
 
-        // Register strategies (internal use)
-        services.AddSingleton<Clients.Jules.Mapping.PlanningActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.ApprovalActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.ProgressActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.CompletionActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.FailureActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.MessageActivityMapper>();
-        services.AddSingleton<Clients.Jules.Mapping.UnknownActivityMapper>();
+        // Strategies are instantiated directly inside the composite registration above, so we don't need to register them individually.
 
         // Register the Composite as THE mapper
         services.AddSingleton<Clients.Jules.Mapping.IJulesActivityMapper>(sp => new CompositeJulesActivityMapper(new Clients.Jules.Mapping.IJulesActivityMapper[]
         {
-            sp.GetRequiredService<Clients.Jules.Mapping.PlanningActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.ApprovalActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.ProgressActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.CompletionActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.FailureActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.MessageActivityMapper>(),
-            sp.GetRequiredService<Clients.Jules.Mapping.UnknownActivityMapper>()
+            // Simple instantiation since ArtifactMappingHelper is static now
+            new Clients.Jules.Mapping.PlanningActivityMapper(),
+            new Clients.Jules.Mapping.ApprovalActivityMapper(),
+            new Clients.Jules.Mapping.ProgressActivityMapper(),
+            new Clients.Jules.Mapping.CompletionActivityMapper(),
+            new Clients.Jules.Mapping.FailureActivityMapper(),
+            new Clients.Jules.Mapping.MessageActivityMapper(),
+            new Clients.Jules.Mapping.UnknownActivityMapper()
         }));
 
         services.AddTransient<JulesAuthHandler>();

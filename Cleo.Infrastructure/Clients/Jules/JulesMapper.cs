@@ -74,7 +74,6 @@ internal static class JulesMapper
         SessionStatus.AwaitingFeedback => "Jules needs your input to proceed. 🗣️",
         SessionStatus.InProgress => "Jules is hard at work on your task! 🔨🔥",
         SessionStatus.Completed => "Current run finished. 🧘‍♀️💖",
-        SessionStatus.Abandoned => "Session closed without making any changes. ⌛️🥀",
         SessionStatus.Failed => "Something went wrong during execution. 🥀",
         _ => $"Session is {rawState}"
     };
