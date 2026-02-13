@@ -13,6 +13,8 @@ namespace Cleo.Cli.Tests.Commands;
 public class StatusCommandTests : IDisposable
 {
     private readonly Mock<IRefreshPulseUseCase> _useCaseMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly SessionStatusEvaluator _evaluator;
     private readonly Mock<ILogger<StatusCommand>> _loggerMock;
     private readonly StatusCommand _command;
     private readonly StringWriter _stringWriter;
@@ -21,8 +23,10 @@ public class StatusCommandTests : IDisposable
     public StatusCommandTests()
     {
         _useCaseMock = new Mock<IRefreshPulseUseCase>();
+        _presenterMock = new Mock<IStatusPresenter>();
+        _evaluator = new SessionStatusEvaluator();
         _loggerMock = new Mock<ILogger<StatusCommand>>();
-        _command = new StatusCommand(_useCaseMock.Object, _loggerMock.Object);
+        _command = new StatusCommand(_useCaseMock.Object, _evaluator, _presenterMock.Object, _loggerMock.Object);
 
         _stringWriter = new StringWriter();
         _originalOutput = Console.Out;
@@ -49,6 +53,9 @@ public class StatusCommandTests : IDisposable
         _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, stance, delivery, activity));
 
+        _presenterMock.Setup(x => x.Format(It.IsAny<StatusViewModel>()))
+            .Returns("MOCKED_OUTPUT");
+
         // Act
         var exitCode = await _command.Build().InvokeAsync($"status {sessionId}");
 
@@ -56,13 +63,7 @@ public class StatusCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🧘‍♀️ Session State: [Working]");
-        // Delivery status is no longer displayed in the presenter!
-        // The presenter handles "Session State" and "Pull Request" and "Last Activity".
-        // It does NOT display "Delivery Status" explicitly anymore as per RFC.
-
-        output.Should().Contain("📝 Last Activity:");
-        output.Should().Contain("dummy");
+        output.Should().Contain("MOCKED_OUTPUT");
         output.Should().NotContain("💔 Error");
     }
 
