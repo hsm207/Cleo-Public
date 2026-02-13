@@ -49,7 +49,7 @@ public class RootCommandTests
         // Assert
         log.Description.Should().Contain("audit trail");
         status.Description.Should().Contain("Pulse");
-        status.Description.Should().Contain("Stance");
+        status.Description.Should().Contain("SessionState");
         list.Description.Should().Contain("Session Registry");
         forget.Description.Should().Contain("Session Registry");
         auth.Description.Should().Contain("Identity");

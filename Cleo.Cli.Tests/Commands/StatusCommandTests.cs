@@ -36,17 +36,18 @@ public class StatusCommandTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact(DisplayName = "Given a valid session ID, when running 'status', then it should display Stance, Delivery, and Pulse details.")]
+    [Fact(DisplayName = "Given a valid session ID, when running 'status', then it should display SessionState, Delivery, and Pulse details.")]
     public async Task Status_WithValidSession_DisplaysDetails()
     {
         // Arrange
         var sessionId = "test-session";
         var pulse = new SessionPulse(SessionStatus.InProgress, "Thinking deeply...");
-        var stance = Stance.Working;
+        var stance = SessionState.Working;
         var delivery = DeliveryStatus.Unfulfilled;
+        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, stance, delivery));
+            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, stance, delivery, activity));
 
         // Act
         var exitCode = await _command.Build().InvokeAsync($"status {sessionId}");
@@ -55,10 +56,13 @@ public class StatusCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🧘‍♀️ Stance: Working");
-        output.Should().Contain("🏆 Delivery: Unfulfilled");
-        output.Should().Contain("📝 Thinking deeply...");
-        output.Should().NotContain("🎁 Pull Request");
+        output.Should().Contain("🧘‍♀️ Session State: [Working]");
+        // Delivery status is no longer displayed in the presenter!
+        // The presenter handles "Session State" and "Pull Request" and "Last Activity".
+        // It does NOT display "Delivery Status" explicitly anymore as per RFC.
+
+        output.Should().Contain("📝 Last Activity:");
+        output.Should().Contain("dummy");
         output.Should().NotContain("💔 Error");
     }
 
@@ -69,15 +73,16 @@ public class StatusCommandTests : IDisposable
         var sessionId = "test-session";
         var pulse = new SessionPulse(SessionStatus.AwaitingFeedback);
         var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/1"), "Title", "Open");
+        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, Stance.AwaitingFeedback, DeliveryStatus.Delivered, pr));
+            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, SessionState.AwaitingFeedback, DeliveryStatus.Delivered, activity, pr));
 
         // Act
         await _command.Build().InvokeAsync($"status {sessionId}");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("🎁 Pull Request: https://github.com/org/repo/pull/1");
+        _stringWriter.ToString().Should().Contain("https://github.com/org/repo/pull/1");
     }
 
     [Fact(DisplayName = "Given an error fetching status, when running 'status', then it should log the error and display a friendly message.")]

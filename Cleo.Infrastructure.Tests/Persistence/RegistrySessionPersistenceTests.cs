@@ -40,7 +40,8 @@ public class RegistrySessionPersistenceTests : IDisposable
             new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory)
+            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.SessionAssignedActivityMapper(artifactMapperFactory)
         };
         _activityFactory = new ActivityMapperFactory(activityMappers);
 

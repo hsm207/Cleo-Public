@@ -11,7 +11,7 @@ namespace Cleo.Core.Domain.Entities;
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge: We trust Value Objects)
 public class Session : AggregateRoot
 {
-    private readonly List<SessionActivity> _sessionLog = new();
+    private readonly List<SessionActivity> _sessionLog;
 
     public SessionId Id { get; }
     public string RemoteId { get; }
@@ -31,6 +31,14 @@ public class Session : AggregateRoot
 
     public IReadOnlyCollection<SessionActivity> GetSignificantHistory() => _sessionLog.Where(a => a.IsSignificant).ToList().AsReadOnly();
 
+    /// <summary>
+    /// The most recent significant activity in the session log.
+    /// Guaranteed to be non-null due to the Zero-Hollow Invariant.
+    /// </summary>
+    public SessionActivity LastActivity => _sessionLog
+        .OrderByDescending(a => a.Timestamp)
+        .First(a => a.IsSignificant);
+
     public Session(
         SessionId id,
         string remoteId,
@@ -42,7 +50,8 @@ public class Session : AggregateRoot
         string? title = null,
         bool? requiresPlanApproval = null,
         AutomationMode mode = AutomationMode.Unspecified,
-        Uri? dashboardUri = null)
+        Uri? dashboardUri = null,
+        IEnumerable<SessionActivity>? history = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(remoteId);
 
@@ -58,25 +67,42 @@ public class Session : AggregateRoot
         Mode = mode;
         DashboardUri = dashboardUri;
 
+        // Initialize Log
+        _sessionLog = history?.ToList() ?? new List<SessionActivity>();
+
+        // Enforce Zero-Hollow Invariant 🏺
+        // If the log is empty (new session) or contains no significant activities (rare edge case),
+        // we must seed it.
+        if (!_sessionLog.Any(a => a.IsSignificant))
+        {
+            var initialActivity = new SessionAssignedActivity(
+                Guid.NewGuid().ToString(),
+                "local-init",
+                createdAt,
+                ActivityOriginator.System,
+                task);
+            _sessionLog.Add(initialActivity);
+        }
+
         RecordDomainEvent(new SessionAssigned(id, task));
     }
 
     /// <summary>
-    /// Evaluates the agent's current stance, applying logical overrides for blocked sessions.
+    /// Evaluates the agent's current state, applying logical overrides for blocked sessions.
     /// </summary>
-    public Stance EvaluatedStance
+    public SessionState State
     {
         get
         {
-            var physicalStance = MapToStance(Pulse.Status);
+            var physicalState = MapToState(Pulse.Status);
 
-            // Logical Stance Override: If Idle + No PR + Last Activity was Planning -> AwaitingPlanApproval
-            if (physicalStance == Stance.Idle && !IsDelivered && LastSignificantActivity is PlanningActivity)
+            // Logical State Override: If Idle + No PR + Last Activity was Planning -> AwaitingPlanApproval
+            if (physicalState == SessionState.Idle && !IsDelivered && LastActivity is PlanningActivity)
             {
-                return Stance.AwaitingPlanApproval;
+                return SessionState.AwaitingPlanApproval;
             }
 
-            return physicalStance;
+            return physicalState;
         }
     }
 
@@ -90,24 +116,20 @@ public class Session : AggregateRoot
             if (IsDelivered) return DeliveryStatus.Delivered;
             
             // If physically idle but no PR, it is officially unfulfilled.
-            // This holds even if the EvaluatedStance is logically overridden to AwaitingPlanApproval.
-            if (MapToStance(Pulse.Status) == Stance.Idle && !IsDelivered)
+            // This holds even if the State is logically overridden to AwaitingPlanApproval.
+            if (MapToState(Pulse.Status) == SessionState.Idle && !IsDelivered)
             {
                 return DeliveryStatus.Unfulfilled;
             }
 
-            var stance = EvaluatedStance;
-            if (stance == Stance.Broken || stance == Stance.Interrupted || stance == Stance.Paused) return DeliveryStatus.Stalled;
+            var state = State;
+            if (state == SessionState.Broken || state == SessionState.Interrupted || state == SessionState.Paused) return DeliveryStatus.Stalled;
 
             return DeliveryStatus.Pending;
         }
     }
 
     public bool IsDelivered => Solution != null || PullRequest != null;
-
-    private SessionActivity? LastSignificantActivity => _sessionLog
-        .OrderByDescending(a => a.Timestamp)
-        .FirstOrDefault(a => a.IsSignificant);
 
     public void UpdatePulse(SessionPulse newPulse)
     {
@@ -168,18 +190,18 @@ public class Session : AggregateRoot
         RecordDomainEvent(new SolutionReady(Id, solution));
     }
 
-    private static Stance MapToStance(SessionStatus status) => status switch
+    private static SessionState MapToState(SessionStatus status) => status switch
     {
-        SessionStatus.StartingUp => Stance.Queued,
-        SessionStatus.Planning => Stance.Planning,
-        SessionStatus.InProgress => Stance.Working,
-        SessionStatus.Paused => Stance.Paused, // Paused is now a distinct stance 🛑
-        SessionStatus.AwaitingFeedback => Stance.AwaitingFeedback,
-        SessionStatus.AwaitingPlanApproval => Stance.AwaitingPlanApproval,
-        SessionStatus.Completed => Stance.Idle,
-        SessionStatus.Abandoned => Stance.Idle,
-        SessionStatus.Failed => Stance.Broken,
+        SessionStatus.StartingUp => SessionState.Queued,
+        SessionStatus.Planning => SessionState.Planning,
+        SessionStatus.InProgress => SessionState.Working,
+        SessionStatus.Paused => SessionState.Paused, // Paused is now a distinct state 🛑
+        SessionStatus.AwaitingFeedback => SessionState.AwaitingFeedback,
+        SessionStatus.AwaitingPlanApproval => SessionState.AwaitingPlanApproval,
+        SessionStatus.Completed => SessionState.Idle,
+        SessionStatus.Abandoned => SessionState.Idle,
+        SessionStatus.Failed => SessionState.Broken,
         // StateUnspecified or unknown values map to WTF 🚨
-        _ => Stance.WTF
+        _ => SessionState.WTF
     };
 }

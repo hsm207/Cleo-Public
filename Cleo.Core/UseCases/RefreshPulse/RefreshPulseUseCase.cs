@@ -68,8 +68,9 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             return new RefreshPulseResponse(
                 request.Id, 
                 remoteSession.Pulse, 
-                session.EvaluatedStance, 
+                session.State,
                 session.DeliveryStatus,
+                session.LastActivity,
                 session.PullRequest);
         }
         catch (RemoteCollaboratorUnavailableException)
@@ -83,8 +84,9 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             return new RefreshPulseResponse(
                 request.Id,
                 session.Pulse,
-                session.EvaluatedStance,
+                session.State,
                 session.DeliveryStatus,
+                session.LastActivity,
                 session.PullRequest,
                 IsCached: true,
                 Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry."

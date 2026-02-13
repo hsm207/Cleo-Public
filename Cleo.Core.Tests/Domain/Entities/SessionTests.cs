@@ -67,8 +67,18 @@ public class SessionTests
 
         session.AddActivity(activity);
 
+        Assert.Equal(2, session.SessionLog.Count);
+        Assert.Equal(activity, session.SessionLog.Last());
+    }
+
+    [Fact(DisplayName = "Session should enforce Zero-Hollow invariant by adding SessionAssignedActivity.")]
+    public void SessionShouldHaveInitialActivity()
+    {
+        var session = CreateSession();
+
         Assert.Single(session.SessionLog);
-        Assert.Equal(activity, session.SessionLog.First());
+        var initial = Assert.IsType<SessionAssignedActivity>(session.SessionLog.First());
+        Assert.Equal(Task, initial.Task);
     }
 
     [Fact(DisplayName = "Session should update the solution and record 'SolutionReady' when an activity with a ChangeSet is added.")]
@@ -94,7 +104,7 @@ public class SessionTests
         
         session.AddFeedback("This looks great!", "act/3");
 
-        var activity = Assert.IsType<MessageActivity>(session.SessionLog.First());
+        var activity = Assert.IsType<MessageActivity>(session.SessionLog.Last());
         Assert.Equal(ActivityOriginator.User, activity.Originator);
         Assert.Equal("This looks great!", activity.Text);
     }
@@ -149,7 +159,7 @@ public class SessionTests
         session.AddActivity(new ProgressActivity("a3", "r3", now, ActivityOriginator.Agent, "working"));
         session.AddActivity(new FailureActivity("a4", "r4", now, ActivityOriginator.System, "error"));
 
-        Assert.Equal(4, session.SessionLog.Count);
+        Assert.Equal(5, session.SessionLog.Count);
     }
 
     [Fact(DisplayName = "Session should update pulse and record events for all statuses.")]
@@ -243,7 +253,7 @@ public class SessionTests
         Assert.Equal(new Uri("https://dashboard.com"), session.DashboardUri);
 
         Assert.Null(session.Solution);
-        Assert.Empty(session.SessionLog);
+        Assert.Single(session.SessionLog);
     }
 
     [Fact(DisplayName = "Session should validate primitive arguments.")]
@@ -299,16 +309,33 @@ public class SessionTests
 
         var significantHistory = session.GetSignificantHistory();
 
-        Assert.Equal(3, significantHistory.Count);
+        // 1 (Initial) + 3 (Added Significant) = 4
+        Assert.Equal(4, significantHistory.Count);
         Assert.Contains(significantHistory, a => a.Id == "a1");
         Assert.Contains(significantHistory, a => a.Id == "a3");
         Assert.Contains(significantHistory, a => a.Id == "a5");
+        Assert.Contains(significantHistory, a => a is SessionAssignedActivity);
         Assert.DoesNotContain(significantHistory, a => a.Id == "a2");
         Assert.DoesNotContain(significantHistory, a => a.Id == "a4");
     }
 
-    [Fact(DisplayName = "EvaluatedStance should override to AwaitingPlanApproval when Idle, no PR, and last significant activity was Planning.")]
-    public void EvaluatedStanceShouldOverrideToAwaitingPlanApproval()
+    [Fact(DisplayName = "LastActivity should return the most recent significant activity.")]
+    public void LastActivityShouldReturnMostRecentSignificant()
+    {
+        var session = CreateSession();
+        var now = DateTimeOffset.UtcNow;
+
+        var plan = new PlanningActivity("a1", "r1", now.AddMinutes(1), ActivityOriginator.Agent, "plan", new[] { new PlanStep("1", 0, "T", "D") });
+        session.AddActivity(plan);
+
+        // Add a non-significant activity later
+        session.AddActivity(new ProgressActivity("a2", "r2", now.AddMinutes(2), ActivityOriginator.Agent, "working"));
+
+        Assert.Equal(plan, session.LastActivity);
+    }
+
+    [Fact(DisplayName = "State should override to AwaitingPlanApproval when Idle, no PR, and last significant activity was Planning.")]
+    public void StateShouldOverrideToAwaitingPlanApproval()
     {
         var session = CreateSession();
         // 1. Last significant activity is Planning
@@ -320,11 +347,11 @@ public class SessionTests
         // 3. No PR set
 
         // Assert override logic
-        Assert.Equal(Stance.AwaitingPlanApproval, session.EvaluatedStance);
+        Assert.Equal(SessionState.AwaitingPlanApproval, session.State);
     }
 
-    [Fact(DisplayName = "EvaluatedStance should NOT override if PR is present.")]
-    public void EvaluatedStanceShouldNotOverrideIfPrPresent()
+    [Fact(DisplayName = "State should NOT override if PR is present.")]
+    public void StateShouldNotOverrideIfPrPresent()
     {
         var session = CreateSession();
         session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
@@ -332,7 +359,7 @@ public class SessionTests
         session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
 
         // Should be Idle because PR is delivered
-        Assert.Equal(Stance.Idle, session.EvaluatedStance);
+        Assert.Equal(SessionState.Idle, session.State);
     }
 
     [Fact(DisplayName = "DeliveryStatus should be Delivered if Solution or PR is present.")]
@@ -415,43 +442,43 @@ public class SessionTests
         public PlanningActivity? ResolvePlan(IEnumerable<SessionActivity> history) => _plan;
     }
 
-    [Fact(DisplayName = "EvaluatedStance should map all statuses correctly.")]
-    public void EvaluatedStanceShouldMapAllStatuses()
+    [Fact(DisplayName = "State should map all statuses correctly.")]
+    public void StateShouldMapAllStatuses()
     {
         var session = CreateSession();
 
         // Verify key mappings
         session.UpdatePulse(new SessionPulse(SessionStatus.StartingUp, ""));
-        Assert.Equal(Stance.Queued, session.EvaluatedStance);
+        Assert.Equal(SessionState.Queued, session.State);
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Planning, ""));
-        Assert.Equal(Stance.Planning, session.EvaluatedStance);
+        Assert.Equal(SessionState.Planning, session.State);
 
         session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingPlanApproval, ""));
-        Assert.Equal(Stance.AwaitingPlanApproval, session.EvaluatedStance);
+        Assert.Equal(SessionState.AwaitingPlanApproval, session.State);
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned, ""));
-        Assert.Equal(Stance.Idle, session.EvaluatedStance);
+        Assert.Equal(SessionState.Idle, session.State);
 
         session.UpdatePulse(new SessionPulse(SessionStatus.Paused, ""));
-        Assert.Equal(Stance.Paused, session.EvaluatedStance);
+        Assert.Equal(SessionState.Paused, session.State);
 
         session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingFeedback, ""));
-        Assert.Equal(Stance.AwaitingFeedback, session.EvaluatedStance);
+        Assert.Equal(SessionState.AwaitingFeedback, session.State);
     }
 
-    [Fact(DisplayName = "EvaluatedStance should map 'StateUnspecified' and unknown values to 'WTF'.")]
-    public void EvaluatedStanceShouldMapUnknownToWtf()
+    [Fact(DisplayName = "State should map 'StateUnspecified' and unknown values to 'WTF'.")]
+    public void StateShouldMapUnknownToWtf()
     {
         var session = CreateSession();
 
         // StateUnspecified -> WTF 🚨
         session.UpdatePulse(new SessionPulse(SessionStatus.StateUnspecified, "Unknown"));
-        Assert.Equal(Stance.WTF, session.EvaluatedStance);
+        Assert.Equal(SessionState.WTF, session.State);
 
         // Unknown Int -> WTF 🚨
         var invalidStatus = (SessionStatus)999;
         session.UpdatePulse(new SessionPulse(invalidStatus, "Invalid"));
-        Assert.Equal(Stance.WTF, session.EvaluatedStance);
+        Assert.Equal(SessionState.WTF, session.State);
     }
 }
