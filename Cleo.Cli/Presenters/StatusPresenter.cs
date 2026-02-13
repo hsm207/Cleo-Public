@@ -27,6 +27,16 @@ internal sealed class StatusPresenter
         var timestamp = lastActivity.Timestamp.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
         sb.Append(CultureInfo.CurrentCulture, $"📝 Last Activity: [{timestamp}] {lastActivity.GetContentSummary()}");
 
+        if (lastActivity is ProgressActivity { Thought: not null } progress)
+        {
+            var lines = progress.Thought.Split('\n');
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var prefix = i == 0 ? "\n          💭 " : "\n             ";
+                sb.Append(prefix + lines[i]);
+            }
+        }
+
         return sb.ToString();
     }
 
