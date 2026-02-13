@@ -1,5 +1,4 @@
 using Cleo.Core.Domain.ValueObjects;
-using Cleo.Infrastructure.Common;
 using Cleo.Infrastructure.Persistence.Internal;
 
 namespace Cleo.Infrastructure.Persistence.Mappers;
@@ -19,11 +18,8 @@ internal sealed class ActivityMapperFactory
 
     public ActivityEnvelopeDto ToEnvelope(SessionActivity activity)
     {
-        var mapper = StrategySelector.SelectOrThrow(
-            _mappers,
-            activity,
-            (m, a) => m.CanHandle(a),
-            () => $"No persistence mapper found for activity type: {activity.GetType().Name}");
+        var mapper = _mappers.FirstOrDefault(m => m.CanHandle(activity))
+            ?? throw new InvalidOperationException($"No persistence mapper found for activity type: {activity.GetType().Name}");
 
         return new ActivityEnvelopeDto
         {
@@ -37,11 +33,8 @@ internal sealed class ActivityMapperFactory
 
     public SessionActivity FromEnvelope(ActivityEnvelopeDto envelope)
     {
-        var mapper = StrategySelector.SelectOrThrow(
-            _mappers,
-            envelope,
-            (m, e) => m.TypeKey == e.Type,
-            () => $"No persistence mapper found for stored type: {envelope.Type}");
+        var mapper = _mappers.FirstOrDefault(m => m.TypeKey == envelope.Type)
+            ?? throw new InvalidOperationException($"No persistence mapper found for stored type: {envelope.Type}");
 
         if (!Enum.TryParse<ActivityOriginator>(envelope.Originator, out var originator))
         {
