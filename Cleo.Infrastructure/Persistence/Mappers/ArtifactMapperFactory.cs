@@ -1,4 +1,5 @@
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Infrastructure.Common;
 using Cleo.Infrastructure.Persistence.Internal;
 
 namespace Cleo.Infrastructure.Persistence.Mappers;
@@ -17,8 +18,11 @@ internal sealed class ArtifactMapperFactory
 
     public ArtifactEnvelope ToEnvelope(Artifact artifact)
     {
-        var mapper = _mappers.FirstOrDefault(m => m.CanHandle(artifact))
-            ?? throw new InvalidOperationException($"No persistence mapper found for artifact: {artifact.GetType().Name}");
+        var mapper = StrategySelector.SelectOrThrow(
+            _mappers,
+            artifact,
+            (m, a) => m.CanHandle(a),
+            () => $"No persistence mapper found for artifact: {artifact.GetType().Name}");
 
         return new ArtifactEnvelope
         {
@@ -29,8 +33,11 @@ internal sealed class ArtifactMapperFactory
 
     public Artifact FromEnvelope(ArtifactEnvelope envelope)
     {
-        var mapper = _mappers.FirstOrDefault(m => m.TypeKey == envelope.Type)
-            ?? throw new InvalidOperationException($"No persistence mapper found for stored artifact type: {envelope.Type}");
+        var mapper = StrategySelector.SelectOrThrow(
+            _mappers,
+            envelope,
+            (m, e) => m.TypeKey == e.Type,
+            () => $"No persistence mapper found for stored artifact type: {envelope.Type}");
 
         return mapper.Deserialize(envelope.PayloadJson);
     }
