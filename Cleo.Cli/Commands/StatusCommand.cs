@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ internal sealed class StatusCommand
 
     public Command Build()
     {
-        var command = new Command("status", "Check the Pulse and Stance of a session 💓");
+        var command = new Command("status", "Check the Pulse and SessionState of a session 💓");
 
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
         command.AddArgument(sessionIdArgument);
@@ -43,15 +44,7 @@ internal sealed class StatusCommand
                 Console.WriteLine(response.Warning);
             }
 
-            Console.WriteLine($"🧘‍♀️ Stance: {response.Stance}");
-            Console.WriteLine($"🏆 Delivery: {response.DeliveryStatus}");
-
-            if (response.PullRequest != null)
-            {
-                Console.WriteLine($"🎁 Pull Request: {response.PullRequest.Url}");
-            }
-
-            Console.WriteLine($"📝 {response.Pulse.Detail}");
+            Console.Write(StatusPresenter.Format(response));
         }
         catch (Exception ex)
         {

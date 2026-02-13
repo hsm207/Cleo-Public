@@ -58,7 +58,7 @@ public class ListCommandTests : IDisposable
         var output = _stringWriter.ToString();
         output.Should().Contain("s1");
         output.Should().Contain("Task 1");
-        output.Should().Contain("InProgress");
+        output.Should().Contain("Working");
     }
 
     [Fact(DisplayName = "Given no sessions, when running 'list', then it should display a friendly empty message.")]

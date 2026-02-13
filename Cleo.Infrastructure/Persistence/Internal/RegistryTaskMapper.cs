@@ -26,6 +26,10 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 
     public Session MapToDomain(RegisteredSessionDto dto)
     {
+        var history = dto.History?
+            .Select(_activityFactory.FromEnvelope)
+            .ToList();
+
         // Note: The registry is a simple store and might not have all the new metadata yet.
         // We'll use defaults for now, but this highlights a potential gap in persistence if we want to store these fields.
         // However, the registry seems to be local cache/history.
@@ -40,12 +44,8 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             null,
             null,
             AutomationMode.Unspecified,
-            dto.DashboardUri);
-
-        foreach (var envelope in dto.History ?? Enumerable.Empty<ActivityEnvelopeDto>())
-        {
-            session.AddActivity(_activityFactory.FromEnvelope(envelope));
-        }
+            dto.DashboardUri,
+            history);
 
         if (dto.PullRequestUrl != null && dto.PullRequestTitle != null)
         {

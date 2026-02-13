@@ -41,7 +41,7 @@ internal sealed class ListCommand
             Console.WriteLine("📋 Current Sessions:");
             foreach (var session in response.Sessions)
             {
-                Console.WriteLine($"- [{session.Id}] {session.Task} ({session.Pulse.Status})");
+                Console.WriteLine($"- [{session.Id}] {session.Task} ({session.State})");
             }
         }
         catch (Exception ex)

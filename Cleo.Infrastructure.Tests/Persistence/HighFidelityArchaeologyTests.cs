@@ -29,6 +29,7 @@ public class HighFidelityArchaeologyTests
         services.AddSingleton<IActivityPersistenceMapper, ProgressActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, CompletionActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, FailureActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, SessionAssignedActivityMapper>();
         
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
         services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
@@ -97,8 +98,8 @@ public class HighFidelityArchaeologyTests
         envelope.Type.Should().Be("PLAN_GENERATED"); 
     }
 
-    [Fact(DisplayName = "Truth-Sensing: Logical Stance Override identifies blocked sessions 🧠⚖️")]
-    public void Session_EvaluatesStanceLogically_WhenIdleButBlockedOnPlan()
+    [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
+    public void Session_EvaluatesSessionStateLogically_WhenIdleButBlockedOnPlan()
     {
         // Arrange
         var sessionId = new SessionId("sessions/123");
@@ -113,7 +114,7 @@ public class HighFidelityArchaeologyTests
 
         // Act & Assert
         session.Pulse.Status.Should().Be(SessionStatus.Completed); 
-        session.EvaluatedStance.Should().Be(Stance.AwaitingPlanApproval); // Logical Override! 🧠🔥
+        session.State.Should().Be(SessionState.AwaitingPlanApproval); // Logical Override! 🧠🔥
         session.DeliveryStatus.Should().Be(DeliveryStatus.Unfulfilled); // The Truth! 💎
     }
 
@@ -181,5 +182,21 @@ public class HighFidelityArchaeologyTests
         // Assert
         hydrated.Should().NotBeNull();
         hydrated!.PlanId.Should().Be("plan-123");
+    }
+
+    [Fact(DisplayName = "Round-Trip: SessionAssignedActivity preserves task 🏺")]
+    public void SessionAssignedActivity_PreservesTask_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var original = new SessionAssignedActivity("init-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.System, (TaskDescription)"Start Mission");
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (SessionAssignedActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.Task.Should().Be((TaskDescription)"Start Mission");
     }
 }

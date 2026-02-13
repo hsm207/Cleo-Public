@@ -40,7 +40,7 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
-        Assert.Equal(Stance.Working, result.Stance);
+        Assert.Equal(SessionState.Working, result.State);
         Assert.Equal(DeliveryStatus.Pending, result.DeliveryStatus);
         Assert.Null(result.PullRequest);
         Assert.False(result.IsCached);
