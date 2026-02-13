@@ -21,20 +21,17 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
 
     public RestSessionLifecycleClient(HttpClient httpClient, ISessionStatusMapper statusMapper)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _statusMapper = statusMapper ?? throw new ArgumentNullException(nameof(statusMapper));
+        _httpClient = httpClient;
+        _statusMapper = statusMapper;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task<Session> CreateSessionAsync(
         TaskDescription task, 
         SourceContext source, 
         SessionCreationOptions options, 
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(task);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(options);
-
         var request = new JulesCreateSessionRequestDto(
             (string)task,
             new JulesSourceContextDto(

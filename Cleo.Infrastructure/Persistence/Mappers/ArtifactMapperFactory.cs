@@ -12,7 +12,7 @@ internal sealed class ArtifactMapperFactory
 
     public ArtifactMapperFactory(IEnumerable<IArtifactPersistenceMapper> mappers)
     {
-        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+        _mappers = mappers;
     }
 
     public ArtifactEnvelope ToEnvelope(Artifact artifact)

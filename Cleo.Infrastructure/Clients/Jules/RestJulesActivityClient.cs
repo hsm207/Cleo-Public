@@ -22,14 +22,13 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
 
     public RestJulesActivityClient(HttpClient httpClient, IJulesActivityMapper mapper)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _httpClient = httpClient;
+        _mapper = mapper;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-
         try
         {
             var allActivities = new List<SessionActivity>();

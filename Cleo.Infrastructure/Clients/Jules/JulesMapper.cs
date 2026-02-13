@@ -15,9 +15,6 @@ internal static class JulesMapper
 {
     public static Session Map(JulesSessionResponseDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        ArgumentNullException.ThrowIfNull(statusMapper);
-
         var pulse = MapPulse(dto, statusMapper);
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
@@ -64,9 +61,6 @@ internal static class JulesMapper
 
     public static SessionPulse MapPulse(JulesSessionResponseDto dto, ISessionStatusMapper statusMapper)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        ArgumentNullException.ThrowIfNull(statusMapper);
-
         var status = statusMapper.Map(dto.State);
         var detail = GetFriendlyStatusDetail(status, dto.State);
         return new SessionPulse(status, detail);

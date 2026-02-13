@@ -15,13 +15,12 @@ public sealed class RestSessionController : ISessionController
 
     public RestSessionController(HttpClient httpClient)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _httpClient = httpClient;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task ApprovePlanAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-
         try
         {
             var response = await _httpClient.PostAsync(new Uri($"v1alpha/{id.Value}:approvePlan", UriKind.Relative), null, cancellationToken).ConfigureAwait(false);

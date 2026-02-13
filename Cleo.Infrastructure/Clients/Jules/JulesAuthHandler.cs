@@ -13,7 +13,7 @@ internal sealed class JulesAuthHandler : DelegatingHandler
 
     public JulesAuthHandler(IVault vault)
     {
-        _vault = vault ?? throw new ArgumentNullException(nameof(vault));
+        _vault = vault;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

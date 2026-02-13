@@ -10,7 +10,7 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
 
     public ApprovalActivityMapper(ArtifactMapperFactory artifactFactory)
     {
-        _artifactFactory = artifactFactory ?? throw new ArgumentNullException(nameof(artifactFactory));
+        _artifactFactory = artifactFactory;
     }
 
     public string TypeKey => "PLAN_APPROVED";

@@ -20,14 +20,13 @@ public sealed class RestPulseMonitor : IPulseMonitor
 
     public RestPulseMonitor(HttpClient httpClient, ISessionStatusMapper statusMapper)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _statusMapper = statusMapper ?? throw new ArgumentNullException(nameof(statusMapper));
+        _httpClient = httpClient;
+        _statusMapper = statusMapper;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-
         try
         {
             var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);
@@ -46,9 +45,6 @@ public sealed class RestPulseMonitor : IPulseMonitor
 
     public async Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-        ArgumentNullException.ThrowIfNull(originalTask);
-
         try
         {
             var response = await _httpClient.GetAsync(new Uri($"v1alpha/{id.Value}", UriKind.Relative), cancellationToken).ConfigureAwait(false);

@@ -17,14 +17,13 @@ public sealed class RestSessionMessenger : ISessionMessenger
 
     public RestSessionMessenger(HttpClient httpClient)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _httpClient = httpClient;
     }
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task SendMessageAsync(SessionId id, string message, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(id);
-        ArgumentException.ThrowIfNullOrWhiteSpace(message);
-
+        // VIP Lounge: Callers (CLI) must validate inputs.
         var request = new JulesSendMessageRequestDto(message);
         
         try

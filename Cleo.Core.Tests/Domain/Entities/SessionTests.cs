@@ -246,13 +246,12 @@ public class SessionTests
         Assert.Empty(session.SessionLog);
     }
 
-    [Fact(DisplayName = "Session should throw ArgumentNullException if method arguments are null.")]
+    [Fact(DisplayName = "Session should validate primitive arguments.")]
     public void MethodsShouldValidateArgs()
     {
         var session = CreateSession();
         
-        Assert.Throws<ArgumentNullException>(() => session.UpdatePulse(null!));
-        Assert.Throws<ArgumentNullException>(() => session.AddActivity(null!));
+        // Validation for primitives (strings) remains.
         Assert.Throws<ArgumentNullException>(() => session.AddFeedback(null!, "id"));
         Assert.Throws<ArgumentException>(() => session.AddFeedback(" ", "id"));
     }
@@ -279,14 +278,11 @@ public class SessionTests
         Assert.True((DateTimeOffset.UtcNow - e1.OccurredOn).TotalSeconds < 5);
     }
 
-    [Fact(DisplayName = "Session should throw ArgumentNullException if constructor arguments are null.")]
+    [Fact(DisplayName = "Session should validate primitive constructor arguments.")]
     public void ConstructorShouldValidateArgs()
     {
-        Assert.Throws<ArgumentNullException>(() => new Session(null!, RemoteId, Task, Source, InitialPulse, Now));
+        // Validation for primitives (strings) remains.
         Assert.Throws<ArgumentNullException>(() => new Session(Id, null!, Task, Source, InitialPulse, Now));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, null!, Source, InitialPulse, Now));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, Task, null!, InitialPulse, Now));
-        Assert.Throws<ArgumentNullException>(() => new Session(Id, RemoteId, Task, Source, null!, Now));
     }
 
     [Fact(DisplayName = "GetSignificantHistory should exclude non-significant activities.")]
@@ -385,7 +381,7 @@ public class SessionTests
         Assert.Equal(DeliveryStatus.Pending, session.DeliveryStatus);
     }
 
-    [Fact(DisplayName = "SetPullRequest should update property and validate args.")]
+    [Fact(DisplayName = "SetPullRequest should update property.")]
     public void SetPullRequestShouldWork()
     {
         var session = CreateSession();
@@ -394,7 +390,6 @@ public class SessionTests
         session.SetPullRequest(pr);
 
         Assert.Equal(pr, session.PullRequest);
-        Assert.Throws<ArgumentNullException>(() => session.SetPullRequest(null!));
     }
 
     [Fact(DisplayName = "GetLatestPlan should resolve using provided strategy.")]
