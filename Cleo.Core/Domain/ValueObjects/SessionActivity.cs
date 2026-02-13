@@ -43,6 +43,11 @@ public abstract record SessionActivity(
     /// Indicates whether this activity represents a major state transition or communication event.
     /// </summary>
     public virtual bool IsSignificant => true;
+
+    /// <summary>
+    /// Returns the internal reasoning or thoughts associated with this activity, if any.
+    /// </summary>
+    public virtual IEnumerable<string> GetThoughts() => Enumerable.Empty<string>();
 }
 
 /// <summary>
@@ -178,6 +183,12 @@ public record ProgressActivity(
             // Trace Signal: Pure system/status heartbeat
             return false;
         }
+    }
+
+    public override IEnumerable<string> GetThoughts()
+    {
+        if (string.IsNullOrWhiteSpace(Thought)) return Enumerable.Empty<string>();
+        return Thought.Split('\n', StringSplitOptions.RemoveEmptyEntries);
     }
 }
 
