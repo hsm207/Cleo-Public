@@ -85,6 +85,29 @@ public class StatusCommandTests : IDisposable
         _stringWriter.ToString().Should().Contain("https://github.com/org/repo/pull/1");
     }
 
+    [Fact(DisplayName = "Given a response with a warning, when running 'status', then it should display the warning.")]
+    public async Task Status_WithWarning_DisplaysWarning()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        var response = new RefreshPulseResponse(
+            new SessionId(sessionId),
+            new SessionPulse(SessionStatus.InProgress),
+            SessionState.Working,
+            DeliveryStatus.Pending,
+            new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy"),
+            Warning: "⚠️ Warning message");
+
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        await _command.Build().InvokeAsync($"status {sessionId}");
+
+        // Assert
+        _stringWriter.ToString().Should().Contain("⚠️ Warning message");
+    }
+
     [Fact(DisplayName = "Given an error fetching status, when running 'status', then it should log the error and display a friendly message.")]
     public async Task Status_UseCaseError_HandlesException()
     {
