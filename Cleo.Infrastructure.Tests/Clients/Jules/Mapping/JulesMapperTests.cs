@@ -40,15 +40,15 @@ public class JulesMapperTests
         activity.Timestamp.Should().BeCloseTo(TestTime, TimeSpan.FromSeconds(1));
     }
 
-    [Fact(DisplayName = "Given an agentMessaged DTO, MessageActivityMapper should map it to a MessageActivity.")]
-    public void MessageActivityMapper_ShouldMap_AgentMessaged()
+    [Fact(DisplayName = "Given an agentMessaged DTO, AgentMessageActivityMapper should map it to a MessageActivity.")]
+    public void AgentMessageActivityMapper_ShouldMap_AgentMessaged()
     {
         // Arrange
         var payload = new JulesAgentMessagedPayloadDto("Hello User");
         var metadata = new JulesActivityMetadataDto("act-2", "rem-2", null, TestTimeStr, "agent", null);
         var dto = new JulesActivityDto(metadata, payload);
 
-        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.MessageActivityMapper();
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.AgentMessageActivityMapper();
 
         // Act
         var result = mapper.Map(dto);
@@ -59,15 +59,15 @@ public class JulesMapperTests
         activity.Originator.Should().Be(ActivityOriginator.Agent);
     }
 
-    [Fact(DisplayName = "Given a userMessaged DTO, MessageActivityMapper should map it to a MessageActivity.")]
-    public void MessageActivityMapper_ShouldMap_UserMessaged()
+    [Fact(DisplayName = "Given a userMessaged DTO, UserMessageActivityMapper should map it to a MessageActivity.")]
+    public void UserMessageActivityMapper_ShouldMap_UserMessaged()
     {
         // Arrange
         var payload = new JulesUserMessagedPayloadDto("Hello Agent");
         var metadata = new JulesActivityMetadataDto("act-3", "rem-3", null, TestTimeStr, "user", null);
         var dto = new JulesActivityDto(metadata, payload);
 
-        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.MessageActivityMapper();
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.UserMessageActivityMapper();
 
         // Act
         var result = mapper.Map(dto);
@@ -153,7 +153,7 @@ public class JulesMapperTests
         var metadata = new JulesActivityMetadataDto("act-media", "rem-media", null, TestTimeStr, "agent", artifacts);
         var dto = new JulesActivityDto(metadata, payload);
 
-        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.MessageActivityMapper();
+        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.AgentMessageActivityMapper();
 
         // Act
         var result = mapper.Map(dto);

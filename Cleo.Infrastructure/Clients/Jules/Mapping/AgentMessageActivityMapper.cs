@@ -5,28 +5,22 @@ using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 
 /// <summary>
-/// Maps Jules API messaging activities into domain-centric MessageActivity objects.
+/// Maps Jules API 'agentMessaged' activities into domain-centric MessageActivity objects.
 /// </summary>
-internal sealed class MessageActivityMapper : IJulesActivityMapper<JulesAgentMessagedPayloadDto>, IJulesActivityMapper<JulesUserMessagedPayloadDto>
+internal sealed class AgentMessageActivityMapper : IJulesActivityMapper<JulesAgentMessagedPayloadDto>
 {
     public SessionActivity Map(JulesActivityDto dto)
     {
-        // Use the Metadata Originator as the source of truth, but fallback to payload type inference if needed
+        ArgumentNullException.ThrowIfNull(dto);
+        var payload = (JulesAgentMessagedPayloadDto)dto.Payload;
         var originator = ActivityOriginatorMapper.Map(dto.Metadata.Originator);
-        
-        var text = dto.Payload switch
-        {
-            JulesAgentMessagedPayloadDto amp => amp.AgentMessage,
-            JulesUserMessagedPayloadDto ump => ump.UserMessage,
-            _ => string.Empty
-        };
 
         return new MessageActivity(
             dto.Metadata.Name,
             dto.Metadata.Id,
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture),
             originator,
-            text ?? string.Empty,
+            payload.AgentMessage ?? string.Empty,
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
     }
 }

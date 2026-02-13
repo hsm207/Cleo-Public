@@ -1,0 +1,45 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Core", "Cleo.Core\Cleo.Core.csproj", "{C3F96176-51D0-BAE9-523D-3F7955003BA5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Infrastructure", "Cleo.Infrastructure\Cleo.Infrastructure.csproj", "{B1C890CD-95C1-3C5B-F668-F18AC15BD276}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Cli", "Cleo.Cli\Cleo.Cli.csproj", "{16A527E1-8283-EF35-1F0D-9FB42583BC36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Core.Tests", "Cleo.Core.Tests\Cleo.Core.Tests.csproj", "{2B134022-5B0F-A037-93AC-B5D9FBBBE503}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Infrastructure.Tests", "Cleo.Infrastructure.Tests\Cleo.Infrastructure.Tests.csproj", "{E0F0BB6C-69C5-4B5E-539C-BED5CAD7572A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cleo.Cli.Tests", "Cleo.Cli.Tests\Cleo.Cli.Tests.csproj", "{C54E54DE-0F83-9619-D73C-0E742B1D2D40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiProbe", "[internal metadata: labs scrubbed]\ApiProbe\ApiProbe.csproj", "{F2B717C3-014D-4595-DD78-3634FDB1B15D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeedVault", "[internal metadata: labs scrubbed]\SeedVault\SeedVault.csproj", "{1634C6D0-EF3C-6C0C-9438-F12C15875E08}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C3F96176-51D0-BAE9-523D-3F7955003BA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3F96176-51D0-BAE9-523D-3F7955003BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1C890CD-95C1-3C5B-F668-F18AC15BD276}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1C890CD-95C1-3C5B-F668-F18AC15BD276}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16A527E1-8283-EF35-1F0D-9FB42583BC36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16A527E1-8283-EF35-1F0D-9FB42583BC36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B134022-5B0F-A037-93AC-B5D9FBBBE503}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B134022-5B0F-A037-93AC-B5D9FBBBE503}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0F0BB6C-69C5-4B5E-539C-BED5CAD7572A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0F0BB6C-69C5-4B5E-539C-BED5CAD7572A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C54E54DE-0F83-9619-D73C-0E742B1D2D40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C54E54DE-0F83-9619-D73C-0E742B1D2D40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2B717C3-014D-4595-DD78-3634FDB1B15D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2B717C3-014D-4595-DD78-3634FDB1B15D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1634C6D0-EF3C-6C0C-9438-F12C15875E08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1634C6D0-EF3C-6C0C-9438-F12C15875E08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+EndGlobal

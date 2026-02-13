@@ -79,7 +79,8 @@ public static class ServiceCollectionExtensions
             new Clients.Jules.Mapping.ProgressActivityMapper(),
             new Clients.Jules.Mapping.CompletionActivityMapper(),
             new Clients.Jules.Mapping.FailureActivityMapper(),
-            new Clients.Jules.Mapping.MessageActivityMapper(),
+            new Clients.Jules.Mapping.UserMessageActivityMapper(),
+            new Clients.Jules.Mapping.AgentMessageActivityMapper(),
             new Clients.Jules.Mapping.UnknownActivityMapper()
         }));
 
