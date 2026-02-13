@@ -7,10 +7,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// <summary>
 /// Maps Jules API 'planApproved' activities into domain-centric ApprovalActivity objects.
 /// </summary>
-internal sealed class ApprovalActivityMapper : IJulesActivityMapper
+internal sealed class ApprovalActivityMapper : IJulesActivityMapper<JulesPlanApprovedPayloadDto>
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesPlanApprovedPayloadDto;
-    
     public SessionActivity Map(JulesActivityDto dto)
     {
         var payload = (JulesPlanApprovedPayloadDto)dto.Payload;

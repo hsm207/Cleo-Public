@@ -250,8 +250,9 @@ public class JulesDtoSerializationTests
 
         // Assert
         result.Should().NotBeNull();
-        // Should fallback to Progress/Message payload with "Unknown Event" title
-        var payload = result!.Payload.Should().BeOfType<JulesProgressUpdatedPayloadDto>().Subject;
-        payload.Title.Should().Be("Unknown Event");
+        // Should fallback to JulesUnknownPayloadDto
+        var payload = result!.Payload.Should().BeOfType<JulesUnknownPayloadDto>().Subject;
+        payload.RawType.Should().Be("Unknown");
+        payload.RawJson.Should().NotBeNullOrEmpty();
     }
 }

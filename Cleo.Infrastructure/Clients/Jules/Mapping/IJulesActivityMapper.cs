@@ -8,6 +8,13 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 public interface IJulesActivityMapper
 {
-    bool CanMap(JulesActivityDto dto);
     SessionActivity Map(JulesActivityDto dto);
+}
+
+/// <summary>
+/// Strongly-typed contract for mapping specific payload types.
+/// </summary>
+public interface IJulesActivityMapper<TPayload> : IJulesActivityMapper
+    where TPayload : JulesActivityPayloadDto
+{
 }

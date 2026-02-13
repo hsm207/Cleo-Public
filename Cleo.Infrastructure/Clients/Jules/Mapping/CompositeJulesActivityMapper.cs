@@ -10,26 +10,33 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// </summary>
 public sealed class CompositeJulesActivityMapper : IJulesActivityMapper
 {
-    private readonly IEnumerable<IJulesActivityMapper> _mappers;
+    private readonly Dictionary<Type, IJulesActivityMapper> _mapperMap;
 
+#pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public CompositeJulesActivityMapper(IEnumerable<IJulesActivityMapper> mappers)
     {
-        _mappers = mappers;
-    }
+        _mapperMap = new Dictionary<Type, IJulesActivityMapper>();
 
-    public bool CanMap(JulesActivityDto dto)
-    {
-        // The composite can theoretically map anything via fallback, so this is always true?
-        // Or should it delegate?
-        // Given it encapsulates fallback, it effectively claims it can map any activity.
-        return true;
+        foreach (var mapper in mappers)
+        {
+            // Inspect the interface to find the TPayload type(s)
+            var interfaceTypes = mapper.GetType().GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IJulesActivityMapper<>));
+
+            foreach (var interfaceType in interfaceTypes)
+            {
+                var payloadType = interfaceType.GetGenericArguments()[0];
+                _mapperMap[payloadType] = mapper;
+            }
+        }
     }
 
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public SessionActivity Map(JulesActivityDto dto)
     {
-        var mapper = _mappers.FirstOrDefault(m => m.CanMap(dto));
-        if (mapper != null)
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (_mapperMap.TryGetValue(dto.Payload.GetType(), out var mapper))
         {
             return mapper.Map(dto);
         }

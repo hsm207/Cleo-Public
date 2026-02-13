@@ -7,10 +7,8 @@ namespace Cleo.Infrastructure.Clients.Jules.Mapping;
 /// <summary>
 /// Maps Jules API 'sessionCompleted' activities into domain-centric CompletionActivity objects.
 /// </summary>
-internal sealed class CompletionActivityMapper : IJulesActivityMapper
+internal sealed class CompletionActivityMapper : IJulesActivityMapper<JulesSessionCompletedPayloadDto>
 {
-    public bool CanMap(JulesActivityDto dto) => dto.Payload is JulesSessionCompletedPayloadDto;
-    
     public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(
         dto.Metadata.Name,
         dto.Metadata.Id, 

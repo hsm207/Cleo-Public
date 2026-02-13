@@ -97,11 +97,11 @@ public class JulesMapperTests
         activity.Originator.Should().Be(ActivityOriginator.System);
     }
 
-    [Fact(DisplayName = "Given an unknown activity type, UnknownActivityMapper should map it to a generic MessageActivity.")]
+    [Fact(DisplayName = "Given an unknown activity type, UnknownActivityMapper should map it to a generic ProgressActivity.")]
     public void UnknownActivityMapper_ShouldMap_Safely()
     {
         // Arrange
-        var payload = new JulesProgressUpdatedPayloadDto("Weird", "Stuff");
+        var payload = new JulesUnknownPayloadDto("Weird", "{}");
         var metadata = new JulesActivityMetadataDto("act-unknown", "rem-unknown", "Strange event", TestTimeStr, "system", null);
         var dto = new JulesActivityDto(metadata, payload);
 
@@ -111,9 +111,9 @@ public class JulesMapperTests
         var result = mapper.Map(dto);
 
         // Assert
-        var activity = result.Should().BeOfType<MessageActivity>().Subject;
-        activity.Text.Should().Contain("Unknown activity type received");
-        activity.Text.Should().Contain("Strange event");
+        var activity = result.Should().BeOfType<ProgressActivity>().Subject;
+        activity.Intent.Should().Contain("Unknown Activity Type: Weird");
+        activity.Thought.Should().Contain("Raw JSON preserved");
     }
 
     [Fact(DisplayName = "Given a planApproved DTO, ApprovalActivityMapper should map it to an ApprovalActivity.")]
