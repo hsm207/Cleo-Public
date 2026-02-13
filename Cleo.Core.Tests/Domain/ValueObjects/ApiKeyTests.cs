@@ -5,43 +5,40 @@ namespace Cleo.Core.Tests.Domain.ValueObjects;
 
 public class ApiKeyTests
 {
-    [Fact(DisplayName = "An ApiKey should store its value correctly when valid.")]
-    public void ConstructorShouldSetValueWhenValid()
-    {
-        var keyValue = "AQ.RealApiKey";
-        var apiKey = new ApiKey(keyValue);
-        Assert.Equal(keyValue, apiKey.Value);
-    }
-
-    [Theory(DisplayName = "An ApiKey should throw an error if the key is empty or null.")]
+    [Theory(DisplayName = "ApiKey should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public void ConstructorShouldThrowWhenInvalid(string? invalidValue)
+    public void ShouldEnforceInvariants(string? invalidValue)
     {
+        // 1. Constructor Invariant
         Assert.Throws<ArgumentException>(() => new ApiKey(invalidValue!));
+        
+        // 2. Implicit Cast Invariant
+        ApiKey? nullKey = null;
+        Assert.Throws<ArgumentNullException>(() => (string)nullKey!);
     }
 
-    [Fact(DisplayName = "An ApiKey should support explicit conversion from string and implicit conversion to string.")]
-    public void ConversionShouldWork()
+    [Fact(DisplayName = "ApiKey should behave as a valid value object (Storage, Conversion, Equality).")]
+    public void ShouldBehaveAsValidValue()
     {
-        var originalValue = "super-secret-token";
-        var key = (ApiKey)originalValue;
-        string value = key;
-        Assert.Equal(originalValue, value);
-    }
-
-    [Fact(DisplayName = "An ApiKey should throw ArgumentNullException when implicitly converting a null ApiKey to string.")]
-    public void ImplicitStringConversionShouldThrowOnNull()
-    {
-        ApiKey? key = null;
-        Assert.Throws<ArgumentNullException>(() => (string)key!);
-    }
-
-    [Fact(DisplayName = "An ApiKey's ToString should return its internal value.")]
-    public void ToStringShouldReturnInternalValue()
-    {
-        var key = new ApiKey("test-key");
-        Assert.Equal("test-key", key.ToString());
+        var raw = "AQ.TestKey_123";
+        
+        // 1. Creation
+        var key = new ApiKey(raw);
+        
+        // 2. Equality (Structural)
+        Assert.Equal(raw, key.Value);
+        Assert.Equal(key, new ApiKey(raw)); // Value Equality
+        
+        // 3. Conversion (Explicit & Implicit)
+        var castedKey = (ApiKey)raw;
+        string backToString = key;
+        
+        Assert.Equal(key, castedKey);
+        Assert.Equal(raw, backToString);
+        
+        // 4. String Representation
+        Assert.Equal(raw, key.ToString());
     }
 }

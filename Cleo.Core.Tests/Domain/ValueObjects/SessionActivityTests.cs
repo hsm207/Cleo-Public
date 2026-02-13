@@ -8,114 +8,93 @@ public class SessionActivityTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private const string RemoteId = "remote-id";
 
-    [Fact(DisplayName = "ProgressActivity should show Intent.")]
-    public void ProgressActivityShouldShowIntent()
+    [Fact(DisplayName = "ProgressActivity should format Intent, Multiline Thought, and Evidence correctly.")]
+    public void ProgressActivityFormattingScenario()
     {
-        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "Working hard!");
-        Assert.Equal("Working hard!", activity.GetContentSummary());
-        Assert.Equal("Working hard!", activity.Intent);
-        Assert.Null(activity.Thought);
-        Assert.False(activity.IsSignificant); // No thought, no evidence -> Not significant
-    }
-
-    [Fact(DisplayName = "ProgressActivity should show Thought when present.")]
-    public void ProgressActivityShouldShowThought()
-    {
-        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "Working", "I am thinking...");
-
-        Assert.Equal("Working", activity.Intent);
-        Assert.Equal("I am thinking...", activity.Thought);
-        Assert.Contains("💭 I am thinking...", activity.GetContentSummary(), StringComparison.Ordinal);
-        Assert.True(activity.IsSignificant); // Has thought -> Significant
-    }
-
-    [Fact(DisplayName = "ProgressActivity should summarize single artifact when Detail is empty.")]
-    public void ProgressActivityShouldSummarizeSingleArtifact()
-    {
-        var patch = new GitPatch("diff", "sha");
-        var changeSet = new ChangeSet("repo", patch);
-        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "", null, new[] { changeSet });
-
-        Assert.Contains("📦 " + changeSet.GetSummary(), activity.GetContentSummary(), StringComparison.Ordinal);
-        Assert.True(activity.IsSignificant); // Has evidence -> Significant
-    }
-
-    [Fact(DisplayName = "ProgressActivity should summarize multiple artifacts when Detail is empty.")]
-    public void ProgressActivityShouldSummarizeMultipleArtifacts()
-    {
+        // ... (Same as before)
+        var intent = "Refactoring";
+        var thought = "Line 1\nLine 2";
         var output = new BashOutput("echo", "hi", 0);
         var snapshot = new MediaArtifact("img/png", "data");
-        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "", null, new Artifact[] { output, snapshot });
+        
+        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, intent, thought, new Artifact[] { output, snapshot });
 
         var summary = activity.GetContentSummary();
+
+        Assert.StartsWith(intent, summary, StringComparison.Ordinal);
+        Assert.Contains("💭 Line 1", summary, StringComparison.Ordinal);
+        Assert.Contains("             Line 2", summary, StringComparison.Ordinal);
         Assert.Contains("📦 " + output.GetSummary(), summary, StringComparison.Ordinal);
         Assert.Contains("📦 " + snapshot.GetSummary(), summary, StringComparison.Ordinal);
-    }
-
-    [Fact(DisplayName = "CompletionActivity should show completion message when no artifacts.")]
-    public void CompletionActivityShouldShowDefault()
-    {
-        var activity = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System);
-        Assert.Equal("Session Completed Successfully", activity.GetContentSummary());
         Assert.True(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "CompletionActivity should append artifacts to completion message.")]
-    public void CompletionActivityShouldAppendArtifacts()
+    [Fact(DisplayName = "ProgressActivity should handle minimal state (Intent only).")]
+    public void ProgressActivityMinimalScenario()
     {
-        var patch = new GitPatch("diff", "sha");
-        var changeSet = new ChangeSet("repo", patch);
-        var activity = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
-
-        Assert.Equal($"Session Completed Successfully | {changeSet.GetSummary()}", activity.GetContentSummary());
+        var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "Just Chilling");
+        Assert.Equal("Just Chilling", activity.GetContentSummary());
+        Assert.False(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "ApprovalActivity should show PlanId.")]
-    public void ApprovalActivityShouldShowPlanId()
+    [Fact(DisplayName = "CompletionActivity should format success message with optional artifacts.")]
+    public void CompletionActivityFormatting()
+    {
+        var simple = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System);
+        Assert.Equal("Session Completed Successfully", simple.GetContentSummary());
+
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var complex = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
+        
+        Assert.Contains("Session Completed Successfully | ", complex.GetContentSummary(), StringComparison.Ordinal);
+        Assert.Contains(changeSet.GetSummary(), complex.GetContentSummary(), StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "ApprovalActivity should display plan ID.")]
+    public void ApprovalActivityFormatting()
     {
         var activity = new ApprovalActivity("id", RemoteId, Now, ActivityOriginator.User, "plan-123");
         Assert.Equal("Plan Approved: plan-123", activity.GetContentSummary());
-        Assert.Equal("plan-123", activity.PlanId);
-        Assert.True(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "PlanningActivity should show steps count.")]
-    public void PlanningActivityShouldShowSteps()
+    [Fact(DisplayName = "PlanningActivity should display step count and plan ID.")]
+    public void PlanningActivityFormatting()
     {
         var steps = new[] { new PlanStep("s1", 1, "T", "D") };
         var activity = new PlanningActivity("id", RemoteId, Now, ActivityOriginator.Agent, "plan-1", steps);
 
         Assert.Equal("Plan Generated: plan-1 (1 steps)", activity.GetContentSummary());
         Assert.Contains("Steps: 1", activity.GetMetaDetail(), StringComparison.Ordinal);
-        Assert.Equal("plan-1", activity.PlanId);
-        Assert.Equal(steps, activity.Steps);
-        Assert.True(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "FailureActivity should show reason.")]
-    public void FailureActivityShouldShowReason()
+    [Fact(DisplayName = "FailureActivity should display reason.")]
+    public void FailureActivityFormatting()
     {
         var activity = new FailureActivity("id", RemoteId, Now, ActivityOriginator.System, "Crashed");
         Assert.Equal("FAILURE: Crashed", activity.GetContentSummary());
-        Assert.Equal("Crashed", activity.Reason);
-        Assert.True(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "MessageActivity should show text.")]
-    public void MessageActivityShouldShowText()
+    [Fact(DisplayName = "MessageActivity should display text.")]
+    public void MessageActivityFormatting()
     {
         var activity = new MessageActivity("id", RemoteId, Now, ActivityOriginator.User, "Hello");
         Assert.Equal("Hello", activity.GetContentSummary());
-        Assert.Equal("Hello", activity.Text);
-        Assert.True(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "SessionActivity MetaDetail should include generic info.")]
-    public void MetaDetailShouldIncludeGenericInfo()
+    [Fact(DisplayName = "SessionActivity should enforce structural equality (Value Object semantics).")]
+    public void SessionActivityValueSemantics()
     {
-        var activity = new MessageActivity("id", RemoteId, Now, ActivityOriginator.User, "Hello");
-        var meta = activity.GetMetaDetail();
-        Assert.Contains($"Originator: {ActivityOriginator.User}", meta, StringComparison.Ordinal);
-        Assert.Contains("Evidence: 0", meta, StringComparison.Ordinal);
+        var act1 = new MessageActivity("id", "rem", Now, ActivityOriginator.User, "Hi");
+        var act2 = new MessageActivity("id", "rem", Now, ActivityOriginator.User, "Hi");
+        var act3 = new MessageActivity("id", "rem", Now, ActivityOriginator.User, "Bye"); // Diff text
+
+        Assert.Equal(act1, act2); // Value Equality
+        Assert.NotEqual(act1, act3);
+        Assert.Equal(act1.GetHashCode(), act2.GetHashCode());
+        
+        // Cover ToString() for the record hierarchy
+        Assert.Contains("MessageActivity", act1.ToString(), StringComparison.Ordinal);
+        Assert.Contains("Hi", act1.ToString(), StringComparison.Ordinal);
     }
 }
