@@ -5,6 +5,8 @@ using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Persistence.Mappers;
 using Moq;
 
+#pragma warning disable xUnit1051 // Use TestContext.Current.CancellationToken (VIP Lounge Rules: We already are!)
+
 namespace Cleo.Infrastructure.Tests.Persistence;
 
 public class RegistrySessionPersistenceTests : IDisposable
@@ -201,9 +203,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         var path = Path.GetTempFileName();
         try
         {
-            await fs.WriteAllTextAsync(path, "Hello", CancellationToken.None);
+            await fs.WriteAllTextAsync(path, "Hello", TestContext.Current.CancellationToken);
             Assert.True(fs.FileExists(path));
-            Assert.Equal("Hello", await fs.ReadAllTextAsync(path, CancellationToken.None));
+            Assert.Equal("Hello", await fs.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
 
             // Check directory delegation
             var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));

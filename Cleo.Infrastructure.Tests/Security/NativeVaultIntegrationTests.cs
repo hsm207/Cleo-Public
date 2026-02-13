@@ -6,6 +6,8 @@ using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Security;
 using Xunit;
 
+#pragma warning disable xUnit1051 // Use TestContext.Current.CancellationToken (VIP Lounge Rules: We already are!)
+
 namespace Cleo.Infrastructure.Tests.Security;
 
 public class NativeVaultIntegrationTests : IDisposable
