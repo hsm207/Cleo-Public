@@ -8,6 +8,7 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Internal;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using Cleo.Infrastructure.Common;
 
 namespace Cleo.Infrastructure.Clients.Jules;
 
@@ -50,7 +51,7 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
                 {
                     foreach (var a in dto.Activities)
                     {
-                        var mapper = _mappers.FirstOrDefault(m => m.CanMap(a));
+                        var mapper = StrategySelector.Select(_mappers, a, (m, act) => m.CanMap(act));
                         if (mapper != null)
                         {
                             allActivities.Add(mapper.Map(a));
