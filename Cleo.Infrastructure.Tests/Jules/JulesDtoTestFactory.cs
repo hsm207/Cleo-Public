@@ -15,14 +15,14 @@ internal static class JulesDtoTestFactory
     {
         var metadata = new JulesActivityMetadataDto(id, name, description, createTime, originator, artifacts?.ToList());
         
-        JulesActivityPayloadDto payload = progressUpdated;
-        if (payload == null) payload = planGenerated;
-        if (payload == null) payload = planApproved;
-        if (payload == null) payload = userMessaged;
-        if (payload == null) payload = agentMessaged;
-        if (payload == null) payload = sessionCompleted;
-        if (payload == null) payload = sessionFailed;
-        if (payload == null) payload = new JulesProgressUpdatedPayloadDto("Default", "Fallback");
+        JulesActivityPayloadDto payload = (JulesActivityPayloadDto?)progressUpdated
+            ?? (JulesActivityPayloadDto?)planGenerated
+            ?? (JulesActivityPayloadDto?)planApproved
+            ?? (JulesActivityPayloadDto?)userMessaged
+            ?? (JulesActivityPayloadDto?)agentMessaged
+            ?? (JulesActivityPayloadDto?)sessionCompleted
+            ?? (JulesActivityPayloadDto?)sessionFailed
+            ?? new JulesProgressUpdatedPayloadDto("Default", "Fallback");
 
         return new JulesActivityDto(metadata, payload);
     }
