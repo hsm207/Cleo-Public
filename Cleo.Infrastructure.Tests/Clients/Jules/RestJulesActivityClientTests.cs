@@ -39,7 +39,10 @@ public class RestJulesActivityClientTests
             new UnknownActivityMapper()
         };
 
-        _client = new RestJulesActivityClient(httpClient, mappers);
+        // Wrap in Composite because the client is now LEAN 🏎️
+        var compositeMapper = new CompositeJulesActivityMapper(mappers);
+
+        _client = new RestJulesActivityClient(httpClient, compositeMapper);
     }
 
     [Fact(DisplayName = "GetActivitiesAsync should map various activity types and attach artifacts from the API.")]

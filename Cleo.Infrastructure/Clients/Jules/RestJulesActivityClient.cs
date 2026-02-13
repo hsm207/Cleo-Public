@@ -18,12 +18,12 @@ namespace Cleo.Infrastructure.Clients.Jules;
 public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArchivist
 {
     private readonly HttpClient _httpClient;
-    private readonly IEnumerable<IJulesActivityMapper> _mappers;
+    private readonly IJulesActivityMapper _mapper;
 
-    public RestJulesActivityClient(HttpClient httpClient, IEnumerable<IJulesActivityMapper> mappers)
+    public RestJulesActivityClient(HttpClient httpClient, IJulesActivityMapper mapper)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
@@ -51,20 +51,7 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
                 {
                     foreach (var a in dto.Activities)
                     {
-                        var mapper = StrategySelector.Select(_mappers, a, (m, act) => m.CanMap(act));
-                        if (mapper != null)
-                        {
-                            allActivities.Add(mapper.Map(a));
-                        }
-                        else
-                        {
-                            allActivities.Add(new MessageActivity(
-                                a.Metadata.Name,
-                                a.Metadata.Id,
-                                DateTimeOffset.Parse(a.Metadata.CreateTime, CultureInfo.InvariantCulture),
-                                ActivityOriginator.System,
-                                $"Unknown activity type '{a.Metadata.Name}' received."));
-                        }
+                        allActivities.Add(_mapper.Map(a));
                     }
                 }
 
