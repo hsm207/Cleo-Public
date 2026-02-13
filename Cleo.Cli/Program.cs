@@ -66,6 +66,10 @@ internal static class Program
         services.AddTransient<ApproveCommand>();
         services.AddTransient<ForgetCommand>();
 
+        // CLI Services 🛡️
+        services.AddSingleton<Cleo.Cli.Services.SessionStatusEvaluator>();
+        services.AddSingleton<Cleo.Cli.Presenters.IStatusPresenter, Cleo.Cli.Presenters.CliStatusPresenter>();
+
         // CLI Command Groups 🌳
         services.AddTransient<SessionCommand>();
         services.AddTransient<LogCommand>();

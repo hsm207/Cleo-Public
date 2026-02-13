@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
@@ -11,11 +12,19 @@ namespace Cleo.Cli.Commands;
 internal sealed class StatusCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
+    private readonly SessionStatusEvaluator _evaluator;
+    private readonly IStatusPresenter _presenter;
     private readonly ILogger<StatusCommand> _logger;
 
-    public StatusCommand(IRefreshPulseUseCase useCase, ILogger<StatusCommand> logger)
+    public StatusCommand(
+        IRefreshPulseUseCase useCase, 
+        SessionStatusEvaluator evaluator,
+        IStatusPresenter presenter,
+        ILogger<StatusCommand> logger)
     {
         _useCase = useCase;
+        _evaluator = evaluator;
+        _presenter = presenter;
         _logger = logger;
     }
 
@@ -44,7 +53,8 @@ internal sealed class StatusCommand
                 Console.WriteLine(response.Warning);
             }
 
-            Console.Write(StatusPresenter.Format(response));
+            var viewModel = _evaluator.Evaluate(response);
+            Console.Write(_presenter.Format(viewModel));
         }
         catch (Exception ex)
         {
