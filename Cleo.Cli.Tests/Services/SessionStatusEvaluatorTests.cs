@@ -9,13 +9,11 @@ namespace Cleo.Cli.Tests.Services;
 
 public class SessionStatusEvaluatorTests
 {
-    private readonly SessionStatusEvaluator _sut = new();
-
     [Fact(DisplayName = "Given Working State, Evaluator should return correct title and In Progress outcome")]
     public void ShouldEvaluateWorkingState()
     {
         var response = CreateResponse(SessionState.Working, null);
-        var vm = _sut.Evaluate(response);
+        var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Working");
         vm.PrOutcome.Should().Be("⏳ In Progress");
@@ -26,7 +24,7 @@ public class SessionStatusEvaluatorTests
     {
         var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
         var response = CreateResponse(SessionState.Idle, pr);
-        var vm = _sut.Evaluate(response);
+        var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Finished");
         vm.PrOutcome.Should().Be("✅ https://github.com/pr/1");
@@ -36,10 +34,51 @@ public class SessionStatusEvaluatorTests
     public void ShouldEvaluateAwaitingPlanApproval()
     {
         var response = CreateResponse(SessionState.AwaitingPlanApproval, null);
-        var vm = _sut.Evaluate(response);
+        var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Waiting for You");
         vm.PrOutcome.Should().Be("⏳ Awaiting Plan Approval");
+    }
+
+    [Fact(DisplayName = "Given Broken State, Evaluator should return Stalled outcome")]
+    public void ShouldEvaluateBrokenState()
+    {
+        var response = CreateResponse(SessionState.Broken, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Broken");
+        vm.PrOutcome.Should().Be("🛑 Stalled");
+    }
+
+    [Fact(DisplayName = "Given Interrupted State with PR, Evaluator should return Stalled outcome with URL")]
+    public void ShouldEvaluateInterruptedStateWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.Interrupted, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Interrupted");
+        vm.PrOutcome.Should().Be("🛑 Stalled | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given AwaitingFeedback with PR, Evaluator should return Awaiting response outcome")]
+    public void ShouldEvaluateAwaitingFeedbackWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.AwaitingFeedback, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("⏳ Awaiting your response... | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Planning with PR, Evaluator should return Iterating outcome")]
+    public void ShouldEvaluatePlanningWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.Planning, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("🔄 Iterating | https://github.com/pr/1");
     }
 
     private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr)
