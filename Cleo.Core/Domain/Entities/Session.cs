@@ -173,7 +173,7 @@ public class Session : AggregateRoot
         SessionStatus.Completed => SessionState.Idle,
         SessionStatus.Abandoned => SessionState.Idle,
         SessionStatus.Failed => SessionState.Broken,
-        // StateUnspecified or unknown values map to Unknown 🛡️
-        _ => SessionState.Unknown
+        // StateUnspecified or unknown values map to WTF 🚨
+        _ => SessionState.WTF
     };
 }
