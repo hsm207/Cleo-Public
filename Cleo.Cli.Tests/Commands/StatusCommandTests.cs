@@ -1,4 +1,7 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Models;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using FluentAssertions;
@@ -14,7 +17,6 @@ public class StatusCommandTests : IDisposable
 {
     private readonly Mock<IRefreshPulseUseCase> _useCaseMock;
     private readonly Mock<IStatusPresenter> _presenterMock;
-    private readonly SessionStatusEvaluator _evaluator;
     private readonly Mock<ILogger<StatusCommand>> _loggerMock;
     private readonly StatusCommand _command;
     private readonly StringWriter _stringWriter;
@@ -24,9 +26,8 @@ public class StatusCommandTests : IDisposable
     {
         _useCaseMock = new Mock<IRefreshPulseUseCase>();
         _presenterMock = new Mock<IStatusPresenter>();
-        _evaluator = new SessionStatusEvaluator();
         _loggerMock = new Mock<ILogger<StatusCommand>>();
-        _command = new StatusCommand(_useCaseMock.Object, _evaluator, _presenterMock.Object, _loggerMock.Object);
+        _command = new StatusCommand(_useCaseMock.Object, _presenterMock.Object, _loggerMock.Object);
 
         _stringWriter = new StringWriter();
         _originalOutput = Console.Out;
@@ -78,6 +79,9 @@ public class StatusCommandTests : IDisposable
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, SessionState.AwaitingFeedback, DeliveryStatus.Delivered, activity, pr));
+
+        _presenterMock.Setup(x => x.Format(It.IsAny<StatusViewModel>()))
+            .Returns("https://github.com/org/repo/pull/1");
 
         // Act
         await _command.Build().InvokeAsync($"status {sessionId}");

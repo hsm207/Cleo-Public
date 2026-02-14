@@ -12,18 +12,15 @@ namespace Cleo.Cli.Commands;
 internal sealed class StatusCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
-    private readonly SessionStatusEvaluator _evaluator;
     private readonly IStatusPresenter _presenter;
     private readonly ILogger<StatusCommand> _logger;
 
     public StatusCommand(
         IRefreshPulseUseCase useCase, 
-        SessionStatusEvaluator evaluator,
         IStatusPresenter presenter,
         ILogger<StatusCommand> logger)
     {
         _useCase = useCase;
-        _evaluator = evaluator;
         _presenter = presenter;
         _logger = logger;
     }
@@ -53,7 +50,7 @@ internal sealed class StatusCommand
                 Console.WriteLine(response.Warning);
             }
 
-            var viewModel = _evaluator.Evaluate(response);
+            var viewModel = SessionStatusEvaluator.Evaluate(response);
             Console.Write(_presenter.Format(viewModel));
         }
         catch (Exception ex)
