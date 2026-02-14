@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Cli.Models;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
@@ -14,10 +15,22 @@ internal sealed class SessionStatusEvaluator
     {
         ArgumentNullException.ThrowIfNull(response);
 
+        var lastActivity = response.LastActivity;
+
+        // Polymorphic extraction for the view model
+        var thoughts = lastActivity.GetThoughts().ToList();
+        var artifactSummaries = lastActivity.Evidence.Select(e => e.GetSummary()).ToList();
+
+        // Format timestamp for display
+        var time = lastActivity.Timestamp.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+
         return new StatusViewModel(
             FormatStateTitle(response.State),
             EvaluatePrOutcome(response.State, response.PullRequest),
-            response.LastActivity);
+            time,
+            lastActivity.GetContentSummary(),
+            thoughts.AsReadOnly(),
+            artifactSummaries.AsReadOnly());
     }
 
     private static string FormatStateTitle(SessionState state) => state switch
