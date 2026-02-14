@@ -10,7 +10,7 @@ namespace Cleo.Cli.Services;
 /// </summary>
 internal sealed class SessionStatusEvaluator
 {
-    public StatusViewModel Evaluate(RefreshPulseResponse response)
+    public static StatusViewModel Evaluate(RefreshPulseResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 

@@ -1,4 +1,5 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
 using Cleo.Core.UseCases.BrowseHistory;
 using Cleo.Core.UseCases.RefreshPulse;
 using Cleo.Core.UseCases.ListSessions;
@@ -26,7 +27,10 @@ public class RootCommandTests
     public RootCommandTests()
     {
         _logCommand = new LogCommand(new Mock<IBrowseHistoryUseCase>().Object, new Mock<ILogger<LogCommand>>().Object);
-        _statusCommand = new StatusCommand(new Mock<IRefreshPulseUseCase>().Object, new Mock<ILogger<StatusCommand>>().Object);
+        _statusCommand = new StatusCommand(
+            new Mock<IRefreshPulseUseCase>().Object, 
+            new Mock<IStatusPresenter>().Object,
+            new Mock<ILogger<StatusCommand>>().Object);
         _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
         _forgetCommand = new ForgetCommand(new Mock<IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
         _authCommand = new AuthCommand(new Mock<IAuthenticateUserUseCase>().Object, new Mock<ICredentialStore>().Object, new Mock<ILogger<AuthCommand>>().Object);
