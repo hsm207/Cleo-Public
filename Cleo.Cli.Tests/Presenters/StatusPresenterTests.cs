@@ -1,7 +1,9 @@
 using Cleo.Cli.Models;
 using Cleo.Cli.Aesthetics;
 using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.RefreshPulse;
 using FluentAssertions;
 using Xunit;
 
@@ -77,5 +79,19 @@ public class StatusPresenterTests
     {
         Action act = () => _sut.Format(null!);
         act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact(DisplayName = "Given AwaitingFeedback, the title should be 'Waiting for You'.")]
+    public void ShouldMapWaitingTitle()
+    {
+        // Arrange
+        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Task");
+        var response = new RefreshPulseResponse(new SessionId("s1"), new SessionPulse(SessionStatus.AwaitingFeedback), SessionState.AwaitingFeedback, activity);
+        
+        // Act
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        // Assert
+        vm.StateTitle.Should().Be("Waiting for You");
     }
 }

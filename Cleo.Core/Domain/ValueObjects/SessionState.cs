@@ -7,7 +7,7 @@ namespace Cleo.Core.Domain.ValueObjects;
 #pragma warning disable CA1724 // Conflict with System.Web.SessionState
 public enum SessionState
 {
-    WTF,
+    Unknown,
     Queued,
     Planning,
     AwaitingPlanApproval,

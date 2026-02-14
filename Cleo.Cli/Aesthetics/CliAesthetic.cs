@@ -18,5 +18,5 @@ internal static class CliAesthetic
     public const string IteratingEmoji = "🔄";
     public const string StalledEmoji = "🛑";
     
-    public const string Indent = "          ";
+    public const string Indent = "                  "; // Exactly 18 spaces for label alignment 📏✨
 }
