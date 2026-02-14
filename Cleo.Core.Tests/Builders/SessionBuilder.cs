@@ -9,7 +9,7 @@ internal sealed class SessionBuilder
     private string _remoteId = "remote-123";
     private TaskDescription _task = new("Fix the universe");
     private SourceContext _source = new("org/repo", "main");
-    private SessionPulse _pulse = new(SessionStatus.StartingUp, "Starting...");
+    private SessionPulse _pulse = new(SessionStatus.StartingUp);
     private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private Uri? _dashboardUri = new("https://jules.com/sessions/test-123");
 
@@ -25,9 +25,9 @@ internal sealed class SessionBuilder
         return this;
     }
 
-    public SessionBuilder WithPulse(SessionStatus status, string detail = "")
+    public SessionBuilder WithPulse(SessionStatus status)
     {
-        _pulse = new SessionPulse(status, detail);
+        _pulse = new SessionPulse(status);
         return this;
     }
 
