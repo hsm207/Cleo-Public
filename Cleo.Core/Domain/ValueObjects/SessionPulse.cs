@@ -17,4 +17,4 @@ public enum SessionStatus
     Failed
 }
 
-public record SessionPulse(SessionStatus Status, string? Detail = null);
+public record SessionPulse(SessionStatus Status);

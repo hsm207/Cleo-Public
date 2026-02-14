@@ -12,9 +12,9 @@ public class JulesMapperTests
 {
     private readonly ISessionStatusMapper _statusMapper = new DefaultSessionStatusMapper();
 
-    [Theory(DisplayName = "JulesMapper should map session status and vibe correctly.")]
+    [Theory(DisplayName = "JulesMapper should map session status correctly.")]
     [MemberData(nameof(StatusScenarios))]
-    public void ShouldMapSessionStatusAndVibe(JulesSessionState inputState, SessionStatus expectedStatus, string expectedVibeSnippet)
+    public void ShouldMapSessionStatus(JulesSessionState inputState, SessionStatus expectedStatus)
     {
         var dto = new JulesSessionResponseDto(
             Name: "sessions/123",
@@ -34,21 +34,18 @@ public class JulesMapperTests
         var session = JulesMapper.Map(dto, (TaskDescription)"Task", _statusMapper);
 
         Assert.Equal(expectedStatus, session.Pulse.Status);
-        Assert.Contains(expectedVibeSnippet, session.Pulse.Detail);
     }
 
-    public static TheoryData<JulesSessionState, SessionStatus, string> StatusScenarios => new()
+    public static TheoryData<JulesSessionState, SessionStatus> StatusScenarios => new()
     {
-        { JulesSessionState.Queued, SessionStatus.StartingUp, "spinning up... 🚀" },
-        { JulesSessionState.StartingUp, SessionStatus.StartingUp, "spinning up... 🚀" },
-        { JulesSessionState.Planning, SessionStatus.Planning, "mapping out her thoughts... 🧠" },
-        { JulesSessionState.InProgress, SessionStatus.InProgress, "hard at work on your task! 🔨🔥" },
-        // If Paused maps to SessionStatus.Paused, default message is "Session is Paused" unless overridden.
-        // Let's assume standard behavior for now.
-        { JulesSessionState.Paused, SessionStatus.Paused, "Session is Paused" },
-        { JulesSessionState.AwaitingUserFeedback, SessionStatus.AwaitingFeedback, "needs your input to proceed. 🗣️" },
-        { JulesSessionState.AwaitingPlanApproval, SessionStatus.AwaitingPlanApproval, "review and approve the plan! 📝✨" },
-        { JulesSessionState.Completed, SessionStatus.Completed, "Current run finished. 🧘‍♀️💖" },
-        { JulesSessionState.Failed, SessionStatus.Failed, "Something went wrong during execution. 🥀" }
+        { JulesSessionState.Queued, SessionStatus.StartingUp },
+        { JulesSessionState.StartingUp, SessionStatus.StartingUp },
+        { JulesSessionState.Planning, SessionStatus.Planning },
+        { JulesSessionState.InProgress, SessionStatus.InProgress },
+        { JulesSessionState.Paused, SessionStatus.Paused },
+        { JulesSessionState.AwaitingUserFeedback, SessionStatus.AwaitingFeedback },
+        { JulesSessionState.AwaitingPlanApproval, SessionStatus.AwaitingPlanApproval },
+        { JulesSessionState.Completed, SessionStatus.Completed },
+        { JulesSessionState.Failed, SessionStatus.Failed }
     };
 }

@@ -41,7 +41,6 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
         Assert.Equal(SessionState.Working, result.State);
-        Assert.Equal(DeliveryStatus.Pending, result.DeliveryStatus);
         Assert.Null(result.PullRequest);
         Assert.False(result.IsCached);
         Assert.True(_sessionWriter.Saved);
@@ -57,7 +56,7 @@ public sealed class RefreshPulseUseCaseTests
         var sessionId = new SessionId("sessions/active-session");
         var cachedSession = new SessionBuilder()
             .WithId("sessions/active-session")
-            .WithPulse(SessionStatus.InProgress, "Cached Progress")
+            .WithPulse(SessionStatus.InProgress)
             .Build();
             
         _sessionReader.Sessions[sessionId] = cachedSession;
@@ -71,7 +70,6 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
-        Assert.Equal("Cached Progress", result.Pulse.Detail);
         Assert.True(result.IsCached);
         Assert.NotNull(result.Warning);
     }
@@ -140,7 +138,7 @@ public sealed class RefreshPulseUseCaseTests
         public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
-            return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
+            return Task.FromResult(new SessionPulse(SessionStatus.InProgress));
         }
 
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
@@ -149,7 +147,7 @@ public sealed class RefreshPulseUseCaseTests
             var session = new SessionBuilder()
                 .WithId(id.Value)
                 .WithTask((string)originalTask)
-                .WithPulse(SessionStatus.InProgress, "All good!")
+                .WithPulse(SessionStatus.InProgress)
                 .Build();
 
             RemoteSessionConfigurator?.Invoke(session);

@@ -8,7 +8,6 @@ public record RefreshPulseResponse(
     SessionId Id,
     SessionPulse Pulse,
     SessionState State,
-    DeliveryStatus DeliveryStatus,
     SessionActivity LastActivity,
     PullRequest? PullRequest = null,
     bool IsCached = false,

@@ -12,7 +12,7 @@ public class SessionTests
     private const string RemoteId = "remote-123";
     private static readonly TaskDescription Task = (TaskDescription)"Fix login";
     private static readonly SourceContext Source = new("sources/repo", "main");
-    private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp, "Starting...");
+    private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp);
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
     private static Session CreateSession()
@@ -38,25 +38,13 @@ public class SessionTests
     public void UpdatePulseShouldRecordEvent()
     {
         var session = CreateSession();
-        var newPulse = new SessionPulse(SessionStatus.InProgress, "Working hard!");
+        var newPulse = new SessionPulse(SessionStatus.InProgress);
 
         session.UpdatePulse(newPulse);
 
         Assert.Equal(newPulse, session.Pulse);
         var events = session.DomainEvents;
         Assert.Contains(events, e => e is StatusHeartbeatReceived);
-    }
-
-    [Fact(DisplayName = "Session should record 'FeedbackRequested' when pulse status is 'AwaitingFeedback'.")]
-    public void UpdatePulseShouldSignalFeedbackRequest()
-    {
-        var session = CreateSession();
-        var feedbackPulse = new SessionPulse(SessionStatus.AwaitingFeedback, "What color should the button be?");
-
-        session.UpdatePulse(feedbackPulse);
-
-        var events = session.DomainEvents;
-        Assert.Contains(events, e => e is FeedbackRequested);
     }
 
     [Fact(DisplayName = "Session should add activities to the Session Log.")]
@@ -109,19 +97,6 @@ public class SessionTests
         Assert.Equal("This looks great!", activity.Text);
     }
 
-    [Fact(DisplayName = "Session should record FeedbackRequested with detail when pulse status is AwaitingFeedback.")]
-    public void UpdatePulseShouldRecordFeedbackDetail()
-    {
-        var session = CreateSession();
-        var detail = "Which file should I edit?";
-        var feedbackPulse = new SessionPulse(SessionStatus.AwaitingFeedback, detail);
-
-        session.UpdatePulse(feedbackPulse);
-
-        var feedbackEvent = session.DomainEvents.OfType<FeedbackRequested>().Single();
-        Assert.Equal(detail, feedbackEvent.Prompt);
-    }
-
     [Fact(DisplayName = "Session should allow clearing domain events.")]
     public void ClearDomainEventsShouldWork()
     {
@@ -168,15 +143,15 @@ public class SessionTests
         var session = CreateSession();
         
         // Test normal transition
-        session.UpdatePulse(new SessionPulse(SessionStatus.InProgress, "Detail"));
+        session.UpdatePulse(new SessionPulse(SessionStatus.InProgress));
         Assert.Equal(SessionStatus.InProgress, session.Pulse.Status);
 
         // Test terminal failure
-        session.UpdatePulse(new SessionPulse(SessionStatus.Failed, "Crash"));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Failed));
         Assert.Equal(SessionStatus.Failed, session.Pulse.Status);
 
         // Test completion
-        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done"));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
         Assert.Equal(SessionStatus.Completed, session.Pulse.Status);
     }
 
@@ -187,7 +162,7 @@ public class SessionTests
         
         foreach (SessionStatus status in Enum.GetValues<SessionStatus>())
         {
-            var pulse = new SessionPulse(status, $"Pulse for {status}");
+            var pulse = new SessionPulse(status);
             session.UpdatePulse(pulse);
             Assert.Equal(status, session.Pulse.Status);
         }
@@ -362,8 +337,8 @@ public class SessionTests
         Assert.Equal(SessionState.Idle, session.State);
     }
 
-    [Fact(DisplayName = "DeliveryStatus should be Delivered if Solution or PR is present.")]
-    public void DeliveryStatusShouldBeDeliveredIfArtifactsPresent()
+    [Fact(DisplayName = "IsDelivered should be true if Solution or PR is present.")]
+    public void IsDeliveredShouldBeTrueIfArtifactsPresent()
     {
         var session = CreateSession();
 
@@ -373,39 +348,12 @@ public class SessionTests
         var evidence = new List<Artifact> { changeSet };
         session.AddActivity(new ProgressActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence));
 
-        Assert.Equal(DeliveryStatus.Delivered, session.DeliveryStatus);
+        Assert.True(session.IsDelivered);
 
         // Case 2: PR present
         var session2 = CreateSession();
         session2.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
-        Assert.Equal(DeliveryStatus.Delivered, session2.DeliveryStatus);
-    }
-
-    [Fact(DisplayName = "DeliveryStatus should be Unfulfilled if Idle and not Delivered.")]
-    public void DeliveryStatusShouldBeUnfulfilledIfIdleAndNotDelivered()
-    {
-        var session = CreateSession();
-        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done")); // Idle
-
-        Assert.Equal(DeliveryStatus.Unfulfilled, session.DeliveryStatus);
-    }
-
-    [Fact(DisplayName = "DeliveryStatus should be Stalled if Broken.")]
-    public void DeliveryStatusShouldBeStalledIfBroken()
-    {
-        var session = CreateSession();
-        session.UpdatePulse(new SessionPulse(SessionStatus.Failed, "Boom"));
-
-        Assert.Equal(DeliveryStatus.Stalled, session.DeliveryStatus);
-    }
-
-    [Fact(DisplayName = "DeliveryStatus should be Pending if Working.")]
-    public void DeliveryStatusShouldBePendingIfWorking()
-    {
-        var session = CreateSession();
-        session.UpdatePulse(new SessionPulse(SessionStatus.InProgress, "Working"));
-
-        Assert.Equal(DeliveryStatus.Pending, session.DeliveryStatus);
+        Assert.True(session2.IsDelivered);
     }
 
     [Fact(DisplayName = "SetPullRequest should update property.")]

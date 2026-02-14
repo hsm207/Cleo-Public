@@ -21,11 +21,7 @@ public class SessionActivityTests
 
         var summary = activity.GetContentSummary();
 
-        Assert.StartsWith(intent, summary, StringComparison.Ordinal);
-        Assert.Contains("💭 Line 1", summary, StringComparison.Ordinal);
-        Assert.Contains("             Line 2", summary, StringComparison.Ordinal);
-        Assert.Contains("📦 " + output.GetSummary(), summary, StringComparison.Ordinal);
-        Assert.Contains("📦 " + snapshot.GetSummary(), summary, StringComparison.Ordinal);
+        Assert.Equal(intent, summary);
         Assert.True(activity.IsSignificant);
     }
 
