@@ -26,10 +26,15 @@ public sealed class RefreshPulseUseCaseTests
     {
         // Arrange
         var sessionId = new SessionId("sessions/active-session");
+
+        // Ensure deterministic session state
         var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
 
-        var activity = new ProgressActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Remotely synchronized activity");
+        // Force the new activity to be explicitly newer than anything in the session
+        var newerTimestamp = session.LastActivity.Timestamp.AddHours(1);
+        var activity = new ProgressActivity("act-1", "remote-act-1", newerTimestamp, ActivityOriginator.Agent, "Remotely synchronized activity");
+
         _activityClient.Activities.Add(activity);
 
         var request = new RefreshPulseRequest(sessionId);
@@ -45,6 +50,36 @@ public sealed class RefreshPulseUseCaseTests
         Assert.False(result.IsCached);
         Assert.True(_sessionWriter.Saved);
         
+        // Response Fidelity: Ensure LastActivity matches the latest significant activity
+
+        // Debugging: If "act-1" is not returned, it means it's not being considered significant OR not the latest.
+        // We know it is significant (intent + thought).
+        // We know it is latest (timestamp + 1h).
+        // So why is it not returned?
+        // Ah, is it possible the UseCase modifies a COPY of the session?
+        // _sessionReader.RecallAsync returns a reference from the Fake dictionary.
+        // UseCase modifies it.
+        // Then returns result.
+
+        // Is it possible the initial activity has a weird timestamp?
+        // Or maybe Session.LastActivity is cached? (No, it's a property getter).
+
+        // Let's assert that the session log actually contains 2 items.
+        Assert.Equal(2, session.SessionLog.Count);
+
+        // Assert the timestamps
+        var initial = session.SessionLog.First(a => a.Id != "act-1");
+        var added = session.SessionLog.First(a => a.Id == "act-1");
+
+        // Debugging Assertions
+        Assert.True(added.Timestamp > initial.Timestamp, $"Added ({added.Timestamp}) should be later than Initial ({initial.Timestamp})");
+        Assert.True(added.IsSignificant, "Added activity must be significant");
+
+        // If sorting works, LastActivity should be "act-1"
+        Assert.Equal("act-1", session.LastActivity.Id);
+
+        Assert.Equal("act-1", result.LastActivity.Id);
+
         // Verify history synchronization 🔄📜
         Assert.Contains(session.SessionLog, a => a.Id == "act-1");
     }
@@ -72,6 +107,9 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
         Assert.True(result.IsCached);
         Assert.NotNull(result.Warning);
+
+        // Response Fidelity: Ensure LastActivity matches the local cached activity
+        Assert.Equal(cachedSession.LastActivity, result.LastActivity);
     }
 
     [Fact(DisplayName = "Given a Handle not in the Registry, when refreshing the Pulse, then it should synchronize and heal the Registry.")]
@@ -99,7 +137,10 @@ public sealed class RefreshPulseUseCaseTests
         _sessionReader.Sessions[sessionId] = session;
 
         var pr = new PullRequest(new Uri("https://github.com/pr/1"), "Title");
-        _pulseMonitor.RemoteSessionConfigurator = s => s.SetPullRequest(pr);
+
+        _pulseMonitor.RemoteSessionConfigurator = remoteSession => {
+            remoteSession.SetPullRequest(pr);
+        };
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -130,20 +171,17 @@ public sealed class RefreshPulseUseCaseTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, TestContext.Current.CancellationToken));
     }
 
+    // --- Fakes ---
+
     private sealed class FakePulseMonitor : IPulseMonitor
     {
         public bool ShouldThrow { get; set; }
         public Action<Session>? RemoteSessionConfigurator { get; set; }
 
-        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
-        {
-            if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
-            return Task.FromResult(new SessionPulse(SessionStatus.InProgress));
-        }
-
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
+
             var session = new SessionBuilder()
                 .WithId(id.Value)
                 .WithTask((string)originalTask)
@@ -153,6 +191,11 @@ public sealed class RefreshPulseUseCaseTests
             RemoteSessionConfigurator?.Invoke(session);
 
             return Task.FromResult(session);
+        }
+
+        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new SessionPulse(SessionStatus.InProgress));
         }
     }
 
