@@ -48,11 +48,11 @@ public class CheckinCommandTests : IDisposable
         // Arrange
         var sessionId = "test-session";
         var pulse = new SessionPulse(SessionStatus.InProgress);
-        var stance = SessionState.Working;
+        var state = SessionState.Working;
         var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, stance, activity));
+            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, state, activity));
 
         // Act
         var exitCode = await _command.Build().InvokeAsync($"checkin {sessionId}");
