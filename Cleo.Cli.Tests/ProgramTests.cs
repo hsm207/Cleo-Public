@@ -85,7 +85,7 @@ public class ProgramTests : IDisposable
         services.AddTransient<AuthCommand>();
         services.AddTransient<ListCommand>();
         services.AddTransient<NewCommand>();
-        services.AddTransient<StatusCommand>();
+        services.AddTransient<CheckinCommand>();
         services.AddTransient<ReposCommand>();
         services.AddTransient<TalkCommand>();
         services.AddTransient<ApproveCommand>();

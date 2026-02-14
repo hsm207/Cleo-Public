@@ -88,7 +88,6 @@ public class SessionStatusEvaluatorTests
             new SessionId("s1"),
             new SessionPulse(SessionStatus.InProgress),
             state,
-            DeliveryStatus.Pending,
             dummy,
             pr);
     }

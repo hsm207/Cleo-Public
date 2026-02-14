@@ -115,7 +115,6 @@ public class HighFidelityArchaeologyTests
         // Act & Assert
         session.Pulse.Status.Should().Be(SessionStatus.Completed); 
         session.State.Should().Be(SessionState.AwaitingPlanApproval); // Logical Override! 🧠🔥
-        session.DeliveryStatus.Should().Be(DeliveryStatus.Unfulfilled); // The Truth! 💎
     }
 
     [Fact(DisplayName = "Round-Trip: CompletionActivity preserves success signal 🏁")]
@@ -219,7 +218,6 @@ public class HighFidelityArchaeologyTests
 
         // Assert
         hydrated.Pulse.Status.Should().Be(SessionStatus.Completed);
-        hydrated.Pulse.Detail.Should().Be("Task successfully completed.");
         hydrated.State.Should().Be(SessionState.Idle);
     }
 }

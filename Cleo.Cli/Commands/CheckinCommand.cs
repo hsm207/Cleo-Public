@@ -9,16 +9,16 @@ using Microsoft.Extensions.Logging;
 namespace Cleo.Cli.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
-internal sealed class StatusCommand
+internal sealed class CheckinCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
     private readonly IStatusPresenter _presenter;
-    private readonly ILogger<StatusCommand> _logger;
+    private readonly ILogger<CheckinCommand> _logger;
 
-    public StatusCommand(
+    public CheckinCommand(
         IRefreshPulseUseCase useCase, 
         IStatusPresenter presenter,
-        ILogger<StatusCommand> logger)
+        ILogger<CheckinCommand> logger)
     {
         _useCase = useCase;
         _presenter = presenter;
@@ -27,7 +27,7 @@ internal sealed class StatusCommand
 
     public Command Build()
     {
-        var command = new Command("status", "Check the Pulse and SessionState of a session 💓");
+        var command = new Command("checkin", "Check in on the progress and state of a session 🧘‍♀️");
 
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
         command.AddArgument(sessionIdArgument);

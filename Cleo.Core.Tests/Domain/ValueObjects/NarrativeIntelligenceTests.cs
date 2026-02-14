@@ -17,10 +17,9 @@ public class NarrativeIntelligenceTests
         Assert.Equal("Thinking...", activity.Intent);
         Assert.Equal("I need to check the files.", activity.Thought);
 
-        // The summary might have line breaks and indentation, so we check for the thought text and the emoji existence.
+        // The summary should contain the intent.
         var summary = activity.GetContentSummary();
-        Assert.Contains("💭", summary, StringComparison.Ordinal);
-        Assert.Contains("I need to check the files.", summary, StringComparison.Ordinal);
+        Assert.Equal("Thinking...", summary);
     }
 
     [Fact(DisplayName = "ProgressActivity with Artifacts should be Significant (Outcome Signal).")]
@@ -30,7 +29,7 @@ public class NarrativeIntelligenceTests
         var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, "Done", null, evidence);
 
         Assert.True(activity.IsSignificant, "Activities with artifacts must be significant.");
-        Assert.Contains("📦", activity.GetContentSummary(), StringComparison.Ordinal);
+        Assert.Equal("Done", activity.GetContentSummary());
     }
 
     [Fact(DisplayName = "ProgressActivity with ONLY Title should be Insignificant (Trace Signal).")]

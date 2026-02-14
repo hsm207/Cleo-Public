@@ -106,29 +106,6 @@ public class Session : AggregateRoot
         }
     }
 
-    /// <summary>
-    /// Evaluates the business truth of the session's deliverables.
-    /// </summary>
-    public DeliveryStatus DeliveryStatus
-    {
-        get
-        {
-            if (IsDelivered) return DeliveryStatus.Delivered;
-            
-            // If physically idle but no PR, it is officially unfulfilled.
-            // This holds even if the State is logically overridden to AwaitingPlanApproval.
-            if (MapToState(Pulse.Status) == SessionState.Idle && !IsDelivered)
-            {
-                return DeliveryStatus.Unfulfilled;
-            }
-
-            var state = State;
-            if (state == SessionState.Broken || state == SessionState.Interrupted || state == SessionState.Paused) return DeliveryStatus.Stalled;
-
-            return DeliveryStatus.Pending;
-        }
-    }
-
     public bool IsDelivered => Solution != null || PullRequest != null;
 
     public void UpdatePulse(SessionPulse newPulse)
@@ -136,11 +113,6 @@ public class Session : AggregateRoot
         Pulse = newPulse;
 
         RecordDomainEvent(new StatusHeartbeatReceived(Id, newPulse));
-
-        if (newPulse.Status == SessionStatus.AwaitingFeedback)
-        {
-            RecordDomainEvent(new FeedbackRequested(Id, newPulse.Detail));
-        }
     }
 
     /// <summary>

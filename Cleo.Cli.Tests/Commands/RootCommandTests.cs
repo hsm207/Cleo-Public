@@ -18,7 +18,7 @@ namespace Cleo.Cli.Tests.Commands;
 public class RootCommandTests
 {
     private readonly LogCommand _logCommand;
-    private readonly StatusCommand _statusCommand;
+    private readonly CheckinCommand _statusCommand;
     private readonly ListCommand _listCommand;
     private readonly ForgetCommand _forgetCommand;
     private readonly AuthCommand _authCommand;
@@ -27,10 +27,10 @@ public class RootCommandTests
     public RootCommandTests()
     {
         _logCommand = new LogCommand(new Mock<IBrowseHistoryUseCase>().Object, new Mock<ILogger<LogCommand>>().Object);
-        _statusCommand = new StatusCommand(
+        _statusCommand = new CheckinCommand(
             new Mock<IRefreshPulseUseCase>().Object, 
             new Mock<IStatusPresenter>().Object,
-            new Mock<ILogger<StatusCommand>>().Object);
+            new Mock<ILogger<CheckinCommand>>().Object);
         _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
         _forgetCommand = new ForgetCommand(new Mock<IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
         _authCommand = new AuthCommand(new Mock<IAuthenticateUserUseCase>().Object, new Mock<ICredentialStore>().Object, new Mock<ILogger<AuthCommand>>().Object);
@@ -52,8 +52,8 @@ public class RootCommandTests
 
         // Assert
         log.Description.Should().Contain("audit trail");
-        status.Description.Should().Contain("Pulse");
-        status.Description.Should().Contain("SessionState");
+        status.Description.Should().Contain("progress");
+        status.Description.Should().Contain("state");
         list.Description.Should().Contain("Session Registry");
         forget.Description.Should().Contain("Session Registry");
         auth.Description.Should().Contain("Identity");

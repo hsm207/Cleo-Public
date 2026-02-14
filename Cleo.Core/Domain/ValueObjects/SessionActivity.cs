@@ -140,31 +140,7 @@ public record ProgressActivity(
     /// </summary>
     public string? Thought => Description;
 
-    private const string Indent = "          "; // Indent to match "- [HH:mm] "
-
-    public override string GetContentSummary()
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.Append(Intent);
-
-        if (!string.IsNullOrWhiteSpace(Thought))
-        {
-            sb.AppendLine();
-            sb.Append(Indent);
-            sb.Append("💭 ");
-            sb.Append(Thought.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
-        }
-
-        if (Evidence.Count > 0)
-        {
-            sb.AppendLine();
-            sb.Append(Indent);
-            sb.Append("📦 ");
-            sb.Append(string.Join($"\n{Indent}📦 ", Evidence.Select(e => e.GetSummary())));
-        }
-
-        return sb.ToString();
-    }
+    public override string GetContentSummary() => Intent;
 
     /// <summary>
     /// Determines if the activity is significant based on the Narrative Intelligence Policy.
