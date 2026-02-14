@@ -27,7 +27,17 @@ public class SessionStatusEvaluatorTests
         var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Finished");
-        vm.PrOutcome.Should().Be("✅ https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("✅ Delivered | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Idle State without PR, Evaluator should return Unfulfilled outcome")]
+    public void ShouldEvaluateIdleWithoutPr()
+    {
+        var response = CreateResponse(SessionState.Idle, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Finished");
+        vm.PrOutcome.Should().Be("⌛️ Unfulfilled (Finished with no PR)");
     }
 
     [Fact(DisplayName = "Given AwaitingPlanApproval, Evaluator should return Waiting for You")]

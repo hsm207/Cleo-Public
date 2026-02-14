@@ -13,7 +13,7 @@ This document ensures that our clean, developer-centric domain model correctly t
 | **TaskId** | `id` / `name` | Captured as `RemoteId` and `Id`. |
 | **Metadata** | `title`, `createTime`, `updateTime` | Captured as `Title`, `CreatedAt`, `UpdatedAt`. |
 | **Policy** | `requirePlanApproval`, `automationMode` | Captured as `RequiresPlanApproval` and `Mode`. |
-| **Stance** | `state` (enum) | Maps to physical state, with logical overrides. See [04](04_Collaborator_Stance_and_Delivery.md). |
+| **Session State** | `state` (enum) | Maps to physical state, with logical overrides. See [04](04_Session_State_and_Narrative.md). |
 | **Talk** | `sendMessage` / `activities` | `userMessaged` and `agentMessaged` activity types. |
 | **Artifacts** | `artifacts[]` | Individual units of data (Patches, Media, etc). |
 | **Outputs** | `outputs[]` | Final high-level deliverables (Pull Request). |
@@ -28,9 +28,9 @@ To assign a task, Cleo must:
 
 ### 2. The `Monitor` Operation
 Cleo polls `GET /v1alpha/{session}` and evaluates:
-1.  **Stance**: Derived from physical `state` + **Session Log** analysis.
-2.  **Delivery Status**: Derived from **Stance** + **Outputs**.
-> See [04: Collaborator Stance and Delivery](04_Collaborator_Stance_and_Delivery.md) for the evaluation logic.
+1.  **Session State**: Derived from physical `state` + **Session Log** analysis.
+2.  **Success**: Determined by the presence of a **Pull Request** in the `outputs`.
+> See [04: Session State and Narrative Intelligence](04_Session_State_and_Narrative.md) for the evaluation logic.
 
 ### 3. The `Talk` Operation
 1.  **Sending:** Call `POST /v1alpha/{session}:sendMessage`.

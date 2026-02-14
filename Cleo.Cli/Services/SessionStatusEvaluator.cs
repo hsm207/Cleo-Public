@@ -36,7 +36,7 @@ internal sealed class SessionStatusEvaluator
                 SessionState.Working or SessionState.Planning => "⏳ In Progress",
                 SessionState.AwaitingPlanApproval => "⏳ Awaiting Plan Approval",
                 SessionState.AwaitingFeedback => "⏳ Awaiting your response...",
-                SessionState.Idle => "WTF?! 🤪 (Finished with no PR)",
+                SessionState.Idle => "⌛️ Unfulfilled (Finished with no PR)",
                 SessionState.Broken or SessionState.Interrupted => "🛑 Stalled",
                 _ => "⏳ In Progress"
             };
@@ -47,7 +47,7 @@ internal sealed class SessionStatusEvaluator
             SessionState.Working or SessionState.Planning => $"🔄 Iterating | {pr.Url}",
             SessionState.AwaitingPlanApproval => $"⏳ Awaiting Plan Approval | {pr.Url}",
             SessionState.AwaitingFeedback => $"⏳ Awaiting your response... | {pr.Url}",
-            SessionState.Idle => $"✅ {pr.Url}",
+            SessionState.Idle => $"✅ Delivered | {pr.Url}",
             SessionState.Broken or SessionState.Interrupted => $"🛑 Stalled | {pr.Url}",
             _ => $"{pr.Url}"
         };
