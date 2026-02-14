@@ -33,7 +33,8 @@ public sealed class RefreshPulseUseCaseTests
 
         // Force the new activity to be explicitly newer than anything in the session
         var newerTimestamp = session.LastActivity.Timestamp.AddHours(1);
-        var activity = new ProgressActivity("act-1", "remote-act-1", newerTimestamp, ActivityOriginator.Agent, "Remotely synchronized activity");
+        // Important: Must provide a Description (Thought) to make it Significant!
+        var activity = new ProgressActivity("act-1", "remote-act-1", newerTimestamp, ActivityOriginator.Agent, "Intent", "Thinking about life...");
 
         _activityClient.Activities.Add(activity);
 
