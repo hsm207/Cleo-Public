@@ -73,6 +73,11 @@ internal sealed class LogCommand
             {
                 RenderSignificantActivities(response.History, limit ?? 10);
             }
+
+            if (response.PullRequest != null)
+            {
+                Console.WriteLine($"\n🎁 Pull Request: {response.PullRequest.Url}");
+            }
         }
         catch (Exception ex)
         {
