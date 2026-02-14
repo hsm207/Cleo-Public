@@ -199,4 +199,27 @@ public class HighFidelityArchaeologyTests
         hydrated.Should().NotBeNull();
         hydrated!.Task.Should().Be((TaskDescription)"Start Mission");
     }
+
+    [Fact(DisplayName = "Round-Trip: Session status is preserved in the registry 🏺💓")]
+    public void SessionStatus_IsPreserved_DuringRoundTrip()
+    {
+        // Arrange
+        var mapper = _serviceProvider.GetRequiredService<IRegistryTaskMapper>();
+        var original = new Session(
+            new SessionId("sessions/1"),
+            "remote-1",
+            (TaskDescription)"Mission",
+            new SourceContext("repo", "main"),
+            new SessionPulse(SessionStatus.Completed, "Task successfully completed."),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var dto = mapper.MapToDto(original);
+        var hydrated = mapper.MapToDomain(dto);
+
+        // Assert
+        hydrated.Pulse.Status.Should().Be(SessionStatus.Completed);
+        hydrated.Pulse.Detail.Should().Be("Task successfully completed.");
+        hydrated.State.Should().Be(SessionState.Idle);
+    }
 }

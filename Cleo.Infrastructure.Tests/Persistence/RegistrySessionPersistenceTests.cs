@@ -82,7 +82,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
-        Assert.Equal(SessionStatus.StartingUp, result.Pulse.Status); // Status is ephemeral! 💓💨
+        Assert.Equal(SessionStatus.Planning, result.Pulse.Status); 
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
         
         // Verify file actually exists and has content
@@ -106,7 +106,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(SessionStatus.StartingUp, result!.Pulse.Status); // Ephemeral!
+        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status); 
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 
