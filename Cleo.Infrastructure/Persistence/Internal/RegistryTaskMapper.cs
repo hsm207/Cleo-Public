@@ -18,6 +18,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         (string)session.Task,
         session.Source.Repository,
         session.Source.StartingBranch,
+        session.Pulse.Status,
         session.DashboardUri,
         session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
         session.PullRequest?.Url,
@@ -30,15 +31,14 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             .Select(_activityFactory.FromEnvelope)
             .ToList();
 
-        // Note: The registry is a simple store and might not have all the new metadata yet.
-        // We'll use defaults for now, but this highlights a potential gap in persistence if we want to store these fields.
-        // However, the registry seems to be local cache/history.
+        // Note: The registry is a simple store and might not have all the new metadata yet (e.g. AutomationMode).
+        // We persist the PulseStatus to satisfy the High-Fidelity List requirement (RFC 015).
         var session = new Session(
             new SessionId(dto.SessionId),
             dto.SessionId, // Fallback RemoteId to SessionId for legacy persisted sessions
             (TaskDescription)dto.TaskDescription,
             new SourceContext(dto.Repository, dto.Branch),
-            new SessionPulse(SessionStatus.StartingUp), // Status remains ephemeral
+            new SessionPulse(dto.PulseStatus), 
             DateTimeOffset.UtcNow, // Fallback for legacy persisted sessions
             null,
             null,
