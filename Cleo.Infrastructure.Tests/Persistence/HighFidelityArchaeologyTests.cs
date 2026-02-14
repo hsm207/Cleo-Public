@@ -210,7 +210,7 @@ public class HighFidelityArchaeologyTests
             "remote-1",
             (TaskDescription)"Mission",
             new SourceContext("repo", "main"),
-            new SessionPulse(SessionStatus.Completed),
+            new SessionPulse(SessionStatus.Completed, "Task successfully completed."),
             DateTimeOffset.UtcNow);
 
         // Act
@@ -218,8 +218,8 @@ public class HighFidelityArchaeologyTests
         var hydrated = mapper.MapToDomain(dto);
 
         // Assert
-        // This is expected to FAIL until we implement RFC 015!
         hydrated.Pulse.Status.Should().Be(SessionStatus.Completed);
+        hydrated.Pulse.Detail.Should().Be("Task successfully completed.");
         hydrated.State.Should().Be(SessionState.Idle);
     }
 }
