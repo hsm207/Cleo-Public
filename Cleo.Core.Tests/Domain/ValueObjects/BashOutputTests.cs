@@ -34,6 +34,6 @@ public class BashOutputTests
     public void ShouldProvideSummary()
     {
         var output = new BashOutput("npm install", "ok", 0);
-        Assert.Equal("🖥️ BashOutput: Executed 'npm install' (Exit Code: 0)", output.GetSummary());
+        Assert.Equal("BashOutput: Executed 'npm install' (Exit Code: 0)", output.GetSummary());
     }
 }

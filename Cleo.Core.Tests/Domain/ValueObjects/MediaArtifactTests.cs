@@ -26,9 +26,9 @@ public class MediaArtifactTests
     public void ShouldProvideSummary()
     {
         var imageMedia = new MediaArtifact("image/png", "data");
-        Assert.Equal("🖼️ Media: Produced 'image/png'", imageMedia.GetSummary());
+        Assert.Equal("Media: Produced 'image/png'", imageMedia.GetSummary());
 
         var genericMedia = new MediaArtifact("application/pdf", "data");
-        Assert.Equal("📎 Media: Produced 'application/pdf'", genericMedia.GetSummary());
+        Assert.Equal("Media: Produced 'application/pdf'", genericMedia.GetSummary());
     }
 }

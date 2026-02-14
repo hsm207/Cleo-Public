@@ -1,9 +1,6 @@
 using Cleo.Cli.Models;
 using Cleo.Cli.Aesthetics;
 using Cleo.Cli.Presenters;
-using Cleo.Cli.Services;
-using Cleo.Core.Domain.ValueObjects;
-using Cleo.Core.UseCases.RefreshPulse;
 using FluentAssertions;
 using Xunit;
 
@@ -17,8 +14,13 @@ public class StatusPresenterTests
     public void ShouldFormatCanonicalLines()
     {
         // Arrange
-        var activity = new MessageActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.User, "Hello");
-        var model = new StatusViewModel("Working", "⏳ In Progress", activity);
+        var model = new StatusViewModel(
+            "Working",
+            "⏳ In Progress",
+            "12:00",
+            "Hello",
+            Array.Empty<string>(),
+            Array.Empty<string>());
 
         // Act
         var output = _sut.Format(model);
@@ -26,16 +28,21 @@ public class StatusPresenterTests
         // Assert
         output.Should().Contain($"{CliAesthetic.SessionStateLabel}: [Working]");
         output.Should().Contain($"{CliAesthetic.PullRequestLabel}: ⏳ In Progress");
-        output.Should().Contain(CliAesthetic.LastActivityLabel);
-        output.Should().Contain("Hello");
+        output.Should().Contain($"{CliAesthetic.LastActivityLabel}: [12:00] Hello");
     }
 
-    [Fact(DisplayName = "Presenter should indent thoughts from ProgressActivity using polymorphic GetThoughts")]
+    [Fact(DisplayName = "Presenter should indent thoughts correctly")]
     public void ShouldIndentThoughts()
     {
         // Arrange
-        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Task", "Line 1\nLine 2");
-        var model = new StatusViewModel("Working", "⏳ In Progress", activity);
+        var thoughts = new[] { "Line 1", "Line 2" };
+        var model = new StatusViewModel(
+            "Working",
+            "⏳ In Progress",
+            "12:00",
+            "Task",
+            thoughts,
+            Array.Empty<string>());
 
         // Act
         var output = _sut.Format(model);
@@ -45,33 +52,24 @@ public class StatusPresenterTests
         output.Should().Contain($"\n{CliAesthetic.Indent}   Line 2");
     }
 
-    [Fact(DisplayName = "Presenter should format evidence (artifacts) from activity")]
+    [Fact(DisplayName = "Presenter should format evidence (artifacts) correctly")]
     public void ShouldFormatEvidence()
     {
         // Arrange
-        var evidence = new List<Artifact> { new BashOutput("ls", "out", 0) };
-        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Task", null, evidence);
-        var model = new StatusViewModel("Working", "⏳ In Progress", activity);
+        var artifacts = new[] { "BashOutput: Executed 'ls' (Exit Code: 0)" };
+        var model = new StatusViewModel(
+            "Working",
+            "⏳ In Progress",
+            "12:00",
+            "Task",
+            Array.Empty<string>(),
+            artifacts);
 
         // Act
         var output = _sut.Format(model);
 
         // Assert
-        output.Should().Contain($"{CliAesthetic.ArtifactBox} 🖥️ BashOutput: Executed 'ls' (Exit Code: 0)");
-    }
-
-    [Fact(DisplayName = "Presenter should format session assigned activity")]
-    public void ShouldFormatSessionAssigned()
-    {
-        // Arrange
-        var activity = new SessionAssignedActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.User, (TaskDescription)"Mission");
-        var model = new StatusViewModel("Queued", "⏳ In Progress", activity);
-
-        // Act
-        var output = _sut.Format(model);
-
-        // Assert
-        output.Should().Contain("Session Assigned: Mission");
+        output.Should().Contain($"{CliAesthetic.ArtifactBox} BashOutput: Executed 'ls' (Exit Code: 0)");
     }
 
     [Fact(DisplayName = "Presenter should throw ArgumentNullException if model is null")]
@@ -79,19 +77,5 @@ public class StatusPresenterTests
     {
         Action act = () => _sut.Format(null!);
         act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact(DisplayName = "Given AwaitingFeedback, the title should be 'Waiting for You'.")]
-    public void ShouldMapWaitingTitle()
-    {
-        // Arrange
-        var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Task");
-        var response = new RefreshPulseResponse(new SessionId("s1"), new SessionPulse(SessionStatus.AwaitingFeedback), SessionState.AwaitingFeedback, activity);
-        
-        // Act
-        var vm = SessionStatusEvaluator.Evaluate(response);
-
-        // Assert
-        vm.StateTitle.Should().Be("Waiting for You");
     }
 }

@@ -48,6 +48,11 @@ public abstract record SessionActivity(
     /// Returns the internal reasoning or thoughts associated with this activity, if any.
     /// </summary>
     public virtual IEnumerable<string> GetThoughts() => Enumerable.Empty<string>();
+
+    /// <summary>
+    /// Returns the visual symbol for this activity.
+    /// </summary>
+    public virtual string GetSymbol() => "🔹";
 }
 
 /// <summary>
@@ -63,6 +68,13 @@ public record MessageActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => Text;
+
+    public override string GetSymbol() => Originator switch
+    {
+        ActivityOriginator.User => "👤",
+        ActivityOriginator.Agent => "👸",
+        _ => "💬"
+    };
 }
 
 /// <summary>
@@ -79,6 +91,7 @@ public record SessionAssignedActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Session Assigned: {Task}";
+    public override string GetSymbol() => "🚀";
 }
 
 /// <summary>
@@ -96,6 +109,7 @@ public record PlanningActivity(
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
+    public override string GetSymbol() => "🗺️";
 }
 
 public record PlanStep(string Id, int Index, string Title, string Description);
@@ -113,6 +127,7 @@ public record ApprovalActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
+    public override string GetSymbol() => "✅";
 }
 
 /// <summary>
@@ -166,6 +181,8 @@ public record ProgressActivity(
         if (string.IsNullOrWhiteSpace(Thought)) return Enumerable.Empty<string>();
         return Thought.Split('\n', StringSplitOptions.RemoveEmptyEntries);
     }
+
+    public override string GetSymbol() => !string.IsNullOrWhiteSpace(Thought) ? "🧠" : "📡";
 }
 
 /// <summary>
@@ -180,6 +197,7 @@ public record CompletionActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => "Session Completed Successfully";
+    public override string GetSymbol() => "🏁";
 }
 
 /// <summary>
@@ -195,4 +213,5 @@ public record FailureActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
+    public override string GetSymbol() => "💥";
 }
