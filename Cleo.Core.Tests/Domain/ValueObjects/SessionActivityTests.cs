@@ -154,12 +154,13 @@ public class SessionActivityTests
         Assert.Equal("💥", act.GetSymbol());
     }
 
-    [Fact(DisplayName = "Minimal SessionActivity should gracefully degrade to Universal Signal.")]
+    [Fact(DisplayName = "Minimal SessionActivity should gracefully degrade to Universal Signal (and be significant by default).")]
     public void MinimalActivityShouldUseUniversalSignal()
     {
         // Graceful Degradation: Base implementation returns '🔹'
         var activity = new MinimalActivity();
         Assert.Equal("🔹", activity.GetSymbol());
+        Assert.True(activity.IsSignificant, "Base activity should be significant by default");
     }
 
     [Fact(DisplayName = "CompletionActivity should have empty thoughts (Silent Reflection).")]
@@ -175,6 +176,17 @@ public class SessionActivityTests
     {
         var activity = new ProgressActivity("id", "r", Now, ActivityOriginator.Agent, "Intent", null);
         Assert.Empty(activity.GetThoughts());
+    }
+
+    [Fact(DisplayName = "ProgressActivity should split multi-line thoughts.")]
+    public void ProgressActivityShouldSplitThoughts()
+    {
+        var activity = new ProgressActivity("id", "r", Now, ActivityOriginator.Agent, "Intent", "Line1\nLine2");
+        var thoughts = activity.GetThoughts().ToList();
+
+        Assert.Equal(2, thoughts.Count);
+        Assert.Equal("Line1", thoughts[0]);
+        Assert.Equal("Line2", thoughts[1]);
     }
 
     [Fact(DisplayName = "SessionActivity base class GetThoughts should be empty.")]
