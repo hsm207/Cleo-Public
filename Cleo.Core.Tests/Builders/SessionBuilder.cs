@@ -10,7 +10,7 @@ internal sealed class SessionBuilder
     private TaskDescription _task = new("Fix the universe");
     private SourceContext _source = new("org/repo", "main");
     private SessionPulse _pulse = new(SessionStatus.StartingUp);
-    private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
+    private DateTimeOffset _createdAt = DateTimeOffset.UtcNow.AddHours(-1);
     private Uri? _dashboardUri = new("https://jules.com/sessions/test-123");
 
     public SessionBuilder WithId(string id)
@@ -33,6 +33,9 @@ internal sealed class SessionBuilder
 
     public Session Build()
     {
+        // If we want total control, we should allow passing history.
+        // But for now, let's just make sure the initial activity (created inside Session ctor if history is null) uses _createdAt.
+        // And _createdAt is set to -1 hour by default.
         return new Session(_id, _remoteId, _task, _source, _pulse, _createdAt, dashboardUri: _dashboardUri);
     }
 }

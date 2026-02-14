@@ -8,6 +8,8 @@ public class SessionActivityTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private const string RemoteId = "remote-id";
 
+    // ... (Existing Tests) ...
+
     [Fact(DisplayName = "ProgressActivity should format Intent, Multiline Thought, and Evidence correctly.")]
     public void ProgressActivityFormattingScenario()
     {
@@ -150,5 +152,42 @@ public class SessionActivityTests
     {
         var act = new FailureActivity("1", "r1", Now, ActivityOriginator.System, "error");
         Assert.Equal("💥", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "Minimal SessionActivity should gracefully degrade to Universal Signal.")]
+    public void MinimalActivityShouldUseUniversalSignal()
+    {
+        // Graceful Degradation: Base implementation returns '🔹'
+        var activity = new MinimalActivity();
+        Assert.Equal("🔹", activity.GetSymbol());
+    }
+
+    [Fact(DisplayName = "CompletionActivity should have empty thoughts (Silent Reflection).")]
+    public void CompletionActivityShouldBeSilent()
+    {
+        // Silent Reflection: Activities without explicit thought support should return empty
+        var activity = new CompletionActivity("id", "r", Now, ActivityOriginator.System);
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    [Fact(DisplayName = "ProgressActivity should handle missing thought gracefully (Empty Thoughts).")]
+    public void ProgressActivityEmptyThoughts()
+    {
+        var activity = new ProgressActivity("id", "r", Now, ActivityOriginator.Agent, "Intent", null);
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    [Fact(DisplayName = "SessionActivity base class GetThoughts should be empty.")]
+    public void BaseActivityGetThoughtsShouldBeEmpty()
+    {
+        var activity = new MinimalActivity();
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    // A minimal concrete implementation for testing the base class behavior
+    private sealed record MinimalActivity() : SessionActivity(
+        "id", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, Array.Empty<Artifact>())
+    {
+        public override string GetContentSummary() => "Minimal";
     }
 }
