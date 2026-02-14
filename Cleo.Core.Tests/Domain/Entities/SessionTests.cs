@@ -466,6 +466,6 @@ public class SessionTests
         session.UpdatePulse(new SessionPulse((SessionStatus)999));
 
         // Assert
-        Assert.Equal(SessionState.Unknown, session.State);
+        Assert.Equal(SessionState.WTF, session.State);
     }
 }
