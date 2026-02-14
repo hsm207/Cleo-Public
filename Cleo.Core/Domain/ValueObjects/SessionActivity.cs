@@ -179,15 +179,7 @@ public record CompletionActivity(
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
-    public override string GetContentSummary()
-    {
-        var baseMsg = "Session Completed Successfully";
-        if (Evidence.Count > 0)
-        {
-            return $"{baseMsg} | {string.Join(" | ", Evidence.Select(e => e.GetSummary()))}";
-        }
-        return baseMsg;
-    }
+    public override string GetContentSummary() => "Session Completed Successfully";
 }
 
 /// <summary>

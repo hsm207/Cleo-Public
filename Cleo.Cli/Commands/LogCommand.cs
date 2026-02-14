@@ -148,27 +148,39 @@ internal sealed class LogCommand
     }
 
     /// <summary>
-    /// Renders a single activity using the UX Goddess Design (RFC 009).
+    /// Renders a single activity using the UX Goddess Design (RFC 009) 
+    /// and Human-Centric Alignment (RFC 013).
     /// </summary>
     private static void RenderActivity(SessionActivity activity)
     {
         var symbol = GetSymbol(activity);
+        var summary = activity.GetContentSummary();
+        
+        // Fallback for empty summaries in progress updates
+        if (string.IsNullOrWhiteSpace(summary) && activity is ProgressActivity)
+        {
+            summary = "Working...";
+        }
 
         // Header line: Symbol + Timestamp + Core Content
-        Console.WriteLine($"{symbol} [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+        Console.WriteLine($"{symbol} [{activity.Timestamp.ToLocalTime():HH:mm}] {summary}");
+
+        // RFC 013: Multi-line Activity Alignment Policy 📏✨
+        // "The 💭 Thought must be indented by exactly 10 spaces to align under the timestamp"
+        const string LogIndent = "          "; // 10 spaces
 
         // Polymorphic Thoughts 💭
         var thoughts = activity.GetThoughts().ToList();
         for (var i = 0; i < thoughts.Count; i++)
         {
-            var prefix = i == 0 ? $"  {Cleo.Cli.Aesthetics.CliAesthetic.ThoughtBubble} " : "     ";
+            var prefix = i == 0 ? $"{LogIndent}{Cleo.Cli.Aesthetics.CliAesthetic.ThoughtBubble} " : $"{LogIndent}   ";
             Console.WriteLine($"{prefix}{thoughts[i]}");
         }
 
         // Polymorphic Evidence 📦
         foreach (var artifact in activity.Evidence)
         {
-            Console.WriteLine($"  {Cleo.Cli.Aesthetics.CliAesthetic.ArtifactBox} {artifact.GetSummary()}");
+            Console.WriteLine($"{LogIndent}{Cleo.Cli.Aesthetics.CliAesthetic.ArtifactBox} {artifact.GetSummary()}");
         }
     }
 
@@ -181,7 +193,6 @@ internal sealed class LogCommand
         PlanningActivity => "🗺️", // Plan Generated
 
         ProgressActivity p when !string.IsNullOrWhiteSpace(p.Thought) => "🧠", // Agent Thought (Reasoning Signal)
-        ProgressActivity p when p.Evidence.Count > 0 => "📦", // Artifact Impact (Outcome Signal)
         ProgressActivity => "📡", // Pulse/Heartbeat (Trace Signal)
 
         ApprovalActivity => "✅", // Approval

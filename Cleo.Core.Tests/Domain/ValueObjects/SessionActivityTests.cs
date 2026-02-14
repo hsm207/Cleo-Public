@@ -33,7 +33,7 @@ public class SessionActivityTests
         Assert.False(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "CompletionActivity should format success message with optional artifacts.")]
+    [Fact(DisplayName = "CompletionActivity should format success message simply (Artifacts are rendered separately by CLI).")]
     public void CompletionActivityFormatting()
     {
         var simple = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System);
@@ -43,8 +43,8 @@ public class SessionActivityTests
         var changeSet = new ChangeSet("repo", patch);
         var complex = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
         
-        Assert.Contains("Session Completed Successfully | ", complex.GetContentSummary(), StringComparison.Ordinal);
-        Assert.Contains(changeSet.GetSummary(), complex.GetContentSummary(), StringComparison.Ordinal);
+        // RFC 013 Fix: We no longer include artifacts in the summary because they are rendered as separate lines.
+        Assert.Equal("Session Completed Successfully", complex.GetContentSummary());
     }
 
     [Fact(DisplayName = "ApprovalActivity should display plan ID.")]

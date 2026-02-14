@@ -37,7 +37,7 @@ public record ChangeSet : Artifact
             ? Patch.BaseCommitId[..7] 
             : Patch.BaseCommitId;
 
-        return $"ChangeSet [{shortSha}]: {fileSummary}";
+        return $"📦 ChangeSet [{shortSha}]: {fileSummary}";
     }
 
     private static string GetNarrativeFileSummary(IReadOnlyList<string> files)
