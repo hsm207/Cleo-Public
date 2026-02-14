@@ -27,7 +27,7 @@ public class SessionStatusEvaluatorTests
         var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Finished");
-        vm.PrOutcome.Should().Be("✅ Delivered | https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("✅ https://github.com/pr/1");
     }
 
     [Fact(DisplayName = "Given Idle State without PR, Evaluator should return Unfulfilled outcome")]
@@ -56,7 +56,7 @@ public class SessionStatusEvaluatorTests
         var response = CreateResponse(SessionState.Broken, null);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
-        vm.StateTitle.Should().Be("Broken");
+        vm.StateTitle.Should().Be("Stalled");
         vm.PrOutcome.Should().Be("🛑 Stalled");
     }
 
@@ -67,7 +67,7 @@ public class SessionStatusEvaluatorTests
         var response = CreateResponse(SessionState.Interrupted, pr);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
-        vm.StateTitle.Should().Be("Interrupted");
+        vm.StateTitle.Should().Be("Stalled");
         vm.PrOutcome.Should().Be("🛑 Stalled | https://github.com/pr/1");
     }
 

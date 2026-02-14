@@ -22,8 +22,10 @@ internal sealed class SessionStatusEvaluator
 
     private static string FormatStateTitle(SessionState state) => state switch
     {
-        SessionState.AwaitingPlanApproval => "Waiting for You",
+        SessionState.AwaitingPlanApproval or SessionState.AwaitingFeedback => "Waiting for You",
         SessionState.Idle => "Finished",
+        SessionState.Broken or SessionState.Interrupted => "Stalled",
+        SessionState.Working or SessionState.Planning => "Working",
         _ => state.ToString()
     };
 
@@ -47,7 +49,7 @@ internal sealed class SessionStatusEvaluator
             SessionState.Working or SessionState.Planning => $"🔄 Iterating | {pr.Url}",
             SessionState.AwaitingPlanApproval => $"⏳ Awaiting Plan Approval | {pr.Url}",
             SessionState.AwaitingFeedback => $"⏳ Awaiting your response... | {pr.Url}",
-            SessionState.Idle => $"✅ Delivered | {pr.Url}",
+            SessionState.Idle => $"✅ {pr.Url}",
             SessionState.Broken or SessionState.Interrupted => $"🛑 Stalled | {pr.Url}",
             _ => $"{pr.Url}"
         };

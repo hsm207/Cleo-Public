@@ -151,6 +151,20 @@ internal sealed class LogCommand
 
         // Header line: Symbol + Timestamp + Core Content
         Console.WriteLine($"{symbol} [{activity.Timestamp:t}] {activity.GetContentSummary()}");
+
+        // Polymorphic Thoughts 💭
+        var thoughts = activity.GetThoughts().ToList();
+        for (var i = 0; i < thoughts.Count; i++)
+        {
+            var prefix = i == 0 ? $"  {Cleo.Cli.Aesthetics.CliAesthetic.ThoughtBubble} " : "     ";
+            Console.WriteLine($"{prefix}{thoughts[i]}");
+        }
+
+        // Polymorphic Evidence 📦
+        foreach (var artifact in activity.Evidence)
+        {
+            Console.WriteLine($"  {Cleo.Cli.Aesthetics.CliAesthetic.ArtifactBox} {artifact.GetSummary()}");
+        }
     }
 
     private static string GetSymbol(SessionActivity activity) => activity switch
