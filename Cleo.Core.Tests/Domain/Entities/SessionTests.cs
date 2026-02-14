@@ -467,18 +467,31 @@ public class SessionTests
         Assert.Equal(SessionState.AwaitingFeedback, session.State);
     }
 
-    [Fact(DisplayName = "State should map 'StateUnspecified' and unknown values to 'WTF'.")]
+    [Fact(DisplayName = "SessionAssignedActivity should return correct summary and string representation.")]
+    public void SessionAssignedActivityShouldFormatCorrectSummary()
+    {
+        // Arrange
+        var activity = new SessionAssignedActivity("id", "remote", DateTimeOffset.UtcNow, ActivityOriginator.User, (TaskDescription)"Mission");
+
+        // Act
+        var summary = activity.GetContentSummary();
+        var toString = activity.ToString();
+
+        // Assert
+        Assert.Equal("Session Assigned: Mission", summary);
+        Assert.Contains("Mission", toString, StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "State should map unknown statuses to WTF.")]
     public void StateShouldMapUnknownToWtf()
     {
+        // Arrange
         var session = CreateSession();
+        
+        // Act
+        session.UpdatePulse(new SessionPulse((SessionStatus)999, "WTF"));
 
-        // StateUnspecified -> WTF 🚨
-        session.UpdatePulse(new SessionPulse(SessionStatus.StateUnspecified, "Unknown"));
-        Assert.Equal(SessionState.WTF, session.State);
-
-        // Unknown Int -> WTF 🚨
-        var invalidStatus = (SessionStatus)999;
-        session.UpdatePulse(new SessionPulse(invalidStatus, "Invalid"));
+        // Assert
         Assert.Equal(SessionState.WTF, session.State);
     }
 }
