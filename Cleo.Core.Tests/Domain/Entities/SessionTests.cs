@@ -145,14 +145,17 @@ public class SessionTests
         // Test normal transition
         session.UpdatePulse(new SessionPulse(SessionStatus.InProgress));
         Assert.Equal(SessionStatus.InProgress, session.Pulse.Status);
+        Assert.Equal(SessionState.Working, session.State);
 
         // Test terminal failure
         session.UpdatePulse(new SessionPulse(SessionStatus.Failed));
         Assert.Equal(SessionStatus.Failed, session.Pulse.Status);
+        Assert.Equal(SessionState.Broken, session.State);
 
         // Test completion
         session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
         Assert.Equal(SessionStatus.Completed, session.Pulse.Status);
+        Assert.Equal(SessionState.Idle, session.State);
     }
 
     [Fact(DisplayName = "Session should handle all possible status heartbeats.")]
@@ -231,14 +234,35 @@ public class SessionTests
         Assert.Single(session.SessionLog);
     }
 
+    [Fact(DisplayName = "Session should not seed initial activity if history is provided.")]
+    public void SessionShouldNotSeedIfHistoryProvided()
+    {
+        // Arrange
+        var history = new List<SessionActivity> { 
+            new MessageActivity("a1", "r1", Now, ActivityOriginator.User, "Existing") 
+        };
+
+        // Act
+        var session = new Session(Id, RemoteId, Task, Source, InitialPulse, Now, history: history);
+
+        // Assert
+        Assert.Single(session.SessionLog);
+        Assert.IsType<MessageActivity>(session.SessionLog.First());
+        Assert.Equal("Existing", ((MessageActivity)session.SessionLog.First()).Text);
+    }
+
     [Fact(DisplayName = "Session should validate primitive arguments.")]
     public void MethodsShouldValidateArgs()
     {
         var session = CreateSession();
         
-        // Validation for primitives (strings) remains.
+        // Validation for feedback
         Assert.Throws<ArgumentNullException>(() => session.AddFeedback(null!, "id"));
         Assert.Throws<ArgumentException>(() => session.AddFeedback(" ", "id"));
+
+        // Validation for activityId
+        Assert.Throws<ArgumentNullException>(() => session.AddFeedback("msg", null!));
+        Assert.Throws<ArgumentException>(() => session.AddFeedback("msg", " "));
     }
 
     [Fact(DisplayName = "Domain Events should expose all properties correctly.")]
@@ -266,8 +290,10 @@ public class SessionTests
     [Fact(DisplayName = "Session should validate primitive constructor arguments.")]
     public void ConstructorShouldValidateArgs()
     {
-        // Validation for primitives (strings) remains.
+        // Null check
         Assert.Throws<ArgumentNullException>(() => new Session(Id, null!, Task, Source, InitialPulse, Now));
+        // Whitespace check
+        Assert.Throws<ArgumentException>(() => new Session(Id, "  ", Task, Source, InitialPulse, Now));
     }
 
     [Fact(DisplayName = "GetSignificantHistory should exclude non-significant activities.")]
@@ -317,7 +343,7 @@ public class SessionTests
         session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
 
         // 2. Pulse is Idle (Completed)
-        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done"));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
 
         // 3. No PR set
 
@@ -330,7 +356,7 @@ public class SessionTests
     {
         var session = CreateSession();
         session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
-        session.UpdatePulse(new SessionPulse(SessionStatus.Completed, "Done"));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
         session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
 
         // Should be Idle because PR is delivered
@@ -396,22 +422,22 @@ public class SessionTests
         var session = CreateSession();
 
         // Verify key mappings
-        session.UpdatePulse(new SessionPulse(SessionStatus.StartingUp, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.StartingUp));
         Assert.Equal(SessionState.Queued, session.State);
 
-        session.UpdatePulse(new SessionPulse(SessionStatus.Planning, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Planning));
         Assert.Equal(SessionState.Planning, session.State);
 
-        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingPlanApproval, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingPlanApproval));
         Assert.Equal(SessionState.AwaitingPlanApproval, session.State);
 
-        session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Abandoned));
         Assert.Equal(SessionState.Idle, session.State);
 
-        session.UpdatePulse(new SessionPulse(SessionStatus.Paused, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.Paused));
         Assert.Equal(SessionState.Paused, session.State);
 
-        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingFeedback, ""));
+        session.UpdatePulse(new SessionPulse(SessionStatus.AwaitingFeedback));
         Assert.Equal(SessionState.AwaitingFeedback, session.State);
     }
 
@@ -437,7 +463,7 @@ public class SessionTests
         var session = CreateSession();
         
         // Act
-        session.UpdatePulse(new SessionPulse((SessionStatus)999, "WTF"));
+        session.UpdatePulse(new SessionPulse((SessionStatus)999));
 
         // Assert
         Assert.Equal(SessionState.WTF, session.State);

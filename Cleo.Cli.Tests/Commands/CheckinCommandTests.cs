@@ -47,7 +47,7 @@ public class CheckinCommandTests : IDisposable
     {
         // Arrange
         var sessionId = "test-session";
-        var pulse = new SessionPulse(SessionStatus.InProgress, "Thinking deeply...");
+        var pulse = new SessionPulse(SessionStatus.InProgress);
         var stance = SessionState.Working;
         var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 

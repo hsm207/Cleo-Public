@@ -107,7 +107,7 @@ public class HighFidelityArchaeologyTests
         var source = new SourceContext("repo", "main");
         
         // A session that is physically IDLE (Completed) but has a Plan and NO PR
-        var pulse = new SessionPulse(SessionStatus.Completed, "Done (technical)");
+        var pulse = new SessionPulse(SessionStatus.Completed);
         var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
         
         session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-1", new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
@@ -209,7 +209,7 @@ public class HighFidelityArchaeologyTests
             "remote-1",
             (TaskDescription)"Mission",
             new SourceContext("repo", "main"),
-            new SessionPulse(SessionStatus.Completed, "Task successfully completed."),
+            new SessionPulse(SessionStatus.Completed),
             DateTimeOffset.UtcNow);
 
         // Act

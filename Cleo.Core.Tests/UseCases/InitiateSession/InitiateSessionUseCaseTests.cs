@@ -107,7 +107,7 @@ public class InitiateSessionUseCaseTests
                 "remote-fake-123",
                 task,
                 source,
-                new SessionPulse(SessionStatus.StartingUp, "Fake Start"),
+                new SessionPulse(SessionStatus.StartingUp),
                 DateTimeOffset.UtcNow,
                 dashboardUri: new Uri("https://fake.jules.com/123")
             );
