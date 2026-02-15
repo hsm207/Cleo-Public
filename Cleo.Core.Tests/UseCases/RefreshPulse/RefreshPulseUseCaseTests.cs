@@ -110,17 +110,9 @@ public sealed class RefreshPulseUseCaseTests
         var realRemoteTask = (TaskDescription)"Real Remote Task";
 
         // Simulating that the session is missing locally (not in _sessionReader)
-
-        // Strategy: Use a custom behavior overriding the default GetRemoteSessionAsync flow
-        _pulseMonitor.GetRemoteSessionOverride = (id, original) =>
-        {
-            // Ignore original (which is "Unknown Task") and return Real Task
-            return Task.FromResult(new SessionBuilder()
-                .WithId(id.Value)
-                .WithTask((string)realRemoteTask)
-                .WithPulse(SessionStatus.InProgress)
-                .Build());
-        };
+        // And configuring the Remote Monitor to return the session with the Real Task.
+        // We use 'ForcedRemoteTask' property to avoid over-engineering the Fake with delegates.
+        _pulseMonitor.ForcedRemoteTask = realRemoteTask;
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -186,17 +178,18 @@ public sealed class RefreshPulseUseCaseTests
     {
         public bool ShouldThrow { get; set; }
         public Action<Session>? RemoteSessionConfigurator { get; set; }
-        // New Delegate for BDD scenarios requiring total control
-        public Func<SessionId, TaskDescription, Task<Session>>? GetRemoteSessionOverride { get; set; }
+        public TaskDescription? ForcedRemoteTask { get; set; }
 
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
-            if (GetRemoteSessionOverride != null) return GetRemoteSessionOverride(id, originalTask);
+
+            // If ForcedRemoteTask is set, it overrides the 'originalTask' hint (simulating remote truth divergence)
+            var effectiveTask = ForcedRemoteTask ?? originalTask;
 
             var session = new SessionBuilder()
                 .WithId(id.Value)
-                .WithTask((string)originalTask)
+                .WithTask((string)effectiveTask)
                 .WithPulse(SessionStatus.InProgress)
                 .Build();
 

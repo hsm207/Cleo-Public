@@ -19,15 +19,11 @@ internal static class JulesMapper
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
         // High-Fidelity Mapping: Use 'Prompt' as the authoritative TaskDescription.
-        // We fallback to "Unknown" only if empty, but we never rely on a passed-in placeholder.
-        var taskDescription = string.IsNullOrWhiteSpace(dto.Prompt)
-            ? (TaskDescription)"Unknown Task"
-            : (TaskDescription)dto.Prompt;
-
+        // We strictly trust the NRT contract. If Prompt is null/empty, the Value Object constructor will throw (Fail Fast).
         var session = new Session(
             new SessionId(dto.Name),
             dto.Id,
-            taskDescription,
+            (TaskDescription)dto.Prompt,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
             pulse,
             ParseDateTime(dto.CreateTime),
