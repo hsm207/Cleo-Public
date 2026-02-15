@@ -8,6 +8,8 @@ public class SessionActivityTests
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private const string RemoteId = "remote-id";
 
+    // ... (Existing Tests) ...
+
     [Fact(DisplayName = "ProgressActivity should format Intent, Multiline Thought, and Evidence correctly.")]
     public void ProgressActivityFormattingScenario()
     {
@@ -21,11 +23,7 @@ public class SessionActivityTests
 
         var summary = activity.GetContentSummary();
 
-        Assert.StartsWith(intent, summary, StringComparison.Ordinal);
-        Assert.Contains("💭 Line 1", summary, StringComparison.Ordinal);
-        Assert.Contains("             Line 2", summary, StringComparison.Ordinal);
-        Assert.Contains("📦 " + output.GetSummary(), summary, StringComparison.Ordinal);
-        Assert.Contains("📦 " + snapshot.GetSummary(), summary, StringComparison.Ordinal);
+        Assert.Equal(intent, summary);
         Assert.True(activity.IsSignificant);
     }
 
@@ -37,7 +35,7 @@ public class SessionActivityTests
         Assert.False(activity.IsSignificant);
     }
 
-    [Fact(DisplayName = "CompletionActivity should format success message with optional artifacts.")]
+    [Fact(DisplayName = "CompletionActivity should format success message simply (Artifacts are rendered separately by CLI).")]
     public void CompletionActivityFormatting()
     {
         var simple = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System);
@@ -47,8 +45,8 @@ public class SessionActivityTests
         var changeSet = new ChangeSet("repo", patch);
         var complex = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
         
-        Assert.Contains("Session Completed Successfully | ", complex.GetContentSummary(), StringComparison.Ordinal);
-        Assert.Contains(changeSet.GetSummary(), complex.GetContentSummary(), StringComparison.Ordinal);
+        // RFC 013 Fix: We no longer include artifacts in the summary because they are rendered as separate lines.
+        Assert.Equal("Session Completed Successfully", complex.GetContentSummary());
     }
 
     [Fact(DisplayName = "ApprovalActivity should display plan ID.")]
@@ -96,5 +94,112 @@ public class SessionActivityTests
         // Cover ToString() for the record hierarchy
         Assert.Contains("MessageActivity", act1.ToString(), StringComparison.Ordinal);
         Assert.Contains("Hi", act1.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "MessageActivity should return correct symbol based on Originator.")]
+    public void MessageActivityShouldReturnCorrectSymbol()
+    {
+        var userMsg = new MessageActivity("1", "r1", Now, ActivityOriginator.User, "hi");
+        Assert.Equal("👤", userMsg.GetSymbol());
+
+        var agentMsg = new MessageActivity("2", "r2", Now, ActivityOriginator.Agent, "hello");
+        Assert.Equal("👸", agentMsg.GetSymbol());
+
+        var sysMsg = new MessageActivity("3", "r3", Now, ActivityOriginator.System, "alert");
+        Assert.Equal("💬", sysMsg.GetSymbol());
+    }
+
+    [Fact(DisplayName = "SessionAssignedActivity should return 🚀.")]
+    public void SessionAssignedActivityShouldReturnRocket()
+    {
+        var act = new SessionAssignedActivity("1", "r1", Now, ActivityOriginator.User, (TaskDescription)"task");
+        Assert.Equal("🚀", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "PlanningActivity should return 🗺️.")]
+    public void PlanningActivityShouldReturnMap()
+    {
+        var act = new PlanningActivity("1", "r1", Now, ActivityOriginator.Agent, "plan", Array.Empty<PlanStep>());
+        Assert.Equal("🗺️", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "ApprovalActivity should return ✅.")]
+    public void ApprovalActivityShouldReturnCheck()
+    {
+        var act = new ApprovalActivity("1", "r1", Now, ActivityOriginator.User, "plan");
+        Assert.Equal("✅", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "ProgressActivity should return 🧠 if Thought is present, else 📡.")]
+    public void ProgressActivityShouldReturnCorrectSymbol()
+    {
+        var trace = new ProgressActivity("1", "r1", Now, ActivityOriginator.Agent, "working");
+        Assert.Equal("📡", trace.GetSymbol());
+
+        var thought = new ProgressActivity("2", "r2", Now, ActivityOriginator.Agent, "working", "thinking...");
+        Assert.Equal("🧠", thought.GetSymbol());
+    }
+
+    [Fact(DisplayName = "CompletionActivity should return 🏁.")]
+    public void CompletionActivityShouldReturnFlag()
+    {
+        var act = new CompletionActivity("1", "r1", Now, ActivityOriginator.System);
+        Assert.Equal("🏁", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "FailureActivity should return 💥.")]
+    public void FailureActivityShouldReturnBoom()
+    {
+        var act = new FailureActivity("1", "r1", Now, ActivityOriginator.System, "error");
+        Assert.Equal("💥", act.GetSymbol());
+    }
+
+    [Fact(DisplayName = "Minimal SessionActivity should gracefully degrade to Universal Signal (and be significant by default).")]
+    public void MinimalActivityShouldUseUniversalSignal()
+    {
+        // Graceful Degradation: Base implementation returns '🔹'
+        var activity = new MinimalActivity();
+        Assert.Equal("🔹", activity.GetSymbol());
+        Assert.True(activity.IsSignificant, "Base activity should be significant by default");
+    }
+
+    [Fact(DisplayName = "CompletionActivity should have empty thoughts (Silent Reflection).")]
+    public void CompletionActivityShouldBeSilent()
+    {
+        // Silent Reflection: Activities without explicit thought support should return empty
+        var activity = new CompletionActivity("id", "r", Now, ActivityOriginator.System);
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    [Fact(DisplayName = "ProgressActivity should handle missing thought gracefully (Empty Thoughts).")]
+    public void ProgressActivityEmptyThoughts()
+    {
+        var activity = new ProgressActivity("id", "r", Now, ActivityOriginator.Agent, "Intent", null);
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    [Fact(DisplayName = "ProgressActivity should split multi-line thoughts.")]
+    public void ProgressActivityShouldSplitThoughts()
+    {
+        var activity = new ProgressActivity("id", "r", Now, ActivityOriginator.Agent, "Intent", "Line1\nLine2");
+        var thoughts = activity.GetThoughts().ToList();
+
+        Assert.Equal(2, thoughts.Count);
+        Assert.Equal("Line1", thoughts[0]);
+        Assert.Equal("Line2", thoughts[1]);
+    }
+
+    [Fact(DisplayName = "SessionActivity base class GetThoughts should be empty.")]
+    public void BaseActivityGetThoughtsShouldBeEmpty()
+    {
+        var activity = new MinimalActivity();
+        Assert.Empty(activity.GetThoughts());
+    }
+
+    // A minimal concrete implementation for testing the base class behavior
+    private sealed record MinimalActivity() : SessionActivity(
+        "id", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, Array.Empty<Artifact>())
+    {
+        public override string GetContentSummary() => "Minimal";
     }
 }

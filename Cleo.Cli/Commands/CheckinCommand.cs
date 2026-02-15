@@ -1,5 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
@@ -7,20 +9,25 @@ using Microsoft.Extensions.Logging;
 namespace Cleo.Cli.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
-internal sealed class StatusCommand
+internal sealed class CheckinCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
-    private readonly ILogger<StatusCommand> _logger;
+    private readonly IStatusPresenter _presenter;
+    private readonly ILogger<CheckinCommand> _logger;
 
-    public StatusCommand(IRefreshPulseUseCase useCase, ILogger<StatusCommand> logger)
+    public CheckinCommand(
+        IRefreshPulseUseCase useCase, 
+        IStatusPresenter presenter,
+        ILogger<CheckinCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("status", "Check the Pulse and Stance of a session 💓");
+        var command = new Command("checkin", "Check in on the progress and state of a session 🧘‍♀️");
 
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
         command.AddArgument(sessionIdArgument);
@@ -43,15 +50,8 @@ internal sealed class StatusCommand
                 Console.WriteLine(response.Warning);
             }
 
-            Console.WriteLine($"🧘‍♀️ Stance: {response.Stance}");
-            Console.WriteLine($"🏆 Delivery: {response.DeliveryStatus}");
-
-            if (response.PullRequest != null)
-            {
-                Console.WriteLine($"🎁 Pull Request: {response.PullRequest.Url}");
-            }
-
-            Console.WriteLine($"📝 {response.Pulse.Detail}");
+            var viewModel = SessionStatusEvaluator.Evaluate(response);
+            Console.Write(_presenter.Format(viewModel));
         }
         catch (Exception ex)
         {

@@ -7,8 +7,8 @@ public record RefreshPulseRequest(SessionId Id);
 public record RefreshPulseResponse(
     SessionId Id,
     SessionPulse Pulse,
-    Stance Stance,
-    DeliveryStatus DeliveryStatus,
+    SessionState State,
+    SessionActivity LastActivity,
     PullRequest? PullRequest = null,
     bool IsCached = false,
     string? Warning = null

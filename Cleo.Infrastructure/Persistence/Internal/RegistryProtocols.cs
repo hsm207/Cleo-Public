@@ -51,6 +51,7 @@ public sealed record RegisteredSessionDto(
     string TaskDescription,
     string Repository,
     string Branch,
+    SessionStatus PulseStatus,
     Uri? DashboardUri,
     IReadOnlyCollection<ActivityEnvelopeDto> History,
     Uri? PullRequestUrl = null,

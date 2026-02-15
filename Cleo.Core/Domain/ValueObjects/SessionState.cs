@@ -1,9 +1,11 @@
 namespace Cleo.Core.Domain.ValueObjects;
 
 /// <summary>
-/// Represents the physical 'Pose' of the remote collaborator.
+/// The user-facing state of the session.
+/// Answers "What is the session's current posture?" 🧘‍♀️
 /// </summary>
-public enum Stance
+#pragma warning disable CA1724 // Conflict with System.Web.SessionState
+public enum SessionState
 {
     WTF,
     Queued,

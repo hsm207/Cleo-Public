@@ -89,12 +89,8 @@ public class RestPulseMonitorTests
         // Assert
         result.Id.Value.Should().Be("session-123");
         result.RemoteId.Should().Be("rem-1");
-        // JulesMapper currently ignores the DTO's prompt and uses the passed-in original task.
-        // This is arguably correct behavior for "GetRemoteSessionAsync" where we want to re-hydrate
-        // a known session with remote state, but preserve our local task description if it's the source of truth.
-        // However, if the remote has a different prompt, we might want to know.
-        // For now, let's align the test with the current implementation: it keeps the task passed in.
-        result.Task.Value.Should().Be("Fix bugs");
+        // High-Fidelity Update: We now expect the Remote Truth ("Original Prompt") to override the local fallback ("Fix bugs").
+        result.Task.Value.Should().Be("Original Prompt");
         result.Pulse.Status.Should().Be(SessionStatus.Completed);
     }
 

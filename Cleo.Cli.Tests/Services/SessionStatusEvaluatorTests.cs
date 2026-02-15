@@ -1,0 +1,104 @@
+using Cleo.Cli.Models;
+using Cleo.Cli.Services;
+using Cleo.Core.Domain.ValueObjects;
+using Cleo.Core.UseCases.RefreshPulse;
+using FluentAssertions;
+using Xunit;
+
+namespace Cleo.Cli.Tests.Services;
+
+public class SessionStatusEvaluatorTests
+{
+    [Fact(DisplayName = "Given Working State, Evaluator should return correct title and In Progress outcome")]
+    public void ShouldEvaluateWorkingState()
+    {
+        var response = CreateResponse(SessionState.Working, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Working");
+        vm.PrOutcome.Should().Be("⏳ In Progress");
+    }
+
+    [Fact(DisplayName = "Given Idle State with PR, Evaluator should return Finished and Success outcome")]
+    public void ShouldEvaluateIdleWithPr()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.Idle, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Finished");
+        vm.PrOutcome.Should().Be("✅ https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Idle State without PR, Evaluator should return WTF outcome")]
+    public void ShouldEvaluateIdleWithoutPr()
+    {
+        var response = CreateResponse(SessionState.Idle, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Finished");
+        vm.PrOutcome.Should().Be("WTF?! 🤪 (Finished with no PR)");
+    }
+
+    [Fact(DisplayName = "Given AwaitingPlanApproval, Evaluator should return Waiting for You")]
+    public void ShouldEvaluateAwaitingPlanApproval()
+    {
+        var response = CreateResponse(SessionState.AwaitingPlanApproval, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Waiting for You");
+        vm.PrOutcome.Should().Be("⏳ Awaiting Plan Approval");
+    }
+
+    [Fact(DisplayName = "Given Broken State, Evaluator should return Stalled outcome")]
+    public void ShouldEvaluateBrokenState()
+    {
+        var response = CreateResponse(SessionState.Broken, null);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Stalled");
+        vm.PrOutcome.Should().Be("🛑 Stalled");
+    }
+
+    [Fact(DisplayName = "Given Interrupted State with PR, Evaluator should return Stalled outcome with URL")]
+    public void ShouldEvaluateInterruptedStateWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.Interrupted, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("Stalled");
+        vm.PrOutcome.Should().Be("🛑 Stalled | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given AwaitingFeedback with PR, Evaluator should return Awaiting response outcome")]
+    public void ShouldEvaluateAwaitingFeedbackWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.AwaitingFeedback, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("⏳ Awaiting your response... | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Planning with PR, Evaluator should return Iterating outcome")]
+    public void ShouldEvaluatePlanningWithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var response = CreateResponse(SessionState.Planning, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("🔄 Iterating | https://github.com/pr/1");
+    }
+
+    private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr)
+    {
+        var dummy = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
+        return new RefreshPulseResponse(
+            new SessionId("s1"),
+            new SessionPulse(SessionStatus.InProgress),
+            state,
+            dummy,
+            pr);
+    }
+}

@@ -11,7 +11,7 @@ public class SessionPlanResolutionTests
     private const string RemoteId = "remote-123";
     private static readonly TaskDescription Task = (TaskDescription)"Resolution Test";
     private static readonly SourceContext Source = new("sources/repo", "main");
-    private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp, "Init");
+    private static readonly SessionPulse InitialPulse = new(SessionStatus.StartingUp);
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
     private static Session CreateSession()

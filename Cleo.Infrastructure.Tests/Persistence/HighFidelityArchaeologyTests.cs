@@ -29,6 +29,7 @@ public class HighFidelityArchaeologyTests
         services.AddSingleton<IActivityPersistenceMapper, ProgressActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, CompletionActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, FailureActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, SessionAssignedActivityMapper>();
         
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
         services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
@@ -97,8 +98,8 @@ public class HighFidelityArchaeologyTests
         envelope.Type.Should().Be("PLAN_GENERATED"); 
     }
 
-    [Fact(DisplayName = "Truth-Sensing: Logical Stance Override identifies blocked sessions 🧠⚖️")]
-    public void Session_EvaluatesStanceLogically_WhenIdleButBlockedOnPlan()
+    [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
+    public void Session_EvaluatesSessionStateLogically_WhenIdleButBlockedOnPlan()
     {
         // Arrange
         var sessionId = new SessionId("sessions/123");
@@ -106,15 +107,14 @@ public class HighFidelityArchaeologyTests
         var source = new SourceContext("repo", "main");
         
         // A session that is physically IDLE (Completed) but has a Plan and NO PR
-        var pulse = new SessionPulse(SessionStatus.Completed, "Done (technical)");
+        var pulse = new SessionPulse(SessionStatus.Completed);
         var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
         
         session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-1", new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
 
         // Act & Assert
         session.Pulse.Status.Should().Be(SessionStatus.Completed); 
-        session.EvaluatedStance.Should().Be(Stance.AwaitingPlanApproval); // Logical Override! 🧠🔥
-        session.DeliveryStatus.Should().Be(DeliveryStatus.Unfulfilled); // The Truth! 💎
+        session.State.Should().Be(SessionState.AwaitingPlanApproval); // Logical Override! 🧠🔥
     }
 
     [Fact(DisplayName = "Round-Trip: CompletionActivity preserves success signal 🏁")]
@@ -181,5 +181,43 @@ public class HighFidelityArchaeologyTests
         // Assert
         hydrated.Should().NotBeNull();
         hydrated!.PlanId.Should().Be("plan-123");
+    }
+
+    [Fact(DisplayName = "Round-Trip: SessionAssignedActivity preserves task 🏺")]
+    public void SessionAssignedActivity_PreservesTask_DuringRoundTrip()
+    {
+        // Arrange
+        var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        var original = new SessionAssignedActivity("init-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.System, (TaskDescription)"Start Mission");
+
+        // Act
+        var envelope = factory.ToEnvelope(original);
+        var hydrated = (SessionAssignedActivity)factory.FromEnvelope(envelope);
+
+        // Assert
+        hydrated.Should().NotBeNull();
+        hydrated!.Task.Should().Be((TaskDescription)"Start Mission");
+    }
+
+    [Fact(DisplayName = "Round-Trip: Session status is preserved in the registry 🏺💓")]
+    public void SessionStatus_IsPreserved_DuringRoundTrip()
+    {
+        // Arrange
+        var mapper = _serviceProvider.GetRequiredService<IRegistryTaskMapper>();
+        var original = new Session(
+            new SessionId("sessions/1"),
+            "remote-1",
+            (TaskDescription)"Mission",
+            new SourceContext("repo", "main"),
+            new SessionPulse(SessionStatus.Completed),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var dto = mapper.MapToDto(original);
+        var hydrated = mapper.MapToDomain(dto);
+
+        // Assert
+        hydrated.Pulse.Status.Should().Be(SessionStatus.Completed);
+        hydrated.State.Should().Be(SessionState.Idle);
     }
 }

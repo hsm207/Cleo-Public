@@ -35,7 +35,7 @@ public class ViewPlanUseCaseTests
             "remote-1",
             new TaskDescription("Task"),
             new SourceContext("owner/repo", "main"),
-            new SessionPulse(SessionStatus.StartingUp, "Just started"),
+            new SessionPulse(SessionStatus.StartingUp),
             DateTimeOffset.UtcNow
         );
         _sessionReader.Sessions[sessionId] = session;
@@ -56,7 +56,7 @@ public class ViewPlanUseCaseTests
             "remote-2",
             new TaskDescription("Task"),
             new SourceContext("owner/repo", "main"),
-            new SessionPulse(SessionStatus.Planning, "Planning"),
+            new SessionPulse(SessionStatus.Planning),
             now
         );
 
