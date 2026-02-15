@@ -53,7 +53,7 @@ public sealed class RestPulseMonitor : IPulseMonitor
             var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (dto == null) throw new InvalidOperationException("Failed to retrieve session.");
 
-            return JulesMapper.Map(dto, originalTask, _statusMapper);
+            return JulesMapper.Map(dto, _statusMapper);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)
         {
