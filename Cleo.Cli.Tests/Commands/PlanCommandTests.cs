@@ -64,8 +64,34 @@ public class PlanCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🗺️ Authoritative Plan: plan-123");
+        output.Should().Contain("🗺️ Approved Plan: plan-123");
         output.Should().Contain("1. Do thing");
+    }
+
+    [Fact(DisplayName = "Given a plan with descriptions, when running 'plan view', then it should display the descriptions with indentation.")]
+    public async Task View_WithDescription_DisplaysIndentedDescription()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        var description = "First line\nSecond line";
+        var steps = new List<PlanStepModel>
+        {
+            new(1, "Step Title", description)
+        };
+        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps);
+
+        _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        var exitCode = await _command.Build().InvokeAsync($"plan view {sessionId}");
+
+        // Assert
+        exitCode.Should().Be(0);
+        var output = _stringWriter.ToString();
+
+        output.Should().Contain("   First line");
+        output.Should().Contain("   Second line");
     }
 
     [Fact(DisplayName = "Given a session with no plan, when running 'plan view', then it should display a friendly message.")]
@@ -82,7 +108,7 @@ public class PlanCommandTests : IDisposable
         await _command.Build().InvokeAsync($"plan view {sessionId}");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("📭 No authoritative plan found");
+        _stringWriter.ToString().Should().Contain("📭 No approved plan found");
     }
 
     [Fact(DisplayName = "Given an error, when running 'plan view', then it should log and display error.")]

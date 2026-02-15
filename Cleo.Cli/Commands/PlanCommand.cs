@@ -9,6 +9,8 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class PlanCommand
 {
+    private static readonly string[] _newlines = ["\r\n", "\r", "\n"];
+
     private readonly ApproveCommand _approveCommand;
     private readonly IViewPlanUseCase _viewPlanUseCase;
     private readonly ILogger<PlanCommand> _logger;
@@ -55,15 +57,23 @@ internal sealed class PlanCommand
 
             if (!response.HasPlan)
             {
-                Console.WriteLine("📭 No authoritative plan found for this session.");
+                Console.WriteLine("📭 No approved plan found for this session.");
                 return;
             }
 
-            Console.WriteLine($"🗺️ Authoritative Plan: {response.PlanId}");
+            Console.WriteLine($"🗺️ Approved Plan: {response.PlanId}");
             Console.WriteLine($"🕒 Generated: {response.Timestamp:g}");
             foreach (var step in response.Steps)
             {
                 Console.WriteLine($"{step.Index}. {step.Title}");
+                if (!string.IsNullOrWhiteSpace(step.Description))
+                {
+                    var lines = step.Description.Split(_newlines, StringSplitOptions.None);
+                    foreach (var line in lines)
+                    {
+                        Console.WriteLine($"   {line}");
+                    }
+                }
             }
         }
         catch (Exception ex)
