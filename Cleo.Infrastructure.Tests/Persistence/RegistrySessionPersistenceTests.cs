@@ -40,7 +40,8 @@ public class RegistrySessionPersistenceTests : IDisposable
             new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
             new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory)
+            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.SessionAssignedActivityMapper(artifactMapperFactory)
         };
         _activityFactory = new ActivityMapperFactory(activityMappers);
 
@@ -81,7 +82,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
-        Assert.Equal(SessionStatus.StartingUp, result.Pulse.Status); // Status is ephemeral! 💓💨
+        Assert.Equal(SessionStatus.Planning, result.Pulse.Status); 
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
         
         // Verify file actually exists and has content
@@ -105,7 +106,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(SessionStatus.StartingUp, result!.Pulse.Status); // Ephemeral!
+        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status); 
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 

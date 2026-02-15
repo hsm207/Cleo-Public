@@ -23,7 +23,6 @@ public record MediaArtifact : Artifact
 
     public override string GetSummary()
     {
-        var symbol = MimeType.StartsWith("image/", StringComparison.Ordinal) ? "🖼️" : "📎";
-        return $"{symbol} Media: Produced '{MimeType}'";
+        return $"Media: Produced '{MimeType}'";
     }
 }

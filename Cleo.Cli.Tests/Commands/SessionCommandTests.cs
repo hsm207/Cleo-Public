@@ -1,4 +1,5 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases;
 using Cleo.Core.UseCases.InitiateSession;
@@ -33,7 +34,10 @@ public class SessionCommandTests
         var newCommand = new NewCommand(initiateUseCase, new Mock<ILogger<NewCommand>>().Object);
 
         var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
-        var statusCommand = new StatusCommand(new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object, new Mock<ILogger<StatusCommand>>().Object);
+        var statusCommand = new CheckinCommand(
+            new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object, 
+            new Mock<IStatusPresenter>().Object,
+            new Mock<ILogger<CheckinCommand>>().Object);
         var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
 
         _command = new SessionCommand(newCommand, listCommand, statusCommand, forgetCommand);
@@ -51,7 +55,7 @@ public class SessionCommandTests
 
         root.Subcommands.Should().Contain(c => c.Name == "new");
         root.Subcommands.Should().Contain(c => c.Name == "list");
-        root.Subcommands.Should().Contain(c => c.Name == "status");
+        root.Subcommands.Should().Contain(c => c.Name == "checkin");
         root.Subcommands.Should().Contain(c => c.Name == "forget");
     }
 }

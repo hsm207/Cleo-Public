@@ -43,6 +43,16 @@ public abstract record SessionActivity(
     /// Indicates whether this activity represents a major state transition or communication event.
     /// </summary>
     public virtual bool IsSignificant => true;
+
+    /// <summary>
+    /// Returns the internal reasoning or thoughts associated with this activity, if any.
+    /// </summary>
+    public virtual IEnumerable<string> GetThoughts() => Enumerable.Empty<string>();
+
+    /// <summary>
+    /// Returns the visual symbol for this activity.
+    /// </summary>
+    public virtual string GetSymbol() => "🔹";
 }
 
 /// <summary>
@@ -58,6 +68,30 @@ public record MessageActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => Text;
+
+    public override string GetSymbol() => Originator switch
+    {
+        ActivityOriginator.User => "👤",
+        ActivityOriginator.Agent => "👸",
+        _ => "💬"
+    };
+}
+
+/// <summary>
+/// The initial activity marking the assignment of a task to the session.
+/// Enforces the 'Zero-Hollow' invariant.
+/// </summary>
+public record SessionAssignedActivity(
+    string Id,
+    string RemoteId,
+    DateTimeOffset Timestamp,
+    ActivityOriginator Originator,
+    TaskDescription Task,
+    IReadOnlyCollection<Artifact>? Evidence = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+{
+    public override string GetContentSummary() => $"Session Assigned: {Task}";
+    public override string GetSymbol() => "🚀";
 }
 
 /// <summary>
@@ -75,6 +109,7 @@ public record PlanningActivity(
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
+    public override string GetSymbol() => "🗺️";
 }
 
 public record PlanStep(string Id, int Index, string Title, string Description);
@@ -92,6 +127,7 @@ public record ApprovalActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
+    public override string GetSymbol() => "✅";
 }
 
 /// <summary>
@@ -119,31 +155,7 @@ public record ProgressActivity(
     /// </summary>
     public string? Thought => Description;
 
-    private const string Indent = "          "; // Indent to match "- [HH:mm] "
-
-    public override string GetContentSummary()
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.Append(Intent);
-
-        if (!string.IsNullOrWhiteSpace(Thought))
-        {
-            sb.AppendLine();
-            sb.Append(Indent);
-            sb.Append("💭 ");
-            sb.Append(Thought.Replace("\n", $"\n{Indent}   ", StringComparison.Ordinal));
-        }
-
-        if (Evidence.Count > 0)
-        {
-            sb.AppendLine();
-            sb.Append(Indent);
-            sb.Append("📦 ");
-            sb.Append(string.Join($"\n{Indent}📦 ", Evidence.Select(e => e.GetSummary())));
-        }
-
-        return sb.ToString();
-    }
+    public override string GetContentSummary() => Intent;
 
     /// <summary>
     /// Determines if the activity is significant based on the Narrative Intelligence Policy.
@@ -163,6 +175,14 @@ public record ProgressActivity(
             return false;
         }
     }
+
+    public override IEnumerable<string> GetThoughts()
+    {
+        if (string.IsNullOrWhiteSpace(Thought)) return Enumerable.Empty<string>();
+        return Thought.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    public override string GetSymbol() => !string.IsNullOrWhiteSpace(Thought) ? "🧠" : "📡";
 }
 
 /// <summary>
@@ -176,15 +196,8 @@ public record CompletionActivity(
     IReadOnlyCollection<Artifact>? Evidence = null) 
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
-    public override string GetContentSummary()
-    {
-        var baseMsg = "Session Completed Successfully";
-        if (Evidence.Count > 0)
-        {
-            return $"{baseMsg} | {string.Join(" | ", Evidence.Select(e => e.GetSummary()))}";
-        }
-        return baseMsg;
-    }
+    public override string GetContentSummary() => "Session Completed Successfully";
+    public override string GetSymbol() => "🏁";
 }
 
 /// <summary>
@@ -200,4 +213,5 @@ public record FailureActivity(
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
+    public override string GetSymbol() => "💥";
 }

@@ -6,7 +6,8 @@ public record BrowseHistoryRequest(SessionId Id);
 
 public record BrowseHistoryResponse(
     SessionId Id,
-    IReadOnlyList<SessionActivity> History
+    IReadOnlyList<SessionActivity> History,
+    PullRequest? PullRequest = null
 );
 
 public interface IBrowseHistoryUseCase : IUseCase<BrowseHistoryRequest, BrowseHistoryResponse> { }

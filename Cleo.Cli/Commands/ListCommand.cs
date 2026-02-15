@@ -1,6 +1,9 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Services;
+using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ListSessions;
+using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
 
 namespace Cleo.Cli.Commands;
@@ -41,7 +44,16 @@ internal sealed class ListCommand
             Console.WriteLine("📋 Current Sessions:");
             foreach (var session in response.Sessions)
             {
-                Console.WriteLine($"- [{session.Id}] {session.Task} ({session.Pulse.Status})");
+                // Map the session to a RefreshPulseResponse so we can use the Evaluator
+                var statusResponse = new RefreshPulseResponse(
+                    session.Id,
+                    session.Pulse,
+                    session.State,
+                    session.LastActivity,
+                    session.PullRequest);
+
+                var vm = SessionStatusEvaluator.Evaluate(statusResponse);
+                Console.WriteLine($"- [{session.Id}] {session.Task} [{vm.StateTitle}]");
             }
         }
         catch (Exception ex)

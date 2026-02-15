@@ -12,11 +12,8 @@ The "Where." The repository and the **Starting Branch** where Jules should begin
 ### Session
 The "Eternal Dialogue." A remote environment where Jules executes a **Task**. It owns the **Session Log**, the **Task** description, and the resulting **Outputs**.
 
-### Stance
-The "Agent's Pose." The ephemeral, physical activity of the collaborator at this exact moment (e.g., Working, AwaitingFeedback, Idle). See [04: Collaborator Stance and Delivery](04_Collaborator_Stance_and_Delivery.md).
-
-### Delivery Status
-The "Business Truth." A domain-driven evaluation of whether the session has fulfilled its purpose by submitting a **Pull Request**. See [04: Collaborator Stance and Delivery](04_Collaborator_Stance_and_Delivery.md).
+### Session State
+The "Human Posture." The intuitive status of the collaboration (e.g., Working, Waiting for You, Finished). Replaces the technical 'Stance' terminology.
 
 ### Session Log
 The "History." A chronological, structured ledger of all **Activities** within a **Session**. It provides full observability into Jules's thoughts and actions and is persisted locally for deep review.

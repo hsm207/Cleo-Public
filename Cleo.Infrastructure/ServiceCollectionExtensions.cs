@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.ProgressActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.CompletionActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.FailureActivityMapper>();
+        services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.SessionAssignedActivityMapper>();
         
         // Messaging
         services.AddSingleton<IDispatcher, MediatRDispatcher>();

@@ -60,11 +60,14 @@ internal static class Program
         services.AddTransient<AuthCommand>();
         services.AddTransient<ListCommand>();
         services.AddTransient<NewCommand>();
-        services.AddTransient<StatusCommand>();
+        services.AddTransient<CheckinCommand>();
         services.AddTransient<ReposCommand>();
         services.AddTransient<TalkCommand>();
         services.AddTransient<ApproveCommand>();
         services.AddTransient<ForgetCommand>();
+
+        // CLI Services 🛡️
+        services.AddSingleton<Cleo.Cli.Presenters.IStatusPresenter, Cleo.Cli.Presenters.CliStatusPresenter>();
 
         // CLI Command Groups 🌳
         services.AddTransient<SessionCommand>();

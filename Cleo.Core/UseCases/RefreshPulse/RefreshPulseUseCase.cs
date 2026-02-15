@@ -57,6 +57,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             foreach (var activity in activities)
             {
                 // Simple synchronization: Add only if not already present
+                // NOTE: Use local ID check for robustness
                 if (session.SessionLog.All(a => a.Id != activity.Id))
                 {
                     session.AddActivity(activity);
@@ -66,11 +67,12 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
             
             return new RefreshPulseResponse(
-                request.Id, 
-                remoteSession.Pulse, 
-                session.EvaluatedStance, 
-                session.DeliveryStatus,
+                request.Id,
+                remoteSession.Pulse,
+                session.State,
+                session.LastActivity,
                 session.PullRequest);
+            
         }
         catch (RemoteCollaboratorUnavailableException)
         {
@@ -83,12 +85,12 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             return new RefreshPulseResponse(
                 request.Id,
                 session.Pulse,
-                session.EvaluatedStance,
-                session.DeliveryStatus,
+                session.State,
+                session.LastActivity,
                 session.PullRequest,
                 IsCached: true,
-                Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry."
-            );
+                Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry.");
+            
         }
     }
 }

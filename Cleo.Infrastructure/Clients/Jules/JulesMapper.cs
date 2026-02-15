@@ -13,15 +13,17 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    public static Session Map(JulesSessionResponseDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
+    public static Session Map(JulesSessionResponseDto dto, ISessionStatusMapper statusMapper)
     {
         var pulse = MapPulse(dto, statusMapper);
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
+        // High-Fidelity Mapping: Use 'Prompt' as the authoritative TaskDescription.
+        // We strictly trust the NRT contract. If Prompt is null/empty, the Value Object constructor will throw (Fail Fast).
         var session = new Session(
             new SessionId(dto.Name),
             dto.Id,
-            originalTask,
+            (TaskDescription)dto.Prompt,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
             pulse,
             ParseDateTime(dto.CreateTime),
@@ -62,21 +64,8 @@ internal static class JulesMapper
     public static SessionPulse MapPulse(JulesSessionResponseDto dto, ISessionStatusMapper statusMapper)
     {
         var status = statusMapper.Map(dto.State);
-        var detail = GetFriendlyStatusDetail(status, dto.State);
-        return new SessionPulse(status, detail);
+        return new SessionPulse(status);
     }
-
-    private static string GetFriendlyStatusDetail(SessionStatus status, JulesSessionState rawState) => status switch
-    {
-        SessionStatus.StartingUp => "The collaboration is spinning up... 🚀",
-        SessionStatus.Planning => "Jules is mapping out her thoughts... 🧠",
-        SessionStatus.AwaitingPlanApproval => "Waiting for you to review and approve the plan! 📝✨",
-        SessionStatus.AwaitingFeedback => "Jules needs your input to proceed. 🗣️",
-        SessionStatus.InProgress => "Jules is hard at work on your task! 🔨🔥",
-        SessionStatus.Completed => "Current run finished. 🧘‍♀️💖",
-        SessionStatus.Failed => "Something went wrong during execution. 🥀",
-        _ => $"Session is {rawState}"
-    };
 
     private static DateTimeOffset ParseDateTime(string? date)
     {

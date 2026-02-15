@@ -39,7 +39,7 @@ public class ChangeSetTests
 +++ b/README.md
 ";
         var changeSet = new ChangeSet("sources/github/hsm207/Cleo", new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c"));
-        Assert.Equal("📦 ChangeSet [852ae21]: Updated [file1.cs, README.md]", changeSet.GetSummary());
+        Assert.Equal("ChangeSet [852ae21]: Updated [file1.cs, README.md]", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should summarize impact magnitude when files exceed narrative threshold.")]
@@ -57,7 +57,7 @@ public class ChangeSetTests
 
         // Common path should be "src/Common"
         var summary = changeSet.GetSummary();
-        Assert.Equal("📦 ChangeSet [sha1234]: 6 src/Common/* modified", summary);
+        Assert.Equal("ChangeSet [sha1234]: 6 src/Common/* modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle no common path when summarizing impact magnitude.")]
@@ -79,7 +79,7 @@ public class ChangeSetTests
         // Next file "1.cs". Common prefix is empty string.
         // So commonPath is empty.
         // If empty, returns "files".
-        Assert.Equal("📦 ChangeSet [sha1234]: 6 files modified", summary);
+        Assert.Equal("ChangeSet [sha1234]: 6 files modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle empty file list.")]
@@ -88,7 +88,7 @@ public class ChangeSetTests
         var diff = ""; // Empty diff -> 0 files
         var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
 
-        Assert.Equal("📦 ChangeSet [sha1234]: Produced patch", changeSet.GetSummary());
+        Assert.Equal("ChangeSet [sha1234]: Produced patch", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should handle partial common path.")]
@@ -104,6 +104,6 @@ public class ChangeSetTests
 
         var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
 
-        Assert.Equal("📦 ChangeSet [sha1234]: 6 src/* modified", changeSet.GetSummary());
+        Assert.Equal("ChangeSet [sha1234]: 6 src/* modified", changeSet.GetSummary());
     }
 }

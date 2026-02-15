@@ -26,10 +26,16 @@ public sealed class RefreshPulseUseCaseTests
     {
         // Arrange
         var sessionId = new SessionId("sessions/active-session");
+
+        // Ensure deterministic session state
         var session = new SessionBuilder().WithId("sessions/active-session").Build();
         _sessionReader.Sessions[sessionId] = session;
 
-        var activity = new ProgressActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Remotely synchronized activity");
+        // Force the new activity to be explicitly newer than anything in the session
+        var newerTimestamp = session.LastActivity.Timestamp.AddHours(1);
+        // Important: Must provide a Description (Thought) to make it Significant!
+        var activity = new ProgressActivity("act-1", "remote-act-1", newerTimestamp, ActivityOriginator.Agent, "Intent", "Thinking about life...");
+
         _activityClient.Activities.Add(activity);
 
         var request = new RefreshPulseRequest(sessionId);
@@ -40,12 +46,14 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
-        Assert.Equal(Stance.Working, result.Stance);
-        Assert.Equal(DeliveryStatus.Pending, result.DeliveryStatus);
+        Assert.Equal(SessionState.Working, result.State);
         Assert.Null(result.PullRequest);
         Assert.False(result.IsCached);
         Assert.True(_sessionWriter.Saved);
         
+        // Response Fidelity: Ensure LastActivity matches the latest significant activity
+        Assert.Equal("act-1", result.LastActivity.Id);
+
         // Verify history synchronization 🔄📜
         Assert.Contains(session.SessionLog, a => a.Id == "act-1");
     }
@@ -57,7 +65,7 @@ public sealed class RefreshPulseUseCaseTests
         var sessionId = new SessionId("sessions/active-session");
         var cachedSession = new SessionBuilder()
             .WithId("sessions/active-session")
-            .WithPulse(SessionStatus.InProgress, "Cached Progress")
+            .WithPulse(SessionStatus.InProgress)
             .Build();
             
         _sessionReader.Sessions[sessionId] = cachedSession;
@@ -71,9 +79,11 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
-        Assert.Equal("Cached Progress", result.Pulse.Detail);
         Assert.True(result.IsCached);
         Assert.NotNull(result.Warning);
+
+        // Response Fidelity: Ensure LastActivity matches the local cached activity
+        Assert.Equal(cachedSession.LastActivity, result.LastActivity);
     }
 
     [Fact(DisplayName = "Given a Handle not in the Registry, when refreshing the Pulse, then it should synchronize and heal the Registry.")]
@@ -92,6 +102,33 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
     }
 
+    [Fact(DisplayName = "Given a session found on Remote but missing locally, when refreshing, it should synchronize the 'Task Description' from the Remote Truth.")]
+    public async Task ShouldSynchronizeTaskFromRemoteTruthForRecoveredSessions()
+    {
+        // Arrange
+        var sessionId = new SessionId("sessions/recovered-identity");
+        var realRemoteTask = (TaskDescription)"Real Remote Task";
+
+        // Simulating that the session is missing locally (not in _sessionReader)
+        // And configuring the Remote Monitor to return the session with the Real Task.
+        // We use 'ForcedRemoteTask' property to avoid over-engineering the Fake with delegates.
+        _pulseMonitor.ForcedRemoteTask = realRemoteTask;
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(_sessionWriter.Saved);
+
+        // Verify that the saved session has the Real Task, not the "Unknown Task" placeholder
+        var savedSession = _sessionWriter.LastSavedSession;
+        Assert.NotNull(savedSession);
+        Assert.Equal(realRemoteTask, savedSession.Task);
+        Assert.NotEqual("Unknown Task (Recovered)", (string)savedSession.Task);
+    }
+
     [Fact(DisplayName = "Given remote session has a PR, when refreshing, then it should sync the PR to local session.")]
     public async Task ShouldSyncPullRequestWhenPresentOnRemote()
     {
@@ -101,7 +138,10 @@ public sealed class RefreshPulseUseCaseTests
         _sessionReader.Sessions[sessionId] = session;
 
         var pr = new PullRequest(new Uri("https://github.com/pr/1"), "Title");
-        _pulseMonitor.RemoteSessionConfigurator = s => s.SetPullRequest(pr);
+
+        _pulseMonitor.RemoteSessionConfigurator = remoteSession => {
+            remoteSession.SetPullRequest(pr);
+        };
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -132,29 +172,35 @@ public sealed class RefreshPulseUseCaseTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, TestContext.Current.CancellationToken));
     }
 
+    // --- Fakes ---
+
     private sealed class FakePulseMonitor : IPulseMonitor
     {
         public bool ShouldThrow { get; set; }
         public Action<Session>? RemoteSessionConfigurator { get; set; }
-
-        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
-        {
-            if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
-            return Task.FromResult(new SessionPulse(SessionStatus.InProgress, "All good!"));
-        }
+        public TaskDescription? ForcedRemoteTask { get; set; }
 
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
+
+            // If ForcedRemoteTask is set, it overrides the 'originalTask' hint (simulating remote truth divergence)
+            var effectiveTask = ForcedRemoteTask ?? originalTask;
+
             var session = new SessionBuilder()
                 .WithId(id.Value)
-                .WithTask((string)originalTask)
-                .WithPulse(SessionStatus.InProgress, "All good!")
+                .WithTask((string)effectiveTask)
+                .WithPulse(SessionStatus.InProgress)
                 .Build();
 
             RemoteSessionConfigurator?.Invoke(session);
 
             return Task.FromResult(session);
+        }
+
+        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new SessionPulse(SessionStatus.InProgress));
         }
     }
 
@@ -183,9 +229,12 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeSessionWriter : ISessionWriter
     {
         public bool Saved { get; private set; }
+        public Session? LastSavedSession { get; private set; }
+
         public Task RememberAsync(Session session, CancellationToken cancellationToken = default)
         {
             Saved = true;
+            LastSavedSession = session;
             return Task.CompletedTask;
         }
         public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;

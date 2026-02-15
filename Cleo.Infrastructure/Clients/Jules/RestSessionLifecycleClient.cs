@@ -48,7 +48,7 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
             await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
 
             var dto = await response.Content.ReadFromJsonAsync<JulesSessionResponseDto>(cancellationToken: cancellationToken).ConfigureAwait(false);
-            return JulesMapper.Map(dto!, task, _statusMapper);
+            return JulesMapper.Map(dto!, _statusMapper);
         }
         catch (Exception ex) when (ex is HttpRequestException or SocketException)
         {

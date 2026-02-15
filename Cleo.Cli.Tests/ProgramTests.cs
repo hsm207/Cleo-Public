@@ -1,6 +1,7 @@
 using System.CommandLine;
 using Cleo.Cli;
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.ApprovePlan;
 using Cleo.Core.UseCases.AuthenticateUser;
@@ -84,7 +85,7 @@ public class ProgramTests : IDisposable
         services.AddTransient<AuthCommand>();
         services.AddTransient<ListCommand>();
         services.AddTransient<NewCommand>();
-        services.AddTransient<StatusCommand>();
+        services.AddTransient<CheckinCommand>();
         services.AddTransient<ReposCommand>();
         services.AddTransient<TalkCommand>();
         services.AddTransient<ApproveCommand>();
@@ -107,6 +108,7 @@ public class ProgramTests : IDisposable
         services.AddTransient(_ => new Mock<IForgetSessionUseCase>().Object);
         services.AddTransient(_ => new Mock<IBrowseHistoryUseCase>().Object);
         services.AddTransient(_ => new Mock<IViewPlanUseCase>().Object);
+        services.AddTransient(_ => new Mock<IStatusPresenter>().Object);
 
         // Special handling for concrete use cases that are dependencies
         services.AddTransient(_ => new InitiateSessionUseCase(new Mock<IJulesSessionClient>().Object, new Mock<ISessionWriter>().Object));
