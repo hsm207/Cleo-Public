@@ -61,7 +61,8 @@ internal sealed class PlanCommand
                 return;
             }
 
-            Console.WriteLine($"🗺️ Approved Plan: {response.PlanId}");
+            var planTitle = response.IsApproved ? "Approved Plan" : "Proposed Plan";
+            Console.WriteLine($"🗺️ {planTitle}: {response.PlanId}");
             Console.WriteLine($"🕒 Generated: {response.Timestamp:g}");
             foreach (var step in response.Steps)
             {
