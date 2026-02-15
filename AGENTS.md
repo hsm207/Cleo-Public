@@ -11,6 +11,7 @@
 ## 3. Testing Standards
 *   **Humble Fakes**: Keep unit test fakes simple and state-driven. Avoid injecting logic via delegates; use stateful properties for scenario divergence.
 *   **Executable Specifications**: Tests must verify business invariants through public APIs to avoid implementation coupling. 🧪✅
+*   **Domain Baseline First**: Secure the Domain baseline before the Presentation layer. Avoid the "Integration Illusion" by ensuring Use Case tests explicitly verify all business logic branches (e.g., boolean flags, state transitions) before implementing CLI/UI output. 🧠🎭
 
 ## 4. Quality Enforcement & Coverage
 *   **The Coverage Mandate**: `Cleo.Core` must maintain 100% line coverage at all times. No exceptions.

@@ -51,8 +51,8 @@ public class PlanCommandTests : IDisposable
         {
             new(1, "Do thing", "Desc") // PlanStepModel(int Index, string Title, string Description)
         };
-        // ViewPlanResponse(bool HasPlan, string? PlanId, DateTimeOffset? Timestamp, IReadOnlyList<PlanStepModel> Steps)
-        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps);
+        // ViewPlanResponse(bool HasPlan, string? PlanId, DateTimeOffset? Timestamp, IReadOnlyList<PlanStepModel> Steps, bool IsApproved)
+        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, true);
 
         _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.Is<ViewPlanRequest>(r => r.SessionId.Value == sessionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
@@ -64,8 +64,55 @@ public class PlanCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🗺️ Authoritative Plan: plan-123");
+        output.Should().Contain("🗺️ Approved Plan: plan-123");
         output.Should().Contain("1. Do thing");
+    }
+
+    [Fact(DisplayName = "Given a proposed plan (not approved), when running 'plan view', then it should display 'Proposed Plan'.")]
+    public async Task View_ProposedPlan_DisplaysProposedTitle()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        var steps = new List<PlanStepModel> { new(1, "Step 1", "Desc") };
+        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, false); // IsApproved = false
+
+        _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        var exitCode = await _command.Build().InvokeAsync($"plan view {sessionId}");
+
+        // Assert
+        exitCode.Should().Be(0);
+        var output = _stringWriter.ToString();
+
+        output.Should().Contain("🗺️ Proposed Plan: plan-123");
+    }
+
+    [Fact(DisplayName = "Given a plan with descriptions, when running 'plan view', then it should display the descriptions with indentation.")]
+    public async Task View_WithDescription_DisplaysIndentedDescription()
+    {
+        // Arrange
+        var sessionId = "test-session";
+        var description = "First line\nSecond line";
+        var steps = new List<PlanStepModel>
+        {
+            new(1, "Step Title", description)
+        };
+        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, true);
+
+        _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        // Act
+        var exitCode = await _command.Build().InvokeAsync($"plan view {sessionId}");
+
+        // Assert
+        exitCode.Should().Be(0);
+        var output = _stringWriter.ToString();
+
+        output.Should().Contain("   First line");
+        output.Should().Contain("   Second line");
     }
 
     [Fact(DisplayName = "Given a session with no plan, when running 'plan view', then it should display a friendly message.")]
@@ -82,7 +129,7 @@ public class PlanCommandTests : IDisposable
         await _command.Build().InvokeAsync($"plan view {sessionId}");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("📭 No authoritative plan found");
+        _stringWriter.ToString().Should().Contain("📭 No approved plan found");
     }
 
     [Fact(DisplayName = "Given an error, when running 'plan view', then it should log and display error.")]
