@@ -30,6 +30,8 @@ public class ViewPlanUseCase : IViewPlanUseCase
 
         var steps = plan.Steps.Select(s => new PlanStepModel(s.Index, s.Title, s.Description)).ToList();
 
-        return new ViewPlanResponse(true, plan.PlanId, plan.Timestamp, steps);
+        var isApproved = session.State != SessionState.AwaitingPlanApproval;
+
+        return new ViewPlanResponse(true, plan.PlanId, plan.Timestamp, steps, isApproved);
     }
 }
