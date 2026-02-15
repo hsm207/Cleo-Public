@@ -54,8 +54,8 @@ public class JulesMapperTests
         Assert.Equal((TaskDescription)expectedTask, session.Task);
     }
 
-    [Fact(DisplayName = "JulesMapper should fallback to 'Unknown Task' if Prompt is missing.")]
-    public void JulesMapper_ShouldFallback_IfPromptMissing()
+    [Fact(DisplayName = "JulesMapper should Fail Fast (Throw) if Prompt is missing/invalid.")]
+    public void JulesMapper_ShouldThrow_IfPromptInvalid()
     {
         var dto = new JulesSessionResponseDto(
             Name: "sessions/123",
@@ -65,9 +65,7 @@ public class JulesMapperTests
             SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
         );
 
-        var session = JulesMapper.Map(dto, _statusMapper);
-
-        Assert.Equal((TaskDescription)"Unknown Task", session.Task);
+        Assert.Throws<ArgumentException>(() => JulesMapper.Map(dto, _statusMapper));
     }
 
     // ... (Existing Activity Mapper Tests) ...
