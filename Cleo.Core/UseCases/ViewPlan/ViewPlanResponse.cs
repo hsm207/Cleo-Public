@@ -6,8 +6,9 @@ public record ViewPlanResponse(
     bool HasPlan,
     string? PlanId,
     DateTimeOffset? Timestamp,
-    IReadOnlyList<PlanStepModel> Steps
+    IReadOnlyList<PlanStepModel> Steps,
+    bool IsApproved
 )
 {
-    public static ViewPlanResponse Empty() => new(false, null, null, Array.Empty<PlanStepModel>());
+    public static ViewPlanResponse Empty() => new(false, null, null, Array.Empty<PlanStepModel>(), false);
 }
