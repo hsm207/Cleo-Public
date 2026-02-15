@@ -102,6 +102,32 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(SessionStatus.InProgress, result.Pulse.Status);
     }
 
+    [Fact(DisplayName = "Given a session found on Remote but missing locally, when refreshing, it should synchronize the 'Task Description' from the Remote Truth.")]
+    public async Task ShouldSynchronizeTaskFromRemoteTruthForRecoveredSessions()
+    {
+        // Arrange
+        var sessionId = new SessionId("sessions/recovered-identity");
+        var realRemoteTask = (TaskDescription)"Real Remote Task";
+
+        // Simulating that the session is missing locally (not in _sessionReader)
+        // And configuring the Remote Monitor to return the session with the Real Task
+        _pulseMonitor.ForcedTask = realRemoteTask;
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(_sessionWriter.Saved);
+
+        // Verify that the saved session has the Real Task, not the "Unknown Task" placeholder
+        var savedSession = _sessionWriter.LastSavedSession;
+        Assert.NotNull(savedSession);
+        Assert.Equal(realRemoteTask, savedSession.Task);
+        Assert.NotEqual("Unknown Task (Recovered)", (string)savedSession.Task);
+    }
+
     [Fact(DisplayName = "Given remote session has a PR, when refreshing, then it should sync the PR to local session.")]
     public async Task ShouldSyncPullRequestWhenPresentOnRemote()
     {
@@ -151,14 +177,17 @@ public sealed class RefreshPulseUseCaseTests
     {
         public bool ShouldThrow { get; set; }
         public Action<Session>? RemoteSessionConfigurator { get; set; }
+        public TaskDescription? ForcedTask { get; set; }
 
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
 
+            var effectiveTask = ForcedTask ?? originalTask;
+
             var session = new SessionBuilder()
                 .WithId(id.Value)
-                .WithTask((string)originalTask)
+                .WithTask((string)effectiveTask)
                 .WithPulse(SessionStatus.InProgress)
                 .Build();
 
@@ -198,9 +227,12 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeSessionWriter : ISessionWriter
     {
         public bool Saved { get; private set; }
+        public Session? LastSavedSession { get; private set; }
+
         public Task RememberAsync(Session session, CancellationToken cancellationToken = default)
         {
             Saved = true;
+            LastSavedSession = session;
             return Task.CompletedTask;
         }
         public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
