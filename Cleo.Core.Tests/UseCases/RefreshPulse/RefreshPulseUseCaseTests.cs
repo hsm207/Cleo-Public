@@ -52,33 +52,6 @@ public sealed class RefreshPulseUseCaseTests
         Assert.True(_sessionWriter.Saved);
         
         // Response Fidelity: Ensure LastActivity matches the latest significant activity
-
-        // Debugging: If "act-1" is not returned, it means it's not being considered significant OR not the latest.
-        // We know it is significant (intent + thought).
-        // We know it is latest (timestamp + 1h).
-        // So why is it not returned?
-        // Ah, is it possible the UseCase modifies a COPY of the session?
-        // _sessionReader.RecallAsync returns a reference from the Fake dictionary.
-        // UseCase modifies it.
-        // Then returns result.
-
-        // Is it possible the initial activity has a weird timestamp?
-        // Or maybe Session.LastActivity is cached? (No, it's a property getter).
-
-        // Let's assert that the session log actually contains 2 items.
-        Assert.Equal(2, session.SessionLog.Count);
-
-        // Assert the timestamps
-        var initial = session.SessionLog.First(a => a.Id != "act-1");
-        var added = session.SessionLog.First(a => a.Id == "act-1");
-
-        // Debugging Assertions
-        Assert.True(added.Timestamp > initial.Timestamp, $"Added ({added.Timestamp}) should be later than Initial ({initial.Timestamp})");
-        Assert.True(added.IsSignificant, "Added activity must be significant");
-
-        // If sorting works, LastActivity should be "act-1"
-        Assert.Equal("act-1", session.LastActivity.Id);
-
         Assert.Equal("act-1", result.LastActivity.Id);
 
         // Verify history synchronization 🔄📜
