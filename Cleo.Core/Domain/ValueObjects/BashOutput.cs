@@ -23,5 +23,5 @@ public record BashOutput : Artifact
         ExitCode = exitCode;
     }
 
-    public override string GetSummary() => $"🖥️ BashOutput: Executed '{Command}' (Exit Code: {ExitCode})";
+    public override string GetSummary() => $"BashOutput: Executed '{Command}' (Exit Code: {ExitCode})";
 }

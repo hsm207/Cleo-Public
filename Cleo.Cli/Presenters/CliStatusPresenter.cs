@@ -22,12 +22,11 @@ internal sealed class CliStatusPresenter : IStatusPresenter
         sb.AppendLine(CultureInfo.CurrentCulture, $"{CliAesthetic.PullRequestLabel}: {model.PrOutcome}");
 
         // 3. Last Activity 📝
-        var lastActivity = model.LastActivity;
-        var timestamp = lastActivity.Timestamp.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
-        sb.Append(CultureInfo.CurrentCulture, $"{CliAesthetic.LastActivityLabel}: [{timestamp}] {lastActivity.GetContentSummary()}");
+        // Note: Timestamp is already formatted in the VM
+        sb.Append(CultureInfo.CurrentCulture, $"{CliAesthetic.LastActivityLabel}: [{model.LastActivityTime}] {model.LastActivitySummary}");
 
         // Polymorphic Thoughts 💭
-        var thoughts = lastActivity.GetThoughts().ToList();
+        var thoughts = model.LastActivityThoughts;
         for (var i = 0; i < thoughts.Count; i++)
         {
             var prefix = i == 0 ? $"\n{CliAesthetic.Indent}{CliAesthetic.ThoughtBubble} " : $"\n{CliAesthetic.Indent}   ";
@@ -36,12 +35,13 @@ internal sealed class CliStatusPresenter : IStatusPresenter
         }
 
         // Polymorphic Evidence 📦
-        if (lastActivity.Evidence.Count > 0)
+        var artifacts = model.LastActivityArtifactSummaries;
+        if (artifacts.Count > 0)
         {
-            foreach (var artifact in lastActivity.Evidence)
+            foreach (var summary in artifacts)
             {
                 sb.Append($"\n{CliAesthetic.Indent}{CliAesthetic.ArtifactBox} ");
-                sb.Append(artifact.GetSummary());
+                sb.Append(summary);
             }
         }
 
