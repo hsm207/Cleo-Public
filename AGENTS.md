@@ -28,3 +28,18 @@
 *   **Anatomy of a Step**: Each milestone must provide visibility into your architectural intent:
     1. **Surgical Target**: Identify the specific files and symbols (classes/methods) to be modified or created.
     2. **Incremental Validation**: Every step MUST include a verification loop (e.g., specific test execution or build check) to ensure the system remains stable throughout the iteration. 🏛️🧪
+
+### 🌟 High-Fidelity Plan Example
+The following demonstrates the structural granularity and validation loops required for a compliant plan (Anonymized Example):
+
+**Goal**: Implement "Sprinkle Invariance" in the CupcakeFactory domain. 🧁✨
+
+*   **Step 1: Ingredient Purification**
+    *   **Surgical Target**: `CupcakeFactory.Core/Ingredients/Sprinkle.cs`
+    *   **Action**: Purge legacy "Glitter" comments to align with the Pure-Sugar RFC.
+    *   **Verification**: Execute `dotnet build` and perform a file inspection to confirm removal.
+
+*   **Step 2: The Frosting Mandate**
+    *   **Surgical Target**: `CupcakeFactory.Core` (Entire Assembly)
+    *   **Action**: Execute the mandated 4-step coverage verification workflow (Purge -> Test -> Report -> Summary).
+    *   **Verification**: If frosting coverage is < 100%, implement specific unit tests for "naked" lines and re-verify. 🧁📊 ✅
