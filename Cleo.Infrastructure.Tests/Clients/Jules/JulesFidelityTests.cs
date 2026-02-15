@@ -57,7 +57,7 @@ public class JulesFidelityTests
         var dto = JsonSerializer.Deserialize<JulesSessionResponseDto>(jsonContent, Options)!;
         var statusMapper = new DefaultSessionStatusMapper();
 
-        var domain = JulesMapper.Map(dto, new TaskDescription(dto.Prompt), statusMapper);
+        var domain = JulesMapper.Map(dto, statusMapper);
 
         // Identity
         domain.Id.Value.Should().Be(dto.Name);
