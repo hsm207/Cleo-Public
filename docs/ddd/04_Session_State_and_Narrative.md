@@ -39,4 +39,22 @@ In the High-Fidelity model, the **Pull Request** is the only authoritative measu
 
 The **Session State** is an ephemeral evaluation derived from the latest **Pulse** and **Session Log**. To maintain high-fidelity visibility even when the remote system is unreachable, the **Pulse Status** and the full **Session Log** (Narrative) are persisted in the **Session Registry**.
 
+### 🏺 The Seeded Narrative Invariant
+To ensure the session history always has a clear point of origin, Cleo enforces the **Seeded Narrative Invariant**. A session history must be initialized with an event that defines its purpose and baseline state.
+
+If a session is initialized (locally or during recovery) and the history is empty, Cleo synthesizes a **`SessionAssignedActivity`** (The **Local Origin Event**).
+
+### 📜 The Local Origin Event (Fidelity Baseline)
+The **Local Origin Event** is a fundamental part of the session's fidelity. It provides a unique record that differs from server-side activities in two ways:
+1.  **Originator**: It is marked as `System`, representing the local orchestration layer.
+2.  **Intent**: It captures the raw **Task Description** exactly as it was provided by the user, before the authoritative remote system interprets it into specific plan steps.
+
+Because the Jules API does not currently emit an explicit "Session Created" activity, this local event serves as the authoritative record of the mission's baseline intent.
+
+### 🔄 History Synchronization Policy
+When synchronizing with the **Authoritative Remote State**, Cleo follows a "Deduplicated Merge" policy:
+*   **Identity Correlation**: Activities are matched based on their unique `Id`. 
+*   **Structural Divergence**: Because the **Local Origin Event** has a locally generated GUID and represents a `System` event, it remains distinct from the server's first `Agent` action (typically a `PlanGenerated` event). 
+*   **Chronological Integrity**: The resulting log maintains full temporal fidelity: **Session Assigned (Local)** -> **Plan Generated (Remote)** -> **Progress (Remote)**.
+
 > See [RFC 013: Human-Centric Alignment](../rfcs/RFC013_HumanCentricAlignment.md) for the CLI presentation rules.
