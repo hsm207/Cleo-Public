@@ -13,15 +13,21 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// </summary>
 internal static class JulesMapper
 {
-    public static Session Map(JulesSessionResponseDto dto, TaskDescription originalTask, ISessionStatusMapper statusMapper)
+    public static Session Map(JulesSessionResponseDto dto, ISessionStatusMapper statusMapper)
     {
         var pulse = MapPulse(dto, statusMapper);
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
+        // High-Fidelity Mapping: Use 'Prompt' as the authoritative TaskDescription.
+        // We fallback to "Unknown" only if empty, but we never rely on a passed-in placeholder.
+        var taskDescription = string.IsNullOrWhiteSpace(dto.Prompt)
+            ? (TaskDescription)"Unknown Task"
+            : (TaskDescription)dto.Prompt;
+
         var session = new Session(
             new SessionId(dto.Name),
             dto.Id,
-            originalTask,
+            taskDescription,
             new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
             pulse,
             ParseDateTime(dto.CreateTime),

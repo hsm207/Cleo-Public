@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
 using FluentAssertions;
@@ -11,6 +12,65 @@ public class JulesMapperTests
 {
     private static readonly DateTimeOffset TestTime = DateTimeOffset.UtcNow;
     private static readonly string TestTimeStr = TestTime.ToString("O", CultureInfo.InvariantCulture);
+    private readonly ISessionStatusMapper _statusMapper = new DefaultSessionStatusMapper();
+
+    [Fact(DisplayName = "JulesMapper should map session status correctly using the StatusMapper.")]
+    public void JulesMapper_ShouldMap_Status()
+    {
+        var dto = new JulesSessionResponseDto(
+            Name: "sessions/123",
+            Id: "remote-123",
+            State: JulesSessionState.InProgress,
+            Prompt: "Task prompt",
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main")),
+            Url: new Uri("https://dash"),
+            RequirePlanApproval: true,
+            AutomationMode: JulesAutomationMode.AutomationModeUnspecified,
+            CreateTime: DateTimeOffset.UtcNow.ToString("O"),
+            UpdateTime: null,
+            Title: "My Task",
+            Outputs: null
+        );
+
+        var session = JulesMapper.Map(dto, _statusMapper);
+
+        Assert.Equal(SessionStatus.InProgress, session.Pulse.Status);
+    }
+
+    [Fact(DisplayName = "JulesMapper should map 'Prompt' from DTO to Session 'Task' (Zero-Hollow Identity).")]
+    public void JulesMapper_ShouldMap_PromptToTask()
+    {
+        var expectedTask = "Fix the universe";
+        var dto = new JulesSessionResponseDto(
+            Name: "sessions/123",
+            Id: "remote-123",
+            State: JulesSessionState.InProgress,
+            Prompt: expectedTask, // <--- Remote Truth
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
+        );
+
+        var session = JulesMapper.Map(dto, _statusMapper);
+
+        Assert.Equal((TaskDescription)expectedTask, session.Task);
+    }
+
+    [Fact(DisplayName = "JulesMapper should fallback to 'Unknown Task' if Prompt is missing.")]
+    public void JulesMapper_ShouldFallback_IfPromptMissing()
+    {
+        var dto = new JulesSessionResponseDto(
+            Name: "sessions/123",
+            Id: "remote-123",
+            State: JulesSessionState.InProgress,
+            Prompt: "", // <--- Empty Remote Truth
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
+        );
+
+        var session = JulesMapper.Map(dto, _statusMapper);
+
+        Assert.Equal((TaskDescription)"Unknown Task", session.Task);
+    }
+
+    // ... (Existing Activity Mapper Tests) ...
 
     [Fact(DisplayName = "Given a planGenerated DTO, PlanningActivityMapper should map it to a PlanningActivity.")]
     public void PlanningActivityMapper_ShouldMap_PlanGenerated()

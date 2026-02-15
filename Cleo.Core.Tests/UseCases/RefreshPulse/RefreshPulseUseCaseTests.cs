@@ -110,8 +110,17 @@ public sealed class RefreshPulseUseCaseTests
         var realRemoteTask = (TaskDescription)"Real Remote Task";
 
         // Simulating that the session is missing locally (not in _sessionReader)
-        // And configuring the Remote Monitor to return the session with the Real Task
-        _pulseMonitor.ForcedTask = realRemoteTask;
+
+        // Strategy: Use a custom behavior overriding the default GetRemoteSessionAsync flow
+        _pulseMonitor.GetRemoteSessionOverride = (id, original) =>
+        {
+            // Ignore original (which is "Unknown Task") and return Real Task
+            return Task.FromResult(new SessionBuilder()
+                .WithId(id.Value)
+                .WithTask((string)realRemoteTask)
+                .WithPulse(SessionStatus.InProgress)
+                .Build());
+        };
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -177,17 +186,17 @@ public sealed class RefreshPulseUseCaseTests
     {
         public bool ShouldThrow { get; set; }
         public Action<Session>? RemoteSessionConfigurator { get; set; }
-        public TaskDescription? ForcedTask { get; set; }
+        // New Delegate for BDD scenarios requiring total control
+        public Func<SessionId, TaskDescription, Task<Session>>? GetRemoteSessionOverride { get; set; }
 
         public Task<Session> GetRemoteSessionAsync(SessionId id, TaskDescription originalTask, CancellationToken cancellationToken = default)
         {
             if (ShouldThrow) throw new RemoteCollaboratorUnavailableException();
-
-            var effectiveTask = ForcedTask ?? originalTask;
+            if (GetRemoteSessionOverride != null) return GetRemoteSessionOverride(id, originalTask);
 
             var session = new SessionBuilder()
                 .WithId(id.Value)
-                .WithTask((string)effectiveTask)
+                .WithTask((string)originalTask)
                 .WithPulse(SessionStatus.InProgress)
                 .Build();
 
