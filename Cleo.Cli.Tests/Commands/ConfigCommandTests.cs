@@ -20,7 +20,7 @@ public class ConfigCommandTests
         // Mock subcommands
         var authCommand = new AuthCommand(
             new Mock<IAuthenticateUserUseCase>().Object,
-            new Mock<ICredentialStore>().Object,
+            new Mock<IVault>().Object,
             new Mock<ILogger<AuthCommand>>().Object
         );
         var reposCommand = new ReposCommand(

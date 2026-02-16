@@ -1,7 +1,6 @@
 using Cleo.Cli.Commands;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.AuthenticateUser;
-using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.CommandLine;
@@ -13,7 +12,7 @@ namespace Cleo.Cli.Tests.Commands;
 public class AuthCommandTests : IDisposable
 {
     private readonly Mock<IAuthenticateUserUseCase> _useCaseMock;
-    private readonly Mock<ICredentialStore> _credentialStoreMock;
+    private readonly Mock<IVault> _vaultMock;
     private readonly Mock<ILogger<AuthCommand>> _loggerMock;
     private readonly AuthCommand _command;
     private readonly StringWriter _stringWriter;
@@ -22,9 +21,11 @@ public class AuthCommandTests : IDisposable
     public AuthCommandTests()
     {
         _useCaseMock = new Mock<IAuthenticateUserUseCase>();
-        _credentialStoreMock = new Mock<ICredentialStore>();
+        _vaultMock = new Mock<IVault>();
         _loggerMock = new Mock<ILogger<AuthCommand>>();
-        _command = new AuthCommand(_useCaseMock.Object, _credentialStoreMock.Object, _loggerMock.Object);
+
+        // Arrange SUT
+        _command = new AuthCommand(_useCaseMock.Object, _vaultMock.Object, _loggerMock.Object);
 
         _stringWriter = new StringWriter();
         _originalOutput = Console.Out;
@@ -42,15 +43,19 @@ public class AuthCommandTests : IDisposable
     public async Task Login_ValidKey_DisplaysSuccess()
     {
         // Arrange
+        // Simulate successful login logic
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AuthenticateUserResponse(true, "Welcome!"));
 
+        var cmd = _command.Build();
+
         // Act
-        var exitCode = await _command.Build().InvokeAsync("auth login my-key");
+        var result = await cmd.InvokeAsync("login my-key");
 
         // Assert
-        exitCode.Should().Be(0);
-        _stringWriter.ToString().Should().Contain("✅ Welcome!");
+        Assert.Equal(0, result);
+        var output = _stringWriter.ToString();
+        Assert.Contains("✅ Welcome!", output);
     }
 
     [Fact(DisplayName = "Given invalid key, when running 'auth login', then it should display error.")]
@@ -60,23 +65,31 @@ public class AuthCommandTests : IDisposable
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AuthenticateUserResponse(false, "Invalid key"));
 
+        var cmd = _command.Build();
+
         // Act
-        await _command.Build().InvokeAsync("auth login bad-key");
+        var result = await cmd.InvokeAsync("login bad-key");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("❌ Error: Invalid key");
+        Assert.Equal(0, result); // Command handled it gracefully
+        var output = _stringWriter.ToString();
+        Assert.Contains("❌ Error: Invalid key", output);
     }
 
     [Fact(DisplayName = "When running 'auth logout', then it should clear credentials and say goodbye.")]
     public async Task Logout_ClearsCredentials()
     {
+        // Arrange
+        var cmd = _command.Build();
+
         // Act
-        var exitCode = await _command.Build().InvokeAsync("auth logout");
+        var result = await cmd.InvokeAsync("logout");
 
         // Assert
-        exitCode.Should().Be(0);
-        _stringWriter.ToString().Should().Contain("🗑️ Credentials cleared");
-        _credentialStoreMock.Verify(x => x.ClearIdentityAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(0, result);
+        var output = _stringWriter.ToString();
+        Assert.Contains("🗑️ Credentials cleared", output);
+        _vaultMock.Verify(x => x.ClearAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Given exception, when running 'auth login', then it should handle it.")]
@@ -86,10 +99,14 @@ public class AuthCommandTests : IDisposable
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Vault locked"));
 
+        var cmd = _command.Build();
+
         // Act
-        await _command.Build().InvokeAsync("auth login key");
+        var result = await cmd.InvokeAsync("login key");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("💔 Error: Vault locked");
+        Assert.Equal(0, result);
+        var output = _stringWriter.ToString();
+        Assert.Contains("💔 Error: Vault locked", output);
     }
 }

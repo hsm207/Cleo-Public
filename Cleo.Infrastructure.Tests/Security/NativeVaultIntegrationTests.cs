@@ -95,24 +95,4 @@ public class NativeVaultIntegrationTests : IDisposable
         await _vault.ClearAsync(CancellationToken.None);
         Assert.False(File.Exists(_tempFile));
     }
-
-    [Fact(DisplayName = "NativeVault should implement explicit ICredentialStore methods.")]
-    public async Task ShouldImplementICredentialStore()
-    {
-        ICredentialStore store = _vault;
-        var identity = new Identity((ApiKey)"Secret");
-
-        // Save
-        await store.SaveIdentityAsync(identity, CancellationToken.None);
-        Assert.True(File.Exists(_tempFile));
-
-        // Get
-        var retrieved = await store.GetIdentityAsync(CancellationToken.None);
-        Assert.NotNull(retrieved);
-        Assert.Equal("Secret", (string)retrieved!.ApiKey);
-
-        // Clear
-        await store.ClearIdentityAsync(CancellationToken.None);
-        Assert.False(File.Exists(_tempFile));
-    }
 }

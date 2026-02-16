@@ -75,7 +75,8 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 remoteSession.Pulse,
                 session.State,
                 session.LastActivity,
-                session.PullRequest);
+                session.PullRequest,
+                HasUnsubmittedSolution: session.Solution != null && session.PullRequest == null);
             
         }
         catch (RemoteCollaboratorUnavailableException)
@@ -92,6 +93,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 session.State,
                 session.LastActivity,
                 session.PullRequest,
+                HasUnsubmittedSolution: session.Solution != null && session.PullRequest == null,
                 IsCached: true,
                 Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry.");
             
