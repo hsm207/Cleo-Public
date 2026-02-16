@@ -10,7 +10,7 @@ namespace Cleo.Infrastructure.Security;
 /// <summary>
 /// A secure vault implementation that uses OS-native protection where possible.
 /// </summary>
-public sealed class NativeVault : IVault, ICredentialStore
+public sealed class NativeVault : IVault
 {
     private readonly string _storagePath;
     private readonly IEncryptionStrategy _strategy;
@@ -72,20 +72,5 @@ public sealed class NativeVault : IVault, ICredentialStore
             File.Delete(_storagePath);
         }
         return Task.CompletedTask;
-    }
-
-    async Task ICredentialStore.SaveIdentityAsync(Identity identity, CancellationToken cancellationToken)
-    {
-        await StoreAsync(identity, cancellationToken).ConfigureAwait(false);
-    }
-
-    async Task ICredentialStore.ClearIdentityAsync(CancellationToken cancellationToken)
-    {
-        await ClearAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    async Task<Identity?> ICredentialStore.GetIdentityAsync(CancellationToken cancellationToken)
-    {
-        return await RetrieveAsync(cancellationToken).ConfigureAwait(false);
     }
 }

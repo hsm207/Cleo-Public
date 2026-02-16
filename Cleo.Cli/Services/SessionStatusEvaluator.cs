@@ -26,7 +26,7 @@ internal sealed class SessionStatusEvaluator
 
         return new StatusViewModel(
             FormatStateTitle(response.State),
-            EvaluatePrOutcome(response.State, response.PullRequest),
+            EvaluatePrOutcome(response.State, response.PullRequest, response.HasUnsubmittedSolution),
             time,
             lastActivity.Headline,
             lastActivity.SubHeadline,
@@ -43,10 +43,15 @@ internal sealed class SessionStatusEvaluator
         _ => state.ToString()
     };
 
-    private static string EvaluatePrOutcome(SessionState state, PullRequest? pr)
+    private static string EvaluatePrOutcome(SessionState state, PullRequest? pr, bool hasUnsubmittedSolution)
     {
         if (pr == null)
         {
+            if (hasUnsubmittedSolution)
+            {
+                return "⚠️ Solution Ready (Unsubmitted) | Open a PR!";
+            }
+
             return state switch
             {
                 SessionState.Working or SessionState.Planning => "⏳ In Progress",
@@ -58,9 +63,7 @@ internal sealed class SessionStatusEvaluator
             };
         }
 
-        var prInfo = !string.IsNullOrEmpty(pr.HeadRef)
-            ? $"{pr.HeadRef} | {pr.Url}"
-            : pr.Url.ToString();
+        var prInfo = $"{pr.HeadRef} | {pr.Url}";
 
         return state switch
         {

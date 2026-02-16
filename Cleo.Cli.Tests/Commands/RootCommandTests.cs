@@ -33,7 +33,7 @@ public class RootCommandTests
             new Mock<ILogger<CheckinCommand>>().Object);
         _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
         _forgetCommand = new ForgetCommand(new Mock<IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
-        _authCommand = new AuthCommand(new Mock<IAuthenticateUserUseCase>().Object, new Mock<ICredentialStore>().Object, new Mock<ILogger<AuthCommand>>().Object);
+        _authCommand = new AuthCommand(new Mock<IAuthenticateUserUseCase>().Object, new Mock<IVault>().Object, new Mock<ILogger<AuthCommand>>().Object);
         _reposCommand = new ReposCommand(new Mock<IBrowseSourcesUseCase>().Object, new Mock<ILogger<ReposCommand>>().Object);
     }
 
