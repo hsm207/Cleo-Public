@@ -45,7 +45,7 @@ public class JulesMapperTests
             Name: "sessions/123",
             Id: "remote-123",
             State: JulesSessionState.InProgress,
-            Prompt: expectedTask, // <--- Remote Truth
+            Prompt: expectedTask,
             SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
         );
 
@@ -61,7 +61,7 @@ public class JulesMapperTests
             Name: "sessions/123",
             Id: "remote-123",
             State: JulesSessionState.InProgress,
-            Prompt: "", // <--- Empty Remote Truth
+            Prompt: "",
             SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
         );
 
