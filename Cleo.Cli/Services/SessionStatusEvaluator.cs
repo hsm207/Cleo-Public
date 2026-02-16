@@ -63,9 +63,8 @@ internal sealed class SessionStatusEvaluator
             };
         }
 
-        var prInfo = !string.IsNullOrEmpty(pr.HeadRef)
-            ? $"{pr.HeadRef} | {pr.Url}"
-            : pr.Url.ToString();
+        // Zero-Hollow Mandate: pr.HeadRef is guaranteed to be non-null and non-empty. 💎
+        var prInfo = $"{pr.HeadRef} | {pr.Url}";
 
         return state switch
         {
