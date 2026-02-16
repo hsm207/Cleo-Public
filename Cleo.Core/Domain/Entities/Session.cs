@@ -1,5 +1,6 @@
 using Cleo.Core.Domain.Common;
 using Cleo.Core.Domain.Events;
+using Cleo.Core.Domain.Policies;
 using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 
@@ -88,23 +89,9 @@ public class Session : AggregateRoot
     }
 
     /// <summary>
-    /// Evaluates the agent's current state, applying logical overrides for blocked sessions.
+    /// Evaluates the agent's current state using the default policy.
     /// </summary>
-    public SessionState State
-    {
-        get
-        {
-            var physicalState = MapToState(Pulse.Status);
-
-            // Logical State Override: If Idle + No PR + Last Activity was Planning -> AwaitingPlanApproval
-            if (physicalState == SessionState.Idle && !IsDelivered && LastActivity is PlanningActivity)
-            {
-                return SessionState.AwaitingPlanApproval;
-            }
-
-            return physicalState;
-        }
-    }
+    public SessionState State => new DefaultSessionStatePolicy().Evaluate(Pulse, SessionLog, IsDelivered);
 
     public bool IsDelivered => Solution != null || PullRequest != null;
 
@@ -139,7 +126,7 @@ public class Session : AggregateRoot
         AddActivity(new MessageActivity(activityId, "temp-remote-id", DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
     }
 
-    public void SetPullRequest(PullRequest pullRequest)
+    public void SetPullRequest(PullRequest? pullRequest)
     {
         PullRequest = pullRequest;
     }
@@ -162,18 +149,4 @@ public class Session : AggregateRoot
         RecordDomainEvent(new SolutionReady(Id, solution));
     }
 
-    private static SessionState MapToState(SessionStatus status) => status switch
-    {
-        SessionStatus.StartingUp => SessionState.Queued,
-        SessionStatus.Planning => SessionState.Planning,
-        SessionStatus.InProgress => SessionState.Working,
-        SessionStatus.Paused => SessionState.Paused, // Paused is now a distinct state 🛑
-        SessionStatus.AwaitingFeedback => SessionState.AwaitingFeedback,
-        SessionStatus.AwaitingPlanApproval => SessionState.AwaitingPlanApproval,
-        SessionStatus.Completed => SessionState.Idle,
-        SessionStatus.Abandoned => SessionState.Idle,
-        SessionStatus.Failed => SessionState.Broken,
-        // StateUnspecified or unknown values map to WTF 🚨
-        _ => SessionState.WTF
-    };
 }
