@@ -13,18 +13,14 @@ internal sealed class ProgressActivityMapper : IJulesActivityMapper<JulesProgres
     {
         var payload = (JulesProgressUpdatedPayloadDto)dto.Payload;
 
-        // RFC 016: Absolute Transformer & Signal Recovery 🛰️💎
-        // The API 'Title' maps to Domain 'Intent'
-        // The API 'Description' maps to Domain 'Reasoning'
-        // The API Metadata 'Description' maps to Domain 'ExecutiveSummary'
         return new ProgressActivity(
             dto.Metadata.Name,
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
-            payload.Title ?? string.Empty, // Intent
-            payload.Description, // Reasoning
+            payload.Title ?? string.Empty,
+            payload.Description,
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
-            dto.Metadata.Description); // Executive Summary 👸✨
+            dto.Metadata.Description);
     }
 }

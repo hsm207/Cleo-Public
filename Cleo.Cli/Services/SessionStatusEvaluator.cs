@@ -17,8 +17,7 @@ internal sealed class SessionStatusEvaluator
 
         var lastActivity = response.LastActivity;
 
-        // RFC 016: The Headline Rule 👸💎
-        // If an Executive Summary exists, it takes precedence over the internal Intent/Summary.
+        // Prioritize Executive Summary if available (The Headline Rule)
         var headline = !string.IsNullOrWhiteSpace(lastActivity.ExecutiveSummary)
             ? lastActivity.ExecutiveSummary
             : lastActivity.GetContentSummary();
@@ -34,7 +33,7 @@ internal sealed class SessionStatusEvaluator
             FormatStateTitle(response.State),
             EvaluatePrOutcome(response.State, response.PullRequest),
             time,
-            headline, // The new authoritative headline
+            headline,
             thoughts.AsReadOnly(),
             artifactSummaries.AsReadOnly());
     }
