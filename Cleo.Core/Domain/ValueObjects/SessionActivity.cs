@@ -226,4 +226,6 @@ public record FailureActivity(
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
     public override string GetSymbol() => "💥";
+
+    public override string Headline => Reason;
 }
