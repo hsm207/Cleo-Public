@@ -99,7 +99,7 @@ public class ProgramTests : IDisposable
         // 3. Register Mocked Dependencies (Infrastructure Ports & Use Cases)
         services.AddLogging();
         services.AddTransient(_ => new Mock<IAuthenticateUserUseCase>().Object);
-        services.AddTransient(_ => new Mock<ICredentialStore>().Object);
+        services.AddTransient(_ => new Mock<IVault>().Object);
         services.AddTransient(_ => new Mock<IListSessionsUseCase>().Object);
         services.AddTransient(_ => new Mock<IRefreshPulseUseCase>().Object);
         services.AddTransient(_ => new Mock<IBrowseSourcesUseCase>().Object);
