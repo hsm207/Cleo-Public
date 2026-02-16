@@ -4,9 +4,9 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Services;
 
-public class AuthoritativePrResolverTests
+public class RemoteFirstPrResolverTests
 {
-    private readonly AuthoritativePrResolver _resolver = new();
+    private readonly RemoteFirstPrResolver _resolver = new();
 
     private readonly PullRequest _localPr = new(new Uri("https://github.com/pr/1"), "Local PR", "Desc", "head", "base");
     private readonly PullRequest _remotePr = new(new Uri("https://github.com/pr/2"), "Remote PR", "Desc", "head", "base");
@@ -25,11 +25,11 @@ public class AuthoritativePrResolverTests
         Assert.Equal(_remotePr, result);
     }
 
-    [Fact(DisplayName = "Resolve should return local PR if only local is present.")]
-    public void ResolveShouldReturnLocal()
+    [Fact(DisplayName = "Resolve should return null (Purge Zombie) if only local is present.")]
+    public void ResolveShouldPurgeZombieArtifact()
     {
         var result = _resolver.Resolve(_localPr, null);
-        Assert.Equal(_localPr, result);
+        Assert.Null(result);
     }
 
     [Fact(DisplayName = "Resolve should return null if neither is present.")]

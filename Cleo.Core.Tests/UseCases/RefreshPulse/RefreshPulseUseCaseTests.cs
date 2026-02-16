@@ -19,7 +19,7 @@ public sealed class RefreshPulseUseCaseTests
 
     public RefreshPulseUseCaseTests()
     {
-        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter, new AuthoritativePrResolver());
+        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter, new RemoteFirstPrResolver());
     }
 
     [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
@@ -154,8 +154,8 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(pr.Title, session.PullRequest.Title);
     }
 
-    [Fact(DisplayName = "Given local session has a PR and remote does not, when refreshing, then it should retain the local PR.")]
-    public async Task ShouldRetainLocalPullRequestWhenRemoteIsMissing()
+    [Fact(DisplayName = "Given local session has a PR and remote does not, when refreshing, then it should purge the local PR (Zombie Artifact).")]
+    public async Task ShouldPurgeLocalPullRequestWhenRemoteIsMissing()
     {
         // Arrange
         var sessionId = new SessionId("sessions/local-pr-session");
@@ -173,8 +173,7 @@ public sealed class RefreshPulseUseCaseTests
         await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.NotNull(session.PullRequest);
-        Assert.Equal(localPr.Title, session.PullRequest.Title);
+        Assert.Null(session.PullRequest);
     }
 
     [Fact(DisplayName = "Given session is missing locally AND remote is unreachable, when refreshing, then it should throw InvalidOperationException.")]

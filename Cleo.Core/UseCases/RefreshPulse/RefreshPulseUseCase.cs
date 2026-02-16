@@ -11,14 +11,14 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     private readonly IJulesActivityClient _activityClient;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
-    private readonly IAuthoritativePrResolver _prResolver;
+    private readonly IPrResolver _prResolver;
 
     public RefreshPulseUseCase(
         IPulseMonitor pulseMonitor, 
         IJulesActivityClient activityClient,
         ISessionReader sessionReader, 
         ISessionWriter sessionWriter,
-        IAuthoritativePrResolver prResolver)
+        IPrResolver prResolver)
     {
         _pulseMonitor = pulseMonitor;
         _activityClient = activityClient;
@@ -53,11 +53,10 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
             session.UpdatePulse(remoteSession.Pulse);
             
-            var authoritativePr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
-            if (authoritativePr != null)
-            {
-                session.SetPullRequest(authoritativePr);
-            }
+            // Resolve the Pull Request (Remote First).
+            // If the resolver returns null (remote is missing), we must purge the local PR (Zombie Artifact).
+            var resolvedPr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
+            session.SetPullRequest(resolvedPr);
 
             foreach (var activity in activities)
             {

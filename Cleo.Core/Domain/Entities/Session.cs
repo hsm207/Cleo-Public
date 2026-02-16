@@ -89,9 +89,9 @@ public class Session : AggregateRoot
     }
 
     /// <summary>
-    /// Evaluates the agent's current state using the authoritative policy.
+    /// Evaluates the agent's current state using the default policy.
     /// </summary>
-    public SessionState State => new AuthoritativeStatePolicy().Evaluate(Pulse, SessionLog, IsDelivered);
+    public SessionState State => new DefaultSessionStatePolicy().Evaluate(Pulse, SessionLog, IsDelivered);
 
     public bool IsDelivered => Solution != null || PullRequest != null;
 
@@ -126,7 +126,7 @@ public class Session : AggregateRoot
         AddActivity(new MessageActivity(activityId, "temp-remote-id", DateTimeOffset.UtcNow, ActivityOriginator.User, feedback));
     }
 
-    public void SetPullRequest(PullRequest pullRequest)
+    public void SetPullRequest(PullRequest? pullRequest)
     {
         PullRequest = pullRequest;
     }
