@@ -1,6 +1,7 @@
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
+using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.Tests.Builders;
 using Cleo.Core.UseCases.RefreshPulse;
@@ -18,7 +19,7 @@ public sealed class RefreshPulseUseCaseTests
 
     public RefreshPulseUseCaseTests()
     {
-        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter);
+        _sut = new RefreshPulseUseCase(_pulseMonitor, _activityClient, _sessionReader, _sessionWriter, new AuthoritativePrResolver());
     }
 
     [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
@@ -151,6 +152,29 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.NotNull(session.PullRequest);
         Assert.Equal(pr.Title, session.PullRequest.Title);
+    }
+
+    [Fact(DisplayName = "Given local session has a PR and remote does not, when refreshing, then it should retain the local PR.")]
+    public async Task ShouldRetainLocalPullRequestWhenRemoteIsMissing()
+    {
+        // Arrange
+        var sessionId = new SessionId("sessions/local-pr-session");
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
+        var localPr = new PullRequest(new Uri("https://github.com/pr/local"), "Local Title", "desc", "head", "base");
+        session.SetPullRequest(localPr);
+
+        _sessionReader.Sessions[sessionId] = session;
+
+        // Remote session by default has no PR in the fake
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.NotNull(session.PullRequest);
+        Assert.Equal(localPr.Title, session.PullRequest.Title);
     }
 
     [Fact(DisplayName = "Given session is missing locally AND remote is unreachable, when refreshing, then it should throw InvalidOperationException.")]
