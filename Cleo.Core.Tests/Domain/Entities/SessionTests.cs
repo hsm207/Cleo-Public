@@ -357,7 +357,7 @@ public class SessionTests
         var session = CreateSession();
         session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
         session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
-        session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
+        session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base"));
 
         // Should be Idle because PR is delivered
         Assert.Equal(SessionState.Idle, session.State);
@@ -378,7 +378,7 @@ public class SessionTests
 
         // Case 2: PR present
         var session2 = CreateSession();
-        session2.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR"));
+        session2.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base"));
         Assert.True(session2.IsDelivered);
     }
 
@@ -386,7 +386,7 @@ public class SessionTests
     public void SetPullRequestShouldWork()
     {
         var session = CreateSession();
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base");
 
         session.SetPullRequest(pr);
 

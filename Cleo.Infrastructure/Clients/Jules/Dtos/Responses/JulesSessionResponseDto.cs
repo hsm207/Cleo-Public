@@ -30,7 +30,7 @@ public sealed record JulesOutputDto(
 public sealed record PullRequestDto(
     [property: JsonPropertyName("url")] Uri Url,
     [property: JsonPropertyName("title")] string Title,
-    [property: JsonPropertyName("description")] string? Description,
-    [property: JsonPropertyName("baseRef")] string? BaseRef = null,
-    [property: JsonPropertyName("headRef")] string? HeadRef = null
+    [property: JsonPropertyName("description")] string Description,
+    [property: JsonPropertyName("baseRef")] string BaseRef,
+    [property: JsonPropertyName("headRef")] string HeadRef
 );
