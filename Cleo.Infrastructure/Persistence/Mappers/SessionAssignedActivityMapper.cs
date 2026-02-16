@@ -26,19 +26,19 @@ internal sealed class SessionAssignedActivityMapper : IActivityPersistenceMapper
             assigned.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<SessionAssignedPayloadDto>(json);
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<SessionAssignedPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new SessionAssignedActivity(
             id,
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp,
             originator,
-            (TaskDescription)(dto?.Task ?? "Unknown Task"),
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            (TaskDescription)(dto.TaskDescription ?? "Unknown Task"),
+            dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
-    private sealed record SessionAssignedPayloadDto(string? RemoteId, string Task, List<ArtifactEnvelope> Evidence);
+    private sealed record SessionAssignedPayloadDto(string? RemoteId, string TaskDescription, List<ArtifactEnvelope> Evidence);
 }

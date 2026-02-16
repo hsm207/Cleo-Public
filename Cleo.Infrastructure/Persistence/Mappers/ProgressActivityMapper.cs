@@ -20,29 +20,36 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
     public string SerializePayload(SessionActivity activity)
     {
         var progress = (ProgressActivity)activity;
-        // RFC 009: We explicitly serialize the 'Thought' (Description) field
         return JsonSerializer.Serialize(new ProgressPayloadDto(
             progress.RemoteId,
-            progress.Title,
-            progress.Description,
+            progress.Intent,
+            progress.Reasoning,
             progress.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(
+        string id,
+        DateTimeOffset timestamp,
+        ActivityOriginator originator,
+        string json,
+        string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ProgressActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.Title ?? string.Empty,
-            dto?.Description, // Restores the agent's thought
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto.Intent,
+            dto.Reasoning,
+            (dto.Evidence ?? []).Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
-    private sealed record ProgressPayloadDto(string? RemoteId, string Title, string? Description, List<ArtifactEnvelope> Evidence);
+    private sealed record ProgressPayloadDto(
+        string? RemoteId,
+        string Intent,
+        string? Reasoning,
+        List<ArtifactEnvelope>? Evidence);
 }

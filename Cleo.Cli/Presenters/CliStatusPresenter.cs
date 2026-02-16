@@ -22,8 +22,12 @@ internal sealed class CliStatusPresenter : IStatusPresenter
         sb.AppendLine(CultureInfo.CurrentCulture, $"{CliAesthetic.PullRequestLabel}: {model.PrOutcome}");
 
         // 3. Last Activity 📝
-        // Note: Timestamp is already formatted in the VM
-        sb.Append(CultureInfo.CurrentCulture, $"{CliAesthetic.LastActivityLabel}: [{model.LastActivityTime}] {model.LastActivitySummary}");
+        sb.Append(CultureInfo.CurrentCulture, $"{CliAesthetic.LastActivityLabel}: [{model.LastActivityTime}] {model.LastActivityHeadline}");
+
+        if (!string.IsNullOrWhiteSpace(model.LastActivitySubHeadline))
+        {
+            sb.Append(CultureInfo.CurrentCulture, $"\n{CliAesthetic.Indent}{model.LastActivitySubHeadline}");
+        }
 
         // Polymorphic Thoughts 💭
         var thoughts = model.LastActivityThoughts;

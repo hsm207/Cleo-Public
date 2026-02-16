@@ -8,6 +8,7 @@ internal record StatusViewModel(
     string StateTitle,
     string PrOutcome,
     string LastActivityTime,
-    string LastActivitySummary,
+    string LastActivityHeadline,
+    string? LastActivitySubHeadline,
     IReadOnlyList<string> LastActivityThoughts,
     IReadOnlyList<string> LastActivityArtifactSummaries);
