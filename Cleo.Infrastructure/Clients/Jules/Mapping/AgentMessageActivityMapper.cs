@@ -22,6 +22,6 @@ internal sealed class AgentMessageActivityMapper : IJulesActivityMapper<JulesAge
             originator,
             payload.AgentMessage ?? string.Empty,
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
-            dto.Metadata.Description); // RFC 016: Executive Summary
+            dto.Metadata.Description);
     }
 }
