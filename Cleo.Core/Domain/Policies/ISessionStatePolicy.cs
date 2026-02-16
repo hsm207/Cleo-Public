@@ -5,7 +5,7 @@ namespace Cleo.Core.Domain.Policies;
 /// <summary>
 /// Defines the policy for evaluating the high-level Session State from low-level signals.
 /// </summary>
-public interface IPulseEvaluationPolicy
+public interface ISessionStatePolicy
 {
     /// <summary>
     /// Evaluates the session state based on the current pulse, history, and delivery status.

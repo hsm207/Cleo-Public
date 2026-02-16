@@ -5,17 +5,17 @@ namespace Cleo.Core.Domain.Policies;
 /// <summary>
 /// Encapsulates the rules for logical session state overrides.
 /// </summary>
-public class AuthoritativeStatePolicy : IPulseEvaluationPolicy
+public class DefaultSessionStatePolicy : ISessionStatePolicy
 {
     public SessionState Evaluate(SessionPulse pulse, IEnumerable<SessionActivity> history, bool isDelivered)
     {
         ArgumentNullException.ThrowIfNull(pulse);
         ArgumentNullException.ThrowIfNull(history);
 
-        var physicalState = MapToState(pulse.Status);
+        var pulseState = MapToState(pulse.Status);
 
         // Logical State Override: If Idle + No PR + Last Activity was Planning -> AwaitingPlanApproval
-        if (physicalState == SessionState.Idle && !isDelivered)
+        if (pulseState == SessionState.Idle && !isDelivered)
         {
             var lastActivity = history
                 .OrderByDescending(a => a.Timestamp)
@@ -27,7 +27,7 @@ public class AuthoritativeStatePolicy : IPulseEvaluationPolicy
             }
         }
 
-        return physicalState;
+        return pulseState;
     }
 
     private static SessionState MapToState(SessionStatus status) => status switch

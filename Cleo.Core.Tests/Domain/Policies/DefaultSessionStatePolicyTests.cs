@@ -5,9 +5,9 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Policies;
 
-public class AuthoritativeStatePolicyTests
+public class DefaultSessionStatePolicyTests
 {
-    private readonly AuthoritativeStatePolicy _policy = new();
+    private readonly DefaultSessionStatePolicy _policy = new();
 
     [Fact(DisplayName = "Evaluate should return AwaitingPlanApproval when Idle, Not Delivered, and Last Significant Activity is Planning.")]
     public void EvaluateShouldOverrideToAwaitingPlanApproval()
