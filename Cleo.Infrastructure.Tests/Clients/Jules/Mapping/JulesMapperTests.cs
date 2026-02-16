@@ -45,7 +45,7 @@ public class JulesMapperTests
             Name: "sessions/123",
             Id: "remote-123",
             State: JulesSessionState.InProgress,
-            Prompt: expectedTask, // <--- Remote Truth
+            Prompt: expectedTask,
             SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
         );
 
@@ -61,14 +61,12 @@ public class JulesMapperTests
             Name: "sessions/123",
             Id: "remote-123",
             State: JulesSessionState.InProgress,
-            Prompt: "", // <--- Empty Remote Truth
+            Prompt: "",
             SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
         );
 
         Assert.Throws<ArgumentException>(() => JulesMapper.Map(dto, _statusMapper));
     }
-
-    // ... (Existing Activity Mapper Tests) ...
 
     [Fact(DisplayName = "Given a planGenerated DTO, PlanningActivityMapper should map it to a PlanningActivity.")]
     public void PlanningActivityMapper_ShouldMap_PlanGenerated()
@@ -96,6 +94,8 @@ public class JulesMapperTests
         activity.Steps.Should().HaveCount(1);
         activity.Steps.First().Title.Should().Be("Do thing");
         activity.Timestamp.Should().BeCloseTo(TestTime, TimeSpan.FromSeconds(1));
+
+        activity.ExecutiveSummary.Should().Be("desc");
     }
 
     [Fact(DisplayName = "Given an agentMessaged DTO, AgentMessageActivityMapper should map it to a MessageActivity.")]
@@ -103,7 +103,7 @@ public class JulesMapperTests
     {
         // Arrange
         var payload = new JulesAgentMessagedPayloadDto("Hello User");
-        var metadata = new JulesActivityMetadataDto("act-2", "rem-2", null, TestTimeStr, "agent", null);
+        var metadata = new JulesActivityMetadataDto("act-2", "rem-2", "Message Summary", TestTimeStr, "agent", null);
         var dto = new JulesActivityDto(metadata, payload);
 
         var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.AgentMessageActivityMapper();
@@ -115,6 +115,8 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<MessageActivity>().Subject;
         activity.Text.Should().Be("Hello User");
         activity.Originator.Should().Be(ActivityOriginator.Agent);
+
+        activity.ExecutiveSummary.Should().Be("Message Summary");
     }
 
     [Fact(DisplayName = "Given a userMessaged DTO, UserMessageActivityMapper should map it to a MessageActivity.")]
@@ -141,7 +143,7 @@ public class JulesMapperTests
     {
         // Arrange
         var payload = new JulesSessionFailedPayloadDto("Critical Error");
-        var metadata = new JulesActivityMetadataDto("act-fail", "rem-fail", null, TestTimeStr, "system", null);
+        var metadata = new JulesActivityMetadataDto("act-fail", "rem-fail", "Failure Summary", TestTimeStr, "system", null);
         var dto = new JulesActivityDto(metadata, payload);
 
         var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.FailureActivityMapper();
@@ -153,6 +155,8 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<FailureActivity>().Subject;
         activity.Reason.Should().Be("Critical Error");
         activity.Originator.Should().Be(ActivityOriginator.System);
+
+        activity.ExecutiveSummary.Should().Be("Failure Summary");
     }
 
     [Fact(DisplayName = "Given an unknown activity type, UnknownActivityMapper should map it to a generic ProgressActivity.")]
@@ -170,8 +174,10 @@ public class JulesMapperTests
 
         // Assert
         var activity = result.Should().BeOfType<ProgressActivity>().Subject;
-        activity.Intent.Should().Contain("Unknown Activity Type: Weird");
-        activity.Thought.Should().Contain("Raw JSON preserved");
+        activity.Intent.Should().Contain("Unknown Activity Type: Weird"); // Mapped from 'Title'
+        activity.Reasoning.Should().Contain("Raw JSON preserved"); // Mapped from 'Description'
+
+        activity.ExecutiveSummary.Should().Be("Strange event");
     }
 
     [Fact(DisplayName = "Given a planApproved DTO, ApprovalActivityMapper should map it to an ApprovalActivity.")]
@@ -197,16 +203,12 @@ public class JulesMapperTests
     public void ArtifactMappingHelper_ShouldMap_MediaArtifact()
     {
         // Arrange
+        // Media data is a list of ArtifactDto
         var mediaDto = new JulesMediaDto("base64data", "image/png");
         var artifactDto = new JulesArtifactDto(null, mediaDto, null);
         var artifacts = new List<JulesArtifactDto> { artifactDto };
 
         // Act
-        // This is static helper logic usually invoked by mappers.
-        // We can test it via a concrete mapper usage or directly if public (it is internal).
-        // Since we are in the same assembly via InternalsVisibleTo (or we invoke it via a mapper flow).
-        // Let's use MessageActivityMapper which uses ArtifactMappingHelper.
-
         var payload = new JulesAgentMessagedPayloadDto("Look at this!");
         var metadata = new JulesActivityMetadataDto("act-media", "rem-media", null, TestTimeStr, "agent", artifacts);
         var dto = new JulesActivityDto(metadata, payload);

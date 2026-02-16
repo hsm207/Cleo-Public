@@ -31,15 +31,13 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             .Select(_activityFactory.FromEnvelope)
             .ToList();
 
-        // Note: The registry is a simple store and might not have all the new metadata yet (e.g. AutomationMode).
-        // We persist the PulseStatus to satisfy the High-Fidelity List requirement (RFC 015).
         var session = new Session(
             new SessionId(dto.SessionId),
-            dto.SessionId, // Fallback RemoteId to SessionId for legacy persisted sessions
+            dto.SessionId,
             (TaskDescription)dto.TaskDescription,
             new SourceContext(dto.Repository, dto.Branch),
             new SessionPulse(dto.PulseStatus), 
-            DateTimeOffset.UtcNow, // Fallback for legacy persisted sessions
+            DateTimeOffset.UtcNow,
             null,
             null,
             null,

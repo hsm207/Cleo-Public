@@ -26,18 +26,18 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
             approval.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json);
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ApprovalActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.PlanId ?? "unknown",
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto.PlanId ?? "unknown",
+            dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
     private sealed record ApprovalPayloadDto(string? RemoteId, string PlanId, List<ArtifactEnvelope> Evidence);

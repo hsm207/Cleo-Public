@@ -27,6 +27,7 @@ internal sealed class ActivityMapperFactory
             Id = activity.Id,
             Timestamp = activity.Timestamp,
             Originator = activity.Originator.ToString(),
+            ExecutiveSummary = activity.ExecutiveSummary,
             PayloadJson = mapper.SerializePayload(activity)
         };
     }
@@ -41,6 +42,11 @@ internal sealed class ActivityMapperFactory
             originator = ActivityOriginator.System;
         }
 
-        return mapper.DeserializePayload(envelope.Id, envelope.Timestamp, originator, envelope.PayloadJson);
+        return mapper.DeserializePayload(
+            envelope.Id,
+            envelope.Timestamp,
+            originator,
+            envelope.PayloadJson,
+            envelope.ExecutiveSummary);
     }
 }

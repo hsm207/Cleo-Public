@@ -55,7 +55,6 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
             }
         }
 
-        // 4. Fallback to a generic payload if none found (keeps things robust) 🛡️
         payload ??= new JulesUnknownPayloadDto("Unknown", node.ToJsonString());
 
         return new JulesActivityDto(metadata, payload);

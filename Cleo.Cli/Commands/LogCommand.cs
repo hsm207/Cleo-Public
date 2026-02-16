@@ -25,7 +25,6 @@ internal sealed class LogCommand
         // Subcommand: view (was activities)
         command.AddCommand(BuildViewCommand());
 
-        // Implementing Recursive Signaling 🧠✨
         command.Description += " More specialized subcommands available. Use --help to explore further.";
 
         return command;
@@ -154,7 +153,7 @@ internal sealed class LogCommand
     private static void RenderActivity(SessionActivity activity)
     {
         var symbol = GetSymbol(activity);
-        var summary = activity.GetContentSummary();
+        var summary = activity.Headline;
         
         // Fallback for empty summaries in progress updates
         if (string.IsNullOrWhiteSpace(summary) && activity is ProgressActivity)
@@ -168,6 +167,12 @@ internal sealed class LogCommand
         // RFC 013: Multi-line Activity Alignment Policy 📏✨
         // "The 💭 Thought must be indented by exactly 10 spaces to align under the timestamp"
         const string LogIndent = "          "; // 10 spaces
+
+        // SubHeadline (New Signal)
+        if (!string.IsNullOrWhiteSpace(activity.SubHeadline))
+        {
+            Console.WriteLine($"{LogIndent}{activity.SubHeadline}");
+        }
 
         // Polymorphic Thoughts 💭
         var thoughts = activity.GetThoughts().ToList();
@@ -192,7 +197,7 @@ internal sealed class LogCommand
 
         PlanningActivity => "🗺️", // Plan Generated
 
-        ProgressActivity p when !string.IsNullOrWhiteSpace(p.Thought) => "🧠", // Agent Thought (Reasoning Signal)
+        ProgressActivity p when !string.IsNullOrWhiteSpace(p.Reasoning) => "🧠", // Agent Thought (Reasoning Signal)
         ProgressActivity => "📡", // Pulse/Heartbeat (Trace Signal)
 
         ApprovalActivity => "✅", // Approval

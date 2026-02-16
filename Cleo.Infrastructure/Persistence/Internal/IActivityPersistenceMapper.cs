@@ -26,5 +26,10 @@ internal interface IActivityPersistenceMapper
     /// <summary>
     /// Hydrates a rich domain activity from an opaque JSON string.
     /// </summary>
-    SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json);
+    SessionActivity DeserializePayload(
+        string id,
+        DateTimeOffset timestamp,
+        ActivityOriginator originator,
+        string json,
+        string? executiveSummary);
 }

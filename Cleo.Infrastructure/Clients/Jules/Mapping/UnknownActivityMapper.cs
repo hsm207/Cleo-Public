@@ -21,7 +21,7 @@ internal sealed class UnknownActivityMapper : IJulesActivityMapper<JulesUnknownP
             ActivityOriginator.System,
             $"Unknown Activity Type: {payload.RawType}",
             "Raw JSON preserved in logs.",
-            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts)
-        );
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
+            dto.Metadata.Description);
     }
 }

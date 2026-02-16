@@ -27,7 +27,8 @@ public abstract record SessionActivity(
     string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
-    IReadOnlyCollection<Artifact> Evidence)
+    IReadOnlyCollection<Artifact> Evidence,
+    string? ExecutiveSummary = null)
 {
     /// <summary>
     /// Returns a human-friendly summary of the activity's primary content.
@@ -53,6 +54,25 @@ public abstract record SessionActivity(
     /// Returns the visual symbol for this activity.
     /// </summary>
     public virtual string GetSymbol() => "🔹";
+
+    /// <summary>
+    /// The authoritative headline for this activity.
+    /// Prioritizes the Executive Summary if available, falling back to the Content Summary.
+    /// </summary>
+    public virtual string Headline => !string.IsNullOrWhiteSpace(ExecutiveSummary) ? ExecutiveSummary : GetContentSummary();
+
+    /// <summary>
+    /// A secondary headline providing additional context or detail.
+    /// Returns the Content Summary if it differs from the Headline (i.e., Executive Summary was used).
+    /// </summary>
+    public virtual string? SubHeadline
+    {
+        get
+        {
+            var content = GetContentSummary();
+            return Headline == ExecutiveSummary && content != Headline ? content : null;
+        }
+    }
 }
 
 /// <summary>
@@ -64,8 +84,9 @@ public record MessageActivity(
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator, 
     string Text,
-    IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => Text;
 
@@ -87,8 +108,9 @@ public record SessionAssignedActivity(
     DateTimeOffset Timestamp,
     ActivityOriginator Originator,
     TaskDescription Task,
-    IReadOnlyCollection<Artifact>? Evidence = null)
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => $"Session Assigned: {Task}";
     public override string GetSymbol() => "🚀";
@@ -104,8 +126,9 @@ public record PlanningActivity(
     ActivityOriginator Originator,
     string PlanId, 
     IReadOnlyCollection<PlanStep> Steps,
-    IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => $"Plan Generated: {PlanId} ({Steps.Count} steps)";
     public override string GetMetaDetail() => $"{base.GetMetaDetail()} | Steps: {Steps.Count}";
@@ -123,8 +146,9 @@ public record ApprovalActivity(
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string PlanId,
-    IReadOnlyCollection<Artifact>? Evidence = null)
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => $"Plan Approved: {PlanId}";
     public override string GetSymbol() => "✅";
@@ -138,22 +162,21 @@ public record ProgressActivity(
     string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
-    string Title,
-    string? Description = null,
-    IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    string Intent,
+    string? Reasoning = null,
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     /// <summary>
     /// The high-level intent or state (e.g., "Working...", "Code Review").
-    /// Maps to the API 'title' field.
     /// </summary>
-    public string Intent => Title;
+    public string Intent { get; init; } = Intent;
 
     /// <summary>
     /// The agent's internal monologue or reasoning signal.
-    /// Maps to the API 'description' field.
     /// </summary>
-    public string? Thought => Description;
+    public string? Reasoning { get; init; } = Reasoning;
 
     public override string GetContentSummary() => Intent;
 
@@ -166,7 +189,7 @@ public record ProgressActivity(
         get
         {
             // Reasoning Signal: Has a non-empty thought/description
-            if (!string.IsNullOrWhiteSpace(Thought)) return true;
+            if (!string.IsNullOrWhiteSpace(Reasoning)) return true;
 
             // Outcome Signal: Has tangible artifacts
             if (Evidence.Count > 0) return true;
@@ -178,11 +201,11 @@ public record ProgressActivity(
 
     public override IEnumerable<string> GetThoughts()
     {
-        if (string.IsNullOrWhiteSpace(Thought)) return Enumerable.Empty<string>();
-        return Thought.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (string.IsNullOrWhiteSpace(Reasoning)) return Enumerable.Empty<string>();
+        return Reasoning.Split('\n', StringSplitOptions.RemoveEmptyEntries);
     }
 
-    public override string GetSymbol() => !string.IsNullOrWhiteSpace(Thought) ? "🧠" : "📡";
+    public override string GetSymbol() => !string.IsNullOrWhiteSpace(Reasoning) ? "🧠" : "📡";
 }
 
 /// <summary>
@@ -193,8 +216,9 @@ public record CompletionActivity(
     string RemoteId,
     DateTimeOffset Timestamp,
     ActivityOriginator Originator,
-    IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => "Session Completed Successfully";
     public override string GetSymbol() => "🏁";
@@ -209,9 +233,14 @@ public record FailureActivity(
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     string Reason,
-    IReadOnlyCollection<Artifact>? Evidence = null) 
-    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>())
+    IReadOnlyCollection<Artifact>? Evidence = null,
+    string? ExecutiveSummary = null)
+    : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
 {
     public override string GetContentSummary() => $"FAILURE: {Reason}";
     public override string GetSymbol() => "💥";
+
+    public override string Headline => Reason;
+
+    public override string? SubHeadline => !string.IsNullOrWhiteSpace(ExecutiveSummary) && ExecutiveSummary != Reason ? ExecutiveSummary : null;
 }
