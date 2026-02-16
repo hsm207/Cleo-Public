@@ -38,7 +38,6 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IVault>(sp => new NativeVault(identityPath, sp.GetRequiredService<IEncryptionStrategy>()));
-        services.AddSingleton<ICredentialStore>(sp => (NativeVault)sp.GetRequiredService<IVault>());
         
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
         services.AddSingleton<IRegistryPathProvider, DefaultRegistryPathProvider>();

@@ -10,13 +10,13 @@ namespace Cleo.Cli.Commands;
 internal sealed class AuthCommand
 {
     private readonly IAuthenticateUserUseCase _authenticateUseCase;
-    private readonly ICredentialStore _credentialStore;
+    private readonly IVault _vault;
     private readonly ILogger<AuthCommand> _logger;
 
-    public AuthCommand(IAuthenticateUserUseCase authenticateUseCase, ICredentialStore credentialStore, ILogger<AuthCommand> logger)
+    public AuthCommand(IAuthenticateUserUseCase authenticateUseCase, IVault vault, ILogger<AuthCommand> logger)
     {
         _authenticateUseCase = authenticateUseCase;
-        _credentialStore = credentialStore;
+        _vault = vault;
         _logger = logger;
     }
 
@@ -65,7 +65,7 @@ internal sealed class AuthCommand
 
     private async Task ExecuteLogoutAsync()
     {
-        await _credentialStore.ClearIdentityAsync(CancellationToken.None).ConfigureAwait(false);
+        await _vault.ClearAsync(CancellationToken.None).ConfigureAwait(false);
         Console.WriteLine("🗑️ Credentials cleared. See you later! 👋🥀");
     }
 }
