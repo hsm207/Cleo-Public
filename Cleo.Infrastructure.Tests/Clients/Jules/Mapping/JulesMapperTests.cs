@@ -39,7 +39,7 @@ public class JulesMapperTests
         activity.Steps.Should().HaveCount(1);
         activity.Steps.First().Title.Should().Be("Do thing");
         activity.Timestamp.Should().BeCloseTo(TestTime, TimeSpan.FromSeconds(1));
-        // RFC 016: Verify Executive Summary
+
         activity.ExecutiveSummary.Should().Be("desc");
     }
 
@@ -60,7 +60,7 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<MessageActivity>().Subject;
         activity.Text.Should().Be("Hello User");
         activity.Originator.Should().Be(ActivityOriginator.Agent);
-        // RFC 016: Verify Executive Summary
+
         activity.ExecutiveSummary.Should().Be("Message Summary");
     }
 
@@ -100,7 +100,7 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<FailureActivity>().Subject;
         activity.Reason.Should().Be("Critical Error");
         activity.Originator.Should().Be(ActivityOriginator.System);
-        // RFC 016: Verify Executive Summary
+
         activity.ExecutiveSummary.Should().Be("Failure Summary");
     }
 
@@ -121,7 +121,7 @@ public class JulesMapperTests
         var activity = result.Should().BeOfType<ProgressActivity>().Subject;
         activity.Intent.Should().Contain("Unknown Activity Type: Weird"); // Mapped from 'Title'
         activity.Reasoning.Should().Contain("Raw JSON preserved"); // Mapped from 'Description'
-        // RFC 016: Verify Executive Summary
+
         activity.ExecutiveSummary.Should().Be("Strange event");
     }
 

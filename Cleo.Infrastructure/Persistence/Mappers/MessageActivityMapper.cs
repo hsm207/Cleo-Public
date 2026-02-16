@@ -28,19 +28,17 @@ internal sealed class MessageActivityMapper : IActivityPersistenceMapper
 
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<MessagePayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<MessagePayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new MessageActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.Text ?? string.Empty,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            dto.Text ?? string.Empty,
+            (dto.Evidence ?? []).Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }
 
-    private sealed record MessagePayloadDto(string? RemoteId, string Text, List<ArtifactEnvelope> Evidence);
+    private sealed record MessagePayloadDto(string? RemoteId, string Text, List<ArtifactEnvelope>? Evidence);
 }
