@@ -29,6 +29,7 @@ internal sealed class SessionStatusEvaluator
             EvaluatePrOutcome(response.State, response.PullRequest),
             time,
             lastActivity.Headline,
+            lastActivity.SubHeadline,
             thoughts.AsReadOnly(),
             artifactSummaries.AsReadOnly());
     }

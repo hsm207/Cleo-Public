@@ -19,6 +19,7 @@ public class StatusPresenterTests
             "⏳ In Progress",
             "12:00",
             "Hello",
+            null, // SubHeadline
             Array.Empty<string>(),
             Array.Empty<string>());
 
@@ -41,6 +42,7 @@ public class StatusPresenterTests
             "⏳ In Progress",
             "12:00",
             "Task",
+            null, // SubHeadline
             thoughts,
             Array.Empty<string>());
 
@@ -62,6 +64,7 @@ public class StatusPresenterTests
             "⏳ In Progress",
             "12:00",
             "Task",
+            null, // SubHeadline
             Array.Empty<string>(),
             artifacts);
 
