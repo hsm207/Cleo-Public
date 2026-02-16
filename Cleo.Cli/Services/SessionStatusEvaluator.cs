@@ -58,14 +58,18 @@ internal sealed class SessionStatusEvaluator
             };
         }
 
+        var prInfo = !string.IsNullOrEmpty(pr.HeadRef)
+            ? $"{pr.HeadRef} | {pr.Url}"
+            : pr.Url.ToString();
+
         return state switch
         {
-            SessionState.Working or SessionState.Planning => $"🔄 Iterating | {pr.Url}",
-            SessionState.AwaitingPlanApproval => $"⏳ Awaiting Plan Approval | {pr.Url}",
-            SessionState.AwaitingFeedback => $"⏳ Awaiting your response... | {pr.Url}",
-            SessionState.Idle => $"✅ {pr.Url}",
-            SessionState.Broken or SessionState.Interrupted => $"🛑 Stalled | {pr.Url}",
-            _ => $"{pr.Url}"
+            SessionState.Working or SessionState.Planning => $"🔄 Iterating | {prInfo}",
+            SessionState.AwaitingPlanApproval => $"⏳ Awaiting Plan Approval | {prInfo}",
+            SessionState.AwaitingFeedback => $"⏳ Awaiting your response... | {prInfo}",
+            SessionState.Idle => $"✅ {prInfo}",
+            SessionState.Broken or SessionState.Interrupted => $"🛑 Stalled | {prInfo}",
+            _ => $"{prInfo}"
         };
     }
 }

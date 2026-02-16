@@ -91,6 +91,26 @@ public class SessionStatusEvaluatorTests
         vm.PrOutcome.Should().Be("🔄 Iterating | https://github.com/pr/1");
     }
 
+    [Fact(DisplayName = "Given Working State with PR and HeadRef, Evaluator should include HeadRef in outcome")]
+    public void ShouldEvaluateWorkingStateWithPrAndHeadRef()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", null, "feature/x", "main");
+        var response = CreateResponse(SessionState.Working, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("🔄 Iterating | feature/x | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Idle State with PR and HeadRef, Evaluator should include HeadRef in success outcome")]
+    public void ShouldEvaluateIdleWithPrAndHeadRef()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", null, "feature/done", "main");
+        var response = CreateResponse(SessionState.Idle, pr);
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("✅ feature/done | https://github.com/pr/1");
+    }
+
     private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr)
     {
         var dummy = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
