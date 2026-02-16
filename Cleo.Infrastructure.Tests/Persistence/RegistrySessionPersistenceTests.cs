@@ -110,13 +110,13 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should persist PullRequest data.")]
+    [Fact(DisplayName = "RegistrySessionWriter should persist PullRequest data with High Fidelity.")]
     public async Task Writer_ShouldPersist_PullRequest()
     {
         // Arrange
         var id = new SessionId("sessions/pr-persistence");
         var session = new Session(id, "remote-pr", new TaskDescription("PR Test"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
-        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/123"), "Fix bug", "Fixed it");
+        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/123"), "Fix bug", "Fixed it", "feature/bugfix", "main");
         session.SetPullRequest(pr);
 
         // Act
@@ -128,10 +128,14 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(pr.Url, result!.PullRequest!.Url);
         Assert.Equal(pr.Title, result.PullRequest.Title);
         Assert.Equal(pr.Description, result.PullRequest.Description);
+        Assert.Equal(pr.HeadRef, result.PullRequest.HeadRef);
+        Assert.Equal(pr.BaseRef, result.PullRequest.BaseRef);
 
-        // Verify JSON contains PR data 💾
+        // Verify JSON contains PR data and topology 💾
         var json = await File.ReadAllTextAsync(_tempFile);
         Assert.Contains("https://github.com/org/repo/pull/123", json);
+        Assert.Contains("feature/bugfix", json);
+        Assert.Contains("main", json);
     }
 
     [Fact(DisplayName = "RegistrySessionWriter should delete sessions correctly.")]
@@ -195,6 +199,40 @@ public class RegistrySessionPersistenceTests : IDisposable
         {
             if (Directory.Exists(nestedDir)) Directory.Delete(nestedDir, true);
         }
+    }
+
+    [Fact(DisplayName = "Reader should deserialize legacy JSON format correctly.")]
+    public async Task Reader_ShouldDeserialize_LegacyFormat()
+    {
+        // Arrange: Create legacy JSON manually
+        var legacyJson = @"
+[
+  {
+    ""SessionId"": ""sessions/legacy-1"",
+    ""TaskDescription"": ""Legacy Task"",
+    ""Repository"": ""org/repo"",
+    ""Branch"": ""legacy-main"",
+    ""PulseStatus"": 2,
+    ""DashboardUri"": ""https://dash"",
+    ""History"": [],
+    ""PullRequestUrl"": ""https://pr/1"",
+    ""PullRequestTitle"": ""Legacy PR"",
+    ""PullRequestDescription"": ""Legacy Desc""
+  }
+]";
+        await File.WriteAllTextAsync(_tempFile, legacyJson);
+
+        // Act
+        var sessions = await _reader.ListAsync(TestContext.Current.CancellationToken);
+        var session = sessions.FirstOrDefault();
+
+        // Assert
+        Assert.NotNull(session);
+        Assert.Equal("sessions/legacy-1", session.Id.Value);
+        Assert.Equal("legacy-main", session.Source.StartingBranch); // Verify Branch -> SourceBranch mapping
+        Assert.NotNull(session.PullRequest);
+        Assert.Equal(new Uri("https://pr/1"), session.PullRequest.Url); // Verify flattened -> Object mapping
+        Assert.Equal("Legacy PR", session.PullRequest.Title);
     }
 
     [Fact(DisplayName = "PhysicalFileSystem should delegate to System.IO.")]

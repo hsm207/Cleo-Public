@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 
@@ -50,10 +51,21 @@ public sealed record RegisteredSessionDto(
     string SessionId,
     string TaskDescription,
     string Repository,
-    string Branch,
+    string? SourceBranch,
     SessionStatus PulseStatus,
     Uri? DashboardUri,
     IReadOnlyCollection<ActivityEnvelopeDto> History,
-    Uri? PullRequestUrl = null,
-    string? PullRequestTitle = null,
-    string? PullRequestDescription = null);
+    RegisteredPullRequestDto? PullRequest = null,
+
+    // Legacy properties for backward compatibility 🔄
+    [property: JsonPropertyName("Branch"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? LegacyBranch = null,
+    [property: JsonPropertyName("PullRequestUrl"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Uri? LegacyPullRequestUrl = null,
+    [property: JsonPropertyName("PullRequestTitle"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? LegacyPullRequestTitle = null,
+    [property: JsonPropertyName("PullRequestDescription"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? LegacyPullRequestDescription = null);
+
+public sealed record RegisteredPullRequestDto(
+    Uri Url,
+    string Title,
+    string? Description,
+    string? HeadRef,
+    string? BaseRef);

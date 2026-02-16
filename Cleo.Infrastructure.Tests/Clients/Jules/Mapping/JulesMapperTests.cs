@@ -68,6 +68,33 @@ public class JulesMapperTests
         Assert.Throws<ArgumentException>(() => JulesMapper.Map(dto, _statusMapper));
     }
 
+    [Fact(DisplayName = "JulesMapper should map PullRequest data with High Fidelity.")]
+    public void JulesMapper_ShouldMap_PullRequest_WithFidelity()
+    {
+        // Arrange
+        var prDto = new PullRequestDto(new Uri("https://pr"), "PR", "Desc", "main", "feature");
+        var outputDto = new JulesOutputDto(null, prDto);
+        var dto = new JulesSessionResponseDto(
+            Name: "sessions/123",
+            Id: "remote-123",
+            State: JulesSessionState.InProgress,
+            Prompt: "Task",
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main")),
+            Outputs: new[] { outputDto }
+        );
+
+        // Act
+        var session = JulesMapper.Map(dto, _statusMapper);
+
+        // Assert
+        session.PullRequest.Should().NotBeNull();
+        session.PullRequest!.Url.Should().Be(prDto.Url);
+        session.PullRequest.Title.Should().Be(prDto.Title);
+        session.PullRequest.Description.Should().Be(prDto.Description);
+        session.PullRequest.HeadRef.Should().Be(prDto.HeadRef);
+        session.PullRequest.BaseRef.Should().Be(prDto.BaseRef);
+    }
+
     [Fact(DisplayName = "Given a planGenerated DTO, PlanningActivityMapper should map it to a PlanningActivity.")]
     public void PlanningActivityMapper_ShouldMap_PlanGenerated()
     {
