@@ -13,17 +13,27 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         _activityFactory = activityFactory;
     }
 
-    public RegisteredSessionDto MapToDto(Session session) => new(
-        session.Id.Value,
-        (string)session.Task,
-        session.Source.Repository,
-        session.Source.StartingBranch,
-        session.Pulse.Status,
-        session.DashboardUri,
-        session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
-        session.PullRequest?.Url,
-        session.PullRequest?.Title,
-        session.PullRequest?.Description);
+    public RegisteredSessionDto MapToDto(Session session)
+    {
+        var prDto = session.PullRequest != null
+            ? new RegisteredPullRequestDto(
+                session.PullRequest.Url,
+                session.PullRequest.Title,
+                session.PullRequest.Description,
+                session.PullRequest.HeadRef,
+                session.PullRequest.BaseRef)
+            : null;
+
+        return new(
+            session.Id.Value,
+            (string)session.Task,
+            session.Source.Repository,
+            session.Source.StartingBranch,
+            session.Pulse.Status,
+            session.DashboardUri,
+            session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
+            prDto);
+    }
 
     public Session MapToDomain(RegisteredSessionDto dto)
     {
@@ -35,7 +45,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             new SessionId(dto.SessionId),
             dto.SessionId,
             (TaskDescription)dto.TaskDescription,
-            new SourceContext(dto.Repository, dto.Branch),
+            new SourceContext(dto.Repository, dto.SourceBranch),
             new SessionPulse(dto.PulseStatus), 
             DateTimeOffset.UtcNow,
             null,
@@ -45,9 +55,14 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             dto.DashboardUri,
             history);
 
-        if (dto.PullRequestUrl != null && dto.PullRequestTitle != null)
+        if (dto.PullRequest != null)
         {
-            session.SetPullRequest(new PullRequest(dto.PullRequestUrl, dto.PullRequestTitle, dto.PullRequestDescription));
+            session.SetPullRequest(new PullRequest(
+                dto.PullRequest.Url,
+                dto.PullRequest.Title,
+                dto.PullRequest.Description,
+                dto.PullRequest.HeadRef,
+                dto.PullRequest.BaseRef));
         }
 
         return session;

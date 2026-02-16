@@ -22,12 +22,12 @@ public class SessionStatusEvaluatorTests
     [Fact(DisplayName = "Given Idle State with PR, Evaluator should return Finished and Success outcome")]
     public void ShouldEvaluateIdleWithPr()
     {
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "Desc", "feature", "main");
         var response = CreateResponse(SessionState.Idle, pr);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Finished");
-        vm.PrOutcome.Should().Be("✅ https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("✅ feature | https://github.com/pr/1");
     }
 
     [Fact(DisplayName = "Given Idle State without PR, Evaluator should return WTF outcome")]
@@ -63,32 +63,32 @@ public class SessionStatusEvaluatorTests
     [Fact(DisplayName = "Given Interrupted State with PR, Evaluator should return Stalled outcome with URL")]
     public void ShouldEvaluateInterruptedStateWithPR()
     {
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "feature", "main");
         var response = CreateResponse(SessionState.Interrupted, pr);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
         vm.StateTitle.Should().Be("Stalled");
-        vm.PrOutcome.Should().Be("🛑 Stalled | https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("🛑 Stalled | feature | https://github.com/pr/1");
     }
 
     [Fact(DisplayName = "Given AwaitingFeedback with PR, Evaluator should return Awaiting response outcome")]
     public void ShouldEvaluateAwaitingFeedbackWithPR()
     {
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "feature", "main");
         var response = CreateResponse(SessionState.AwaitingFeedback, pr);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
-        vm.PrOutcome.Should().Be("⏳ Awaiting your response... | https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("⏳ Awaiting your response... | feature | https://github.com/pr/1");
     }
 
     [Fact(DisplayName = "Given Planning with PR, Evaluator should return Iterating outcome")]
     public void ShouldEvaluatePlanningWithPR()
     {
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "feature", "main");
         var response = CreateResponse(SessionState.Planning, pr);
         var vm = SessionStatusEvaluator.Evaluate(response);
 
-        vm.PrOutcome.Should().Be("🔄 Iterating | https://github.com/pr/1");
+        vm.PrOutcome.Should().Be("🔄 Iterating | feature | https://github.com/pr/1");
     }
 
     private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr)
