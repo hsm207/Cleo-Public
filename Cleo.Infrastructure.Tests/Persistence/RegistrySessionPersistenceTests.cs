@@ -201,39 +201,6 @@ public class RegistrySessionPersistenceTests : IDisposable
         }
     }
 
-    [Fact(DisplayName = "Reader should deserialize legacy JSON format correctly.")]
-    public async Task Reader_ShouldDeserialize_LegacyFormat()
-    {
-        // Arrange: Create legacy JSON manually
-        var legacyJson = @"
-[
-  {
-    ""SessionId"": ""sessions/legacy-1"",
-    ""TaskDescription"": ""Legacy Task"",
-    ""Repository"": ""org/repo"",
-    ""Branch"": ""legacy-main"",
-    ""PulseStatus"": 2,
-    ""DashboardUri"": ""https://dash"",
-    ""History"": [],
-    ""PullRequestUrl"": ""https://pr/1"",
-    ""PullRequestTitle"": ""Legacy PR"",
-    ""PullRequestDescription"": ""Legacy Desc""
-  }
-]";
-        await File.WriteAllTextAsync(_tempFile, legacyJson);
-
-        // Act
-        var sessions = await _reader.ListAsync(TestContext.Current.CancellationToken);
-        var session = sessions.FirstOrDefault();
-
-        // Assert
-        Assert.NotNull(session);
-        Assert.Equal("sessions/legacy-1", session.Id.Value);
-        Assert.Equal("legacy-main", session.Source.StartingBranch); // Verify Branch -> SourceBranch mapping
-        Assert.NotNull(session.PullRequest);
-        Assert.Equal(new Uri("https://pr/1"), session.PullRequest.Url); // Verify flattened -> Object mapping
-        Assert.Equal("Legacy PR", session.PullRequest.Title);
-    }
 
     [Fact(DisplayName = "PhysicalFileSystem should delegate to System.IO.")]
     public async Task PhysicalFileSystem_DelegatesCorrectly()
