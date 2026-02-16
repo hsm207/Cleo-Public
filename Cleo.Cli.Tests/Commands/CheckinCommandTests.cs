@@ -74,7 +74,7 @@ public class CheckinCommandTests : IDisposable
         // Arrange
         var sessionId = "test-session";
         var pulse = new SessionPulse(SessionStatus.AwaitingFeedback);
-        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/1"), "Title", "Open");
+        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/1"), "Title", "Open", "head", "base");
         var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))

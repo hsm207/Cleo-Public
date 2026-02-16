@@ -26,7 +26,7 @@ public sealed class BrowseHistoryUseCaseTests
         var activity = new ProgressActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Did a thing");
         _archivist.History[sessionId] = new List<SessionActivity> { activity };
         
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base");
         _sessionReader.Sessions[sessionId] = new SessionBuilder().WithId(sessionId.Value).Build();
         _sessionReader.Sessions[sessionId].SetPullRequest(pr);
 
