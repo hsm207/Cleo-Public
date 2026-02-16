@@ -15,9 +15,8 @@ public class NarrativeIntelligenceTests
 
         Assert.True(activity.IsSignificant, "Activities with internal monologue must be significant.");
         Assert.Equal("Thinking...", activity.Intent);
-        Assert.Equal("I need to check the files.", activity.Reasoning); // Updated to Reasoning
+        Assert.Equal("I need to check the files.", activity.Reasoning);
 
-        // The summary should contain the intent.
         var summary = activity.GetContentSummary();
         Assert.Equal("Thinking...", summary);
     }
@@ -53,7 +52,7 @@ public class NarrativeIntelligenceTests
         var summary = changeSet.GetSummary();
 
         Assert.Contains("50 Cleo.Core/Domain/* modified", summary, StringComparison.Ordinal);
-        Assert.DoesNotContain("Entity0.cs", summary, StringComparison.Ordinal); // Should hide the wall of text
+        Assert.DoesNotContain("Entity0.cs", summary, StringComparison.Ordinal);
     }
 
     [Fact(DisplayName = "ChangeSet should list files for small changes (Audit Escape Hatch).")]
@@ -66,5 +65,22 @@ public class NarrativeIntelligenceTests
         var summary = changeSet.GetSummary();
 
         Assert.Contains("Updated [File1.cs, File2.cs]", summary, StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "FailureActivity should prioritize Reason over ExecutiveSummary (The Signal Rule).")]
+    public void FailureActivityPrioritizesReasonOverExecutiveSummary()
+    {
+        var executiveSummary = "Session failed";
+        var reason = "403 Forbidden - Quota Exceeded";
+        var activity = new FailureActivity(
+            "id",
+            RemoteId,
+            Now,
+            ActivityOriginator.System,
+            reason,
+            null,
+            executiveSummary);
+
+        Assert.Equal(reason, activity.Headline);
     }
 }
