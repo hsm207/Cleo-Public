@@ -32,9 +32,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             session.Pulse.Status,
             session.DashboardUri,
             session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
-            prDto,
-            // Explicitly set legacy fields to null (they will be ignored by serializer)
-            null, null, null, null);
+            prDto);
     }
 
     public Session MapToDomain(RegisteredSessionDto dto)
@@ -43,14 +41,11 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             .Select(_activityFactory.FromEnvelope)
             .ToList();
 
-        // Backward Compatibility: Fallback to 'Branch' if 'SourceBranch' is missing
-        var sourceBranch = dto.SourceBranch ?? dto.LegacyBranch ?? string.Empty;
-
         var session = new Session(
             new SessionId(dto.SessionId),
             dto.SessionId,
             (TaskDescription)dto.TaskDescription,
-            new SourceContext(dto.Repository, sourceBranch),
+            new SourceContext(dto.Repository, dto.SourceBranch),
             new SessionPulse(dto.PulseStatus), 
             DateTimeOffset.UtcNow,
             null,
@@ -68,14 +63,6 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
                 dto.PullRequest.Description,
                 dto.PullRequest.HeadRef,
                 dto.PullRequest.BaseRef));
-        }
-        else if (dto.LegacyPullRequestUrl != null && !string.IsNullOrWhiteSpace(dto.LegacyPullRequestTitle))
-        {
-            // Backward Compatibility: Fallback to flattened PR fields
-            session.SetPullRequest(new PullRequest(
-                dto.LegacyPullRequestUrl,
-                dto.LegacyPullRequestTitle,
-                dto.LegacyPullRequestDescription));
         }
 
         return session;
