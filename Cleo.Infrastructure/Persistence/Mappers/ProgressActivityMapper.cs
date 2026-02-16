@@ -20,15 +20,22 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
     public string SerializePayload(SessionActivity activity)
     {
         var progress = (ProgressActivity)activity;
-        // RFC 009: We explicitly serialize the 'Thought' (Description) field
+        // RFC 016: Absolute Transformer & Signal Recovery 🛰️💎
+        // Renamed DTO fields to match Domain Language (Breaking Change!)
         return JsonSerializer.Serialize(new ProgressPayloadDto(
             progress.RemoteId,
-            progress.Title,
-            progress.Description,
+            progress.Intent,
+            progress.Reasoning,
             progress.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
+            // Note: ExecutiveSummary is now persisted in the Envelope, not the Payload! 👸💎
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(
+        string id,
+        DateTimeOffset timestamp,
+        ActivityOriginator originator,
+        string json,
+        string? executiveSummary) // Injected from Envelope
     {
         var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json);
         // Fallback RemoteId to id for legacy data
@@ -39,10 +46,16 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
             remoteId,
             timestamp, 
             originator,
-            dto?.Title ?? string.Empty,
-            dto?.Description, // Restores the agent's thought
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto?.Intent ?? string.Empty,
+            dto?.Reasoning, // Restores the agent's thought
+            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary); // Hydrated from Envelope
     }
 
-    private sealed record ProgressPayloadDto(string? RemoteId, string Title, string? Description, List<ArtifactEnvelope> Evidence);
+    // RFC 016: DTO Updated to reflect Domain Language (Intent/Reasoning)
+    private sealed record ProgressPayloadDto(
+        string? RemoteId,
+        string Intent,
+        string? Reasoning,
+        List<ArtifactEnvelope> Evidence);
 }

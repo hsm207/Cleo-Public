@@ -19,9 +19,9 @@ internal sealed class UnknownActivityMapper : IJulesActivityMapper<JulesUnknownP
             dto.Metadata.Id,
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture),
             ActivityOriginator.System,
-            $"Unknown Activity Type: {payload.RawType}",
-            "Raw JSON preserved in logs.",
-            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts)
-        );
+            $"Unknown Activity Type: {payload.RawType}", // Intent
+            "Raw JSON preserved in logs.", // Reasoning
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
+            dto.Metadata.Description); // RFC 016: Executive Summary
     }
 }

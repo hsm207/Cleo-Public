@@ -18,6 +18,7 @@ internal sealed class ApprovalActivityMapper : IJulesActivityMapper<JulesPlanApp
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
             payload.PlanId ?? "unknown",
-            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
+            dto.Metadata.Description); // RFC 016: Executive Summary
     }
 }

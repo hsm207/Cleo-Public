@@ -14,5 +14,6 @@ internal sealed class CompletionActivityMapper : IJulesActivityMapper<JulesSessi
         dto.Metadata.Id, 
         DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
         ActivityOriginatorMapper.Map(dto.Metadata.Originator),
-        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+        ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
+        dto.Metadata.Description); // RFC 016: Executive Summary
 }

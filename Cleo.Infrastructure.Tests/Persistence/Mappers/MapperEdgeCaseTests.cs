@@ -54,7 +54,7 @@ public class MapperEdgeCaseTests
     {
         var envelope = new ActivityEnvelopeDto
         {
-            Type = "FAILED",
+            Type = "FAILURE", // Corrected TypeKey (was FAILED) 🧱🛡️
             Id = "fail-1",
             Timestamp = DateTimeOffset.UtcNow,
             Originator = "System",

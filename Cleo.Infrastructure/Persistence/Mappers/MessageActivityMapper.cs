@@ -26,18 +26,20 @@ internal sealed class MessageActivityMapper : IActivityPersistenceMapper
             message.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
         var dto = JsonSerializer.Deserialize<MessagePayloadDto>(json);
+        // Fallback RemoteId to id for legacy data
         var remoteId = dto?.RemoteId ?? id;
 
         return new MessageActivity(
             id, 
             remoteId,
             timestamp, 
-            originator, 
+            originator,
             dto?.Text ?? string.Empty,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
     private sealed record MessagePayloadDto(string? RemoteId, string Text, List<ArtifactEnvelope> Evidence);

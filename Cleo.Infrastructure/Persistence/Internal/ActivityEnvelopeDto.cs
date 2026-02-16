@@ -19,6 +19,12 @@ public sealed class ActivityEnvelopeDto
     public string Originator { get; init; } = default!;
 
     /// <summary>
+    /// RFC 016: The Executive Summary is now a first-class citizen of the Envelope.
+    /// This ensures visibility even without payload deserialization. 👸💎
+    /// </summary>
+    public string? ExecutiveSummary { get; init; }
+
+    /// <summary>
     /// The opaque, type-specific payload.
     /// Deferred to specialized mappers for serialization.
     /// </summary>
