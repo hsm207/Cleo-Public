@@ -19,6 +19,6 @@ internal sealed class ApprovalActivityMapper : IJulesActivityMapper<JulesPlanApp
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
             payload.PlanId ?? "unknown",
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
-            dto.Metadata.Description); // RFC 016: Executive Summary
+            dto.Metadata.Description);
     }
 }

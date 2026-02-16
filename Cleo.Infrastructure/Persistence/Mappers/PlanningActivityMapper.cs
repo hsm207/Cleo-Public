@@ -13,8 +13,6 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
         _artifactFactory = artifactFactory;
     }
 
-    // RFC 016: Adjusted to "PLAN_GENERATED" to satisfy HighFidelityArchaeologyTests.
-    // This aligns with the "Stable Discriminator" pattern (Event-based naming).
     public string TypeKey => "PLAN_GENERATED";
 
     public bool CanHandle(SessionActivity activity) => activity is PlanningActivity;
@@ -31,21 +29,18 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
 
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<PlanningPayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<PlanningPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
-        var steps = dto?.Steps?.Select(s => new PlanStep(s.Id, s.Index, s.Title, s.Description)).ToList()
-                    ?? new List<PlanStep>();
+        var steps = dto.Steps.Select(s => new PlanStep(s.Id, s.Index, s.Title, s.Description)).ToList();
 
         return new PlanningActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.PlanId ?? "unknown",
+            dto.PlanId ?? "unknown",
             steps,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }
 

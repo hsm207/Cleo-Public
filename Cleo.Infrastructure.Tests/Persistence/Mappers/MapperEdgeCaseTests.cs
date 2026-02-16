@@ -23,7 +23,6 @@ public class MapperEdgeCaseTests
         {
             new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapper),
             new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapper),
-            // Add others if needed for coverage
         };
         _factory = new ActivityMapperFactory(activityMappers);
     }
@@ -37,16 +36,12 @@ public class MapperEdgeCaseTests
             Id = "msg-1",
             Timestamp = DateTimeOffset.UtcNow,
             Originator = "Agent",
-            PayloadJson = "{}" // Missing Text field
+            PayloadJson = "{\"RemoteId\":\"remote-123\"}" // Provided required RemoteId
         };
 
         var activity = _factory.FromEnvelope(envelope);
 
         activity.Should().BeOfType<MessageActivity>();
-        // Assuming default or empty string if missing?
-        // Need to check MessageActivityMapper implementation to be sure.
-        // Usually JSON deserializer leaves it null or default.
-        // If required, it might throw. The goal is to verify behavior.
     }
 
     [Fact(DisplayName = "FailureActivityMapper should handle missing Reason gracefully.")]
@@ -54,11 +49,11 @@ public class MapperEdgeCaseTests
     {
         var envelope = new ActivityEnvelopeDto
         {
-            Type = "FAILURE", // Corrected TypeKey (was FAILED) 🧱🛡️
+            Type = "FAILURE",
             Id = "fail-1",
             Timestamp = DateTimeOffset.UtcNow,
             Originator = "System",
-            PayloadJson = "{}" // Missing Reason
+            PayloadJson = "{\"RemoteId\":\"remote-fail\"}" // Provided required RemoteId
         };
 
         var activity = _factory.FromEnvelope(envelope);

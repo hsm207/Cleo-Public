@@ -19,6 +19,6 @@ internal sealed class FailureActivityMapper : IJulesActivityMapper<JulesSessionF
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
             payload.Reason ?? "Unknown failure",
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
-            dto.Metadata.Description); // RFC 016: Executive Summary
+            dto.Metadata.Description);
     }
 }

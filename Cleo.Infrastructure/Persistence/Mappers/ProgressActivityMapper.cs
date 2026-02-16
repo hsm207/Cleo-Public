@@ -34,25 +34,22 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
         string json,
         string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ProgressActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.Intent ?? string.Empty,
-            dto?.Reasoning,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            dto.Intent,
+            dto.Reasoning,
+            (dto.Evidence ?? []).Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }
 
-    // RFC 016: DTO Updated to reflect Domain Language (Intent/Reasoning)
     private sealed record ProgressPayloadDto(
         string? RemoteId,
         string Intent,
         string? Reasoning,
-        List<ArtifactEnvelope> Evidence);
+        List<ArtifactEnvelope>? Evidence);
 }

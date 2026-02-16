@@ -48,3 +48,4 @@ The following demonstrates the structural granularity and validation loops requi
 ## 6. Narrative & Signal Integrity 📖📡
 *   **Signal-to-Noise Ratio**: Never write comments that restate the obvious or describe **WHAT** the code is doing when the code is readable. Comments must focus on **WHY** (the Intent) or complex invariants only. The code itself is the narrative; the comments are the subtext. 🧼🧹
 *   **Ubiquitous Language**: Ensure that Domain Terminology (e.g., "Intent", "Reasoning") is reflected in the code structure itself, not just in comments. Avoid relying on "Legacy" names or translations.
+*   **Zero-Noise Policy**: Absolutely NO placeholder comments for RFCs (e.g., `// RFC 016`) or feature markers once the code is merged. The code is the truth; the comments are just noise. 🤫💎

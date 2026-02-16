@@ -28,17 +28,15 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
 
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ApprovalActivity(
             id, 
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            dto?.PlanId ?? "unknown",
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            dto.PlanId ?? "unknown",
+            dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }
 

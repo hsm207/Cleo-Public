@@ -27,16 +27,14 @@ internal sealed class CompletionActivityMapper : IActivityPersistenceMapper
 
     public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
-        var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
-        // Fallback RemoteId to id for legacy data
-        var remoteId = dto?.RemoteId ?? id;
+        var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new CompletionActivity(
             id,
-            remoteId,
+            dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp,
             originator,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }
 
