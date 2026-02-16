@@ -123,6 +123,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ISessionArchivist>(sp => (RestJulesActivityClient)sp.GetRequiredService<IJulesActivityClient>());
 
+        // Domain Services
+        services.AddSingleton<Cleo.Core.Domain.Services.IAuthoritativePrResolver, Cleo.Core.Domain.Services.AuthoritativePrResolver>();
+
         // Use Cases
         services.AddScoped<Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
         services.AddScoped<Cleo.Core.UseCases.RefreshPulse.IRefreshPulseUseCase, Cleo.Core.UseCases.RefreshPulse.RefreshPulseUseCase>();

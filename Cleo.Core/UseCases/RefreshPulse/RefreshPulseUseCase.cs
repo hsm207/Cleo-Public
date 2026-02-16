@@ -1,5 +1,6 @@
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
+using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.UseCases.RefreshPulse;
@@ -10,17 +11,20 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     private readonly IJulesActivityClient _activityClient;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
+    private readonly IAuthoritativePrResolver _prResolver;
 
     public RefreshPulseUseCase(
         IPulseMonitor pulseMonitor, 
         IJulesActivityClient activityClient,
         ISessionReader sessionReader, 
-        ISessionWriter sessionWriter)
+        ISessionWriter sessionWriter,
+        IAuthoritativePrResolver prResolver)
     {
         _pulseMonitor = pulseMonitor;
         _activityClient = activityClient;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
+        _prResolver = prResolver;
     }
 
     public async Task<RefreshPulseResponse> ExecuteAsync(RefreshPulseRequest request, CancellationToken cancellationToken = default)
@@ -49,9 +53,10 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
             session.UpdatePulse(remoteSession.Pulse);
             
-            if (remoteSession.PullRequest != null)
+            var authoritativePr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
+            if (authoritativePr != null)
             {
-                session.SetPullRequest(remoteSession.PullRequest);
+                session.SetPullRequest(authoritativePr);
             }
 
             foreach (var activity in activities)
