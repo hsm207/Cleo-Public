@@ -13,17 +13,29 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         _activityFactory = activityFactory;
     }
 
-    public RegisteredSessionDto MapToDto(Session session) => new(
-        session.Id.Value,
-        (string)session.Task,
-        session.Source.Repository,
-        session.Source.StartingBranch,
-        session.Pulse.Status,
-        session.DashboardUri,
-        session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
-        session.PullRequest?.Url,
-        session.PullRequest?.Title,
-        session.PullRequest?.Description);
+    public RegisteredSessionDto MapToDto(Session session)
+    {
+        var prDto = session.PullRequest != null
+            ? new RegisteredPullRequestDto(
+                session.PullRequest.Url,
+                session.PullRequest.Title,
+                session.PullRequest.Description,
+                session.PullRequest.HeadRef,
+                session.PullRequest.BaseRef)
+            : null;
+
+        return new(
+            session.Id.Value,
+            (string)session.Task,
+            session.Source.Repository,
+            session.Source.StartingBranch,
+            session.Pulse.Status,
+            session.DashboardUri,
+            session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
+            prDto,
+            // Explicitly set legacy fields to null (they will be ignored by serializer)
+            null, null, null, null);
+    }
 
     public Session MapToDomain(RegisteredSessionDto dto)
     {
@@ -31,11 +43,14 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             .Select(_activityFactory.FromEnvelope)
             .ToList();
 
+        // Backward Compatibility: Fallback to 'Branch' if 'SourceBranch' is missing
+        var sourceBranch = dto.SourceBranch ?? dto.LegacyBranch ?? string.Empty;
+
         var session = new Session(
             new SessionId(dto.SessionId),
             dto.SessionId,
             (TaskDescription)dto.TaskDescription,
-            new SourceContext(dto.Repository, dto.Branch),
+            new SourceContext(dto.Repository, sourceBranch),
             new SessionPulse(dto.PulseStatus), 
             DateTimeOffset.UtcNow,
             null,
@@ -45,9 +60,22 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             dto.DashboardUri,
             history);
 
-        if (dto.PullRequestUrl != null && dto.PullRequestTitle != null)
+        if (dto.PullRequest != null)
         {
-            session.SetPullRequest(new PullRequest(dto.PullRequestUrl, dto.PullRequestTitle, dto.PullRequestDescription));
+            session.SetPullRequest(new PullRequest(
+                dto.PullRequest.Url,
+                dto.PullRequest.Title,
+                dto.PullRequest.Description,
+                dto.PullRequest.HeadRef,
+                dto.PullRequest.BaseRef));
+        }
+        else if (dto.LegacyPullRequestUrl != null && !string.IsNullOrWhiteSpace(dto.LegacyPullRequestTitle))
+        {
+            // Backward Compatibility: Fallback to flattened PR fields
+            session.SetPullRequest(new PullRequest(
+                dto.LegacyPullRequestUrl,
+                dto.LegacyPullRequestTitle,
+                dto.LegacyPullRequestDescription));
         }
 
         return session;

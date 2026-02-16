@@ -55,7 +55,7 @@ internal static class JulesMapper
         if (prOutput?.PullRequest != null)
         {
             var pr = prOutput.PullRequest;
-            session.SetPullRequest(new PullRequest(pr.Url, pr.Title, pr.Description));
+            session.SetPullRequest(new PullRequest(pr.Url, pr.Title, pr.Description, pr.HeadRef, pr.BaseRef));
         }
 
         return session;

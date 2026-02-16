@@ -8,8 +8,15 @@ public record PullRequest
     public Uri Url { get; init; }
     public string Title { get; init; }
     public string? Description { get; init; }
+    public string? HeadRef { get; init; }
+    public string? BaseRef { get; init; }
 
-    public PullRequest(Uri url, string title, string? description = null)
+    public PullRequest(
+        Uri url,
+        string title,
+        string? description = null,
+        string? headRef = null,
+        string? baseRef = null)
     {
         ArgumentNullException.ThrowIfNull(url);
         
@@ -21,5 +28,7 @@ public record PullRequest
         Url = url;
         Title = title;
         Description = description;
+        HeadRef = headRef;
+        BaseRef = baseRef;
     }
 }

@@ -11,12 +11,16 @@ public class PullRequestTests
         var url = new Uri("https://github.com/org/repo/pull/1");
         var title = "Fix bug";
         var description = "Fixed the bug.";
+        var headRef = "feature-branch";
+        var baseRef = "main";
 
-        var pr = new PullRequest(url, title, description);
+        var pr = new PullRequest(url, title, description, headRef, baseRef);
 
         Assert.Equal(url, pr.Url);
         Assert.Equal(title, pr.Title);
         Assert.Equal(description, pr.Description);
+        Assert.Equal(headRef, pr.HeadRef);
+        Assert.Equal(baseRef, pr.BaseRef);
     }
 
     [Fact(DisplayName = "PullRequest should throw ArgumentNullException if URL is null.")]
