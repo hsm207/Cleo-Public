@@ -168,6 +168,12 @@ internal sealed class LogCommand
         // "The 💭 Thought must be indented by exactly 10 spaces to align under the timestamp"
         const string LogIndent = "          "; // 10 spaces
 
+        // SubHeadline (New Signal)
+        if (!string.IsNullOrWhiteSpace(activity.SubHeadline))
+        {
+            Console.WriteLine($"{LogIndent}{activity.SubHeadline}");
+        }
+
         // Polymorphic Thoughts 💭
         var thoughts = activity.GetThoughts().ToList();
         for (var i = 0; i < thoughts.Count; i++)
