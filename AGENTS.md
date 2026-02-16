@@ -26,7 +26,12 @@
 ## 5. High-Fidelity Planning Mandate
 *   **Avoid Vague Roadmaps**: Broad, 3-step "Standard Plans" (Plan -> Fix -> Submit) are prohibited. Your plan must demonstrate a clear path through the specific problem.
 *   **Granularity**: Aim for logical milestones rather than line-by-line micro-steps. A balanced plan should capture the structural evolution of the change without becoming an administrative burden.
-*   **Critical Task Analysis**: Before generating a plan, explicitly analyze the user's request to identify the root cause, potential risks, and the specific surgical targets. Planning without analysis is hallucination. **If a task feels "Zero-Sum" or risks signal loss, you MUST ask clarifying questions before committing to a roadmap.** 🕵️‍♀️🧠
+*   **Critical Task Analysis (The Contemplation Ritual)**: 🧘‍♀️💎
+    Before generating a plan, you MUST pause and perform a deep-dive analysis of the request. Do not just "accept" the task; challenge it! 🥊✨
+    *   **Root Cause Archaeology**: Ask yourself: *"What is the actual problem this request is trying to solve?"* Is the requested solution just a band-aid for a deeper architectural flaw? 🏺🕵️‍♀️
+    *   **Blast Radius Forecasting**: Ask yourself: *"If I follow this exactly as requested, what could break in the future? What are the second-order effects on UX or Purity?"* 🔮🌪️
+    *   **Alignment Gating**: You **MUST** ask clarifying questions to ensure expectations are perfectly synchronized. Do not commit to a roadmap until you are certain that the "Future Vision" is shared. 🛰️🤝
+    *   **Outcome**: Purity requires contemplation. Planning without critical analysis is just fast-tracking technical debt. 📉🚫
 *   **Anatomy of a Step**: Each milestone must provide visibility into your architectural intent:
     1. **Surgical Target**: Identify the specific files and symbols (classes/methods) to be modified or created.
     2. **Incremental Validation**: Every step MUST include a verification loop (e.g., specific test execution or build check) to ensure the system remains stable throughout the iteration. 🏛️🧪
