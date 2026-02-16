@@ -3,17 +3,21 @@
 ## 1. Core Principles
 *   **Clean Architecture**: Strictly observe the Dependency Rule. All dependencies point toward the Core.
 *   **Domain Purity**: Domain Entities must remain agnostic of presentation (formatting) and infrastructure concerns.
+*   **Narrative Integrity (Commentary Philosophy)**: The code is the narrative; comments are the subtext.
+    *   **Ubiquitous Language**: Core terminology (e.g., Intent, Reasoning) must be reflected in the code structure itself.
+    *   **Signal over Noise**: Avoid "Captain Obvious" comments. Focus exclusively on WHY (Intent) or complex invariants. If the code is readable, the comment is clutter.
+    *   **Zero-Litter**: Absolutely NO placeholder comments or RFC markers (e.g., // RFC 016) in merged code. The Git history is the ledger of record.
 
 ## 2. North Boundary (Infrastructure -> Domain)
 *   **Static Type Fidelity**: Leverage .NET 10 Nullable Reference Types (NRT). Do not implement defensive "soft fallbacks" (e.g., "Unknown Task") for non-nullable DTO properties.
 *   **Fail Fast**: Allow Domain Value Objects to enforce invariants. If remote data is malformed, the system must throw rather than mask the failure.
 
-## 3. Testing Standards
+## 3. Testing Philosophy
+*   **Executable Specifications**: Tests must verify business invariants through public APIs to avoid implementation coupling.
 *   **Humble Fakes (The State Mandate)**: Prefer simple, hand-rolled fakes over complex mocking frameworks. Fakes must be State-Driven, not Logic-Injected.
     *   **No Delegates**: Never inject behavior via lambdas or delegates in tests.
     *   **Scenario Divergence**: Use stateful properties (e.g., ShouldFail, PredefinedResult) to trigger branch logic.
     *   **Behavioral focus**: Fakes should only provide the data necessary to verify Domain Invariants. If you're verifying how a fake was called, you're writing a fragile Mirror Test.
-*   **Executable Specifications**: Tests must verify business invariants through public APIs to avoid implementation coupling.
 *   **Domain Baseline First**: Secure the Domain baseline before the Presentation layer. Avoid the "Integration Illusion" by ensuring Use Case tests explicitly verify all business logic branches (e.g., boolean flags, state transitions) before implementing CLI/UI output.
 
 ## 4. Quality Enforcement & Coverage
@@ -52,8 +56,3 @@ The following demonstrates the structural granularity and validation loops requi
     *   **Surgical Target**: CupcakeFactory.Core (Entire Assembly)
     *   **Action**: Execute the mandated 4-step coverage verification workflow (Purge -> Test -> Report -> Summary).
     *   **Verification**: If frosting coverage is < 100%, implement specific unit tests for "naked" lines and re-verify.
-
-## 6. Narrative & Signal Integrity
-*   **Signal-to-Noise Ratio**: Never write comments that restate the obvious or describe WHAT the code is doing when the code is readable. Comments must focus on WHY (the Intent) or complex invariants only. The code itself is the narrative; the comments are the subtext.
-*   **Ubiquitous Language**: Ensure that Domain Terminology (e.g., "Intent", "Reasoning") is reflected in the code structure itself, not just in comments. Avoid relying on "Legacy" names or translations.
-*   **Zero-Noise Policy**: Absolutely NO placeholder comments for RFCs (e.g., // RFC 016) or feature markers once the code is merged. The code is the truth; the comments are just noise.
