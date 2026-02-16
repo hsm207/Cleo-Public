@@ -54,6 +54,12 @@ public abstract record SessionActivity(
     /// Returns the visual symbol for this activity.
     /// </summary>
     public virtual string GetSymbol() => "🔹";
+
+    /// <summary>
+    /// The authoritative headline for this activity.
+    /// Prioritizes the Executive Summary if available, falling back to the Content Summary.
+    /// </summary>
+    public virtual string Headline => !string.IsNullOrWhiteSpace(ExecutiveSummary) ? ExecutiveSummary : GetContentSummary();
 }
 
 /// <summary>

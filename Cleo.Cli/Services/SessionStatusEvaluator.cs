@@ -17,11 +17,6 @@ internal sealed class SessionStatusEvaluator
 
         var lastActivity = response.LastActivity;
 
-        // Prioritize Executive Summary if available (The Headline Rule)
-        var headline = !string.IsNullOrWhiteSpace(lastActivity.ExecutiveSummary)
-            ? lastActivity.ExecutiveSummary
-            : lastActivity.GetContentSummary();
-
         // Polymorphic extraction for the view model
         var thoughts = lastActivity.GetThoughts().ToList();
         var artifactSummaries = lastActivity.Evidence.Select(e => e.GetSummary()).ToList();
@@ -33,7 +28,7 @@ internal sealed class SessionStatusEvaluator
             FormatStateTitle(response.State),
             EvaluatePrOutcome(response.State, response.PullRequest),
             time,
-            headline,
+            lastActivity.Headline,
             thoughts.AsReadOnly(),
             artifactSummaries.AsReadOnly());
     }
