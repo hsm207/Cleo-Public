@@ -15,7 +15,7 @@ public class NarrativeIntelligenceTests
 
         Assert.True(activity.IsSignificant, "Activities with internal monologue must be significant.");
         Assert.Equal("Thinking...", activity.Intent);
-        Assert.Equal("I need to check the files.", activity.Thought);
+        Assert.Equal("I need to check the files.", activity.Reasoning); // Updated to Reasoning
 
         // The summary should contain the intent.
         var summary = activity.GetContentSummary();

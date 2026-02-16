@@ -19,6 +19,7 @@ internal sealed class PlanningActivityMapper : IJulesActivityMapper<JulesPlanGen
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
             payload.Plan.Id ?? "unknown",
             payload.Plan.Steps?.Select(s => new PlanStep(s.Id, s.Index ?? 0, s.Title ?? string.Empty, s.Description ?? string.Empty)).ToList() ?? new List<PlanStep>(),
-            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts));
+            ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
+            dto.Metadata.Description); // RFC 016: Executive Summary
     }
 }

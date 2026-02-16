@@ -154,7 +154,11 @@ internal sealed class LogCommand
     private static void RenderActivity(SessionActivity activity)
     {
         var symbol = GetSymbol(activity);
-        var summary = activity.GetContentSummary();
+
+        // RFC 016: The Headline Rule 👸💎
+        var summary = !string.IsNullOrWhiteSpace(activity.ExecutiveSummary)
+            ? activity.ExecutiveSummary
+            : activity.GetContentSummary();
         
         // Fallback for empty summaries in progress updates
         if (string.IsNullOrWhiteSpace(summary) && activity is ProgressActivity)
@@ -192,7 +196,8 @@ internal sealed class LogCommand
 
         PlanningActivity => "🗺️", // Plan Generated
 
-        ProgressActivity p when !string.IsNullOrWhiteSpace(p.Thought) => "🧠", // Agent Thought (Reasoning Signal)
+        // RFC 016: Use 'Reasoning' for symbol logic (Breaking Change) 🧠✨
+        ProgressActivity p when !string.IsNullOrWhiteSpace(p.Reasoning) => "🧠", // Agent Thought (Reasoning Signal)
         ProgressActivity => "📡", // Pulse/Heartbeat (Trace Signal)
 
         ApprovalActivity => "✅", // Approval

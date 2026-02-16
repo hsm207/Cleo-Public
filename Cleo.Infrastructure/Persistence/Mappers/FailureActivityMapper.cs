@@ -13,7 +13,7 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
         _artifactFactory = artifactFactory;
     }
 
-    public string TypeKey => "FAILED";
+    public string TypeKey => "FAILURE";
 
     public bool CanHandle(SessionActivity activity) => activity is FailureActivity;
 
@@ -26,9 +26,10 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
             failure.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
         var dto = JsonSerializer.Deserialize<FailurePayloadDto>(json);
+        // Fallback RemoteId to id for legacy data
         var remoteId = dto?.RemoteId ?? id;
 
         return new FailureActivity(
@@ -37,7 +38,8 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
             timestamp, 
             originator,
             dto?.Reason ?? "Unknown failure",
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
     private sealed record FailurePayloadDto(string? RemoteId, string Reason, List<ArtifactEnvelope> Evidence);

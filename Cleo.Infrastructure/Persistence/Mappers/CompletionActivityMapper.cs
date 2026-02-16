@@ -13,21 +13,22 @@ internal sealed class CompletionActivityMapper : IActivityPersistenceMapper
         _artifactFactory = artifactFactory;
     }
 
-    public string TypeKey => "COMPLETED";
+    public string TypeKey => "COMPLETION";
 
     public bool CanHandle(SessionActivity activity) => activity is CompletionActivity;
 
     public string SerializePayload(SessionActivity activity)
     {
-        var completed = (CompletionActivity)activity;
+        var completion = (CompletionActivity)activity;
         return JsonSerializer.Serialize(new CompletionPayloadDto(
-            completed.RemoteId,
-            completed.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
+            completion.RemoteId,
+            completion.Evidence.Select(_artifactFactory.ToEnvelope).ToList()));
     }
 
-    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json)
+    public SessionActivity DeserializePayload(string id, DateTimeOffset timestamp, ActivityOriginator originator, string json, string? executiveSummary)
     {
         var dto = JsonSerializer.Deserialize<CompletionPayloadDto>(json);
+        // Fallback RemoteId to id for legacy data
         var remoteId = dto?.RemoteId ?? id;
 
         return new CompletionActivity(
@@ -35,7 +36,8 @@ internal sealed class CompletionActivityMapper : IActivityPersistenceMapper
             remoteId,
             timestamp,
             originator,
-            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList());
+            dto?.Evidence?.Select(_artifactFactory.FromEnvelope).ToList(),
+            executiveSummary);
     }
 
     private sealed record CompletionPayloadDto(string? RemoteId, List<ArtifactEnvelope> Evidence);
