@@ -60,6 +60,6 @@ public sealed record RegisteredSessionDto(
 public sealed record RegisteredPullRequestDto(
     Uri Url,
     string Title,
-    string? Description,
-    string? HeadRef,
-    string? BaseRef);
+    string Description,
+    string HeadRef,
+    string BaseRef);

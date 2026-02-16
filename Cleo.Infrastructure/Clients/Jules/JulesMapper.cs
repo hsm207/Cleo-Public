@@ -55,7 +55,13 @@ internal static class JulesMapper
         if (prOutput?.PullRequest != null)
         {
             var pr = prOutput.PullRequest;
-            session.SetPullRequest(new PullRequest(pr.Url, pr.Title, pr.Description, pr.HeadRef, pr.BaseRef));
+            // High-Fidelity Mandate: We strictly enforce presence of Description and Topology. 💎
+            session.SetPullRequest(new PullRequest(
+                pr.Url,
+                pr.Title,
+                pr.Description,
+                pr.HeadRef,
+                pr.BaseRef));
         }
 
         return session;

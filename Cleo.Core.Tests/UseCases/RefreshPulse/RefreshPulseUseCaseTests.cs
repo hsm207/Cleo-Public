@@ -137,7 +137,7 @@ public sealed class RefreshPulseUseCaseTests
         var session = new SessionBuilder().WithId(sessionId.Value).Build();
         _sessionReader.Sessions[sessionId] = session;
 
-        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "Title");
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "Title", "desc", "head", "base");
 
         _pulseMonitor.RemoteSessionConfigurator = remoteSession => {
             remoteSession.SetPullRequest(pr);
