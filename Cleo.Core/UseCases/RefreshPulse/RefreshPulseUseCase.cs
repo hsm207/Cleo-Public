@@ -1,5 +1,6 @@
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
+using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.UseCases.RefreshPulse;
@@ -10,17 +11,20 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     private readonly IJulesActivityClient _activityClient;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
+    private readonly IPrResolver _prResolver;
 
     public RefreshPulseUseCase(
         IPulseMonitor pulseMonitor, 
         IJulesActivityClient activityClient,
         ISessionReader sessionReader, 
-        ISessionWriter sessionWriter)
+        ISessionWriter sessionWriter,
+        IPrResolver prResolver)
     {
         _pulseMonitor = pulseMonitor;
         _activityClient = activityClient;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
+        _prResolver = prResolver;
     }
 
     public async Task<RefreshPulseResponse> ExecuteAsync(RefreshPulseRequest request, CancellationToken cancellationToken = default)
@@ -49,10 +53,10 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
             session.UpdatePulse(remoteSession.Pulse);
             
-            if (remoteSession.PullRequest != null)
-            {
-                session.SetPullRequest(remoteSession.PullRequest);
-            }
+            // Resolve the Pull Request (Remote First).
+            // If the resolver returns null (remote is missing), we must purge the local PR (Zombie Artifact).
+            var resolvedPr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
+            session.SetPullRequest(resolvedPr);
 
             foreach (var activity in activities)
             {
