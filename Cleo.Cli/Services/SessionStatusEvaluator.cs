@@ -63,7 +63,6 @@ internal sealed class SessionStatusEvaluator
             };
         }
 
-        // Zero-Hollow Mandate: pr.HeadRef is guaranteed to be non-null and non-empty. 💎
         var prInfo = $"{pr.HeadRef} | {pr.Url}";
 
         return state switch
