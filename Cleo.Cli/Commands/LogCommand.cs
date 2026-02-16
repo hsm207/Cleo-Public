@@ -153,11 +153,7 @@ internal sealed class LogCommand
     private static void RenderActivity(SessionActivity activity)
     {
         var symbol = GetSymbol(activity);
-
-        // Prioritize Executive Summary if available (The Headline Rule)
-        var summary = !string.IsNullOrWhiteSpace(activity.ExecutiveSummary)
-            ? activity.ExecutiveSummary
-            : activity.GetContentSummary();
+        var summary = activity.Headline;
         
         // Fallback for empty summaries in progress updates
         if (string.IsNullOrWhiteSpace(summary) && activity is ProgressActivity)
