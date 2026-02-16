@@ -93,7 +93,7 @@ public class Session : AggregateRoot
     /// </summary>
     public SessionState State => new DefaultSessionStatePolicy().Evaluate(Pulse, SessionLog, IsDelivered);
 
-    public bool IsDelivered => Solution != null || PullRequest != null;
+    public bool IsDelivered => PullRequest != null;
 
     public void UpdatePulse(SessionPulse newPulse)
     {

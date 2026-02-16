@@ -7,12 +7,12 @@ namespace Cleo.Core.Tests.UseCases.AuthenticateUser;
 
 public sealed class AuthenticateUserUseCaseTests
 {
-    private readonly FakeCredentialStore _store = new();
+    private readonly FakeVault _vault = new();
     private readonly AuthenticateUserUseCase _sut;
 
     public AuthenticateUserUseCaseTests()
     {
-        _sut = new AuthenticateUserUseCase(_store);
+        _sut = new AuthenticateUserUseCase(_vault);
     }
 
     [Fact(DisplayName = "Given a valid API Key, when logging in, then the Identity should be persisted in the Vault.")]
@@ -27,8 +27,8 @@ public sealed class AuthenticateUserUseCaseTests
 
         // Assert
         Assert.True(result.Success);
-        Assert.NotNull(_store.Identity);
-        Assert.Equal(apiKey, _store.Identity.ApiKey.Value);
+        Assert.NotNull(_vault.Identity);
+        Assert.Equal(apiKey, _vault.Identity.ApiKey.Value);
     }
 
     [Fact(DisplayName = "Given an empty API Key, when logging in, then it should refuse the Identity.")]
@@ -44,25 +44,28 @@ public sealed class AuthenticateUserUseCaseTests
         Assert.False(result.Success);
         Assert.NotNull(result.Message);
         Assert.Contains("cannot be empty", result.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Null(_store.Identity);
+        Assert.Null(_vault.Identity);
     }
 
-    private sealed class FakeCredentialStore : ICredentialStore
+    private sealed class FakeVault : IVault
     {
         public Identity? Identity { get; private set; }
-        public Task SaveIdentityAsync(Identity identity, CancellationToken cancellationToken = default)
+
+        public Task StoreAsync(Identity identity, CancellationToken cancellationToken = default)
         {
             Identity = identity;
             return Task.CompletedTask;
         }
-        public Task ClearIdentityAsync(CancellationToken cancellationToken = default)
+
+        public Task<Identity?> RetrieveAsync(CancellationToken cancellationToken = default)
+        {
+             return Task.FromResult(Identity);
+        }
+
+        public Task ClearAsync(CancellationToken cancellationToken = default)
         {
             Identity = null;
             return Task.CompletedTask;
-        }
-        public Task<Identity?> GetIdentityAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(Identity);
         }
     }
 }

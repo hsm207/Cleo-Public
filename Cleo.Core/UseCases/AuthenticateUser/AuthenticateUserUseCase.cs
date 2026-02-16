@@ -6,9 +6,9 @@ namespace Cleo.Core.UseCases.AuthenticateUser;
 
 public class AuthenticateUserUseCase : IAuthenticateUserUseCase
 {
-    private readonly ICredentialStore _vault;
+    private readonly IVault _vault;
 
-    public AuthenticateUserUseCase(ICredentialStore vault)
+    public AuthenticateUserUseCase(IVault vault)
     {
         _vault = vault ?? throw new ArgumentNullException(nameof(vault));
     }
@@ -23,7 +23,7 @@ public class AuthenticateUserUseCase : IAuthenticateUserUseCase
         }
 
         var identity = new Identity(new ApiKey(request.ApiKey));
-        await _vault.SaveIdentityAsync(identity, cancellationToken).ConfigureAwait(false);
+        await _vault.StoreAsync(identity, cancellationToken).ConfigureAwait(false);
 
         return new AuthenticateUserResponse(true, "Identity persisted! Systems ready for launch! 🚀✨");
     }

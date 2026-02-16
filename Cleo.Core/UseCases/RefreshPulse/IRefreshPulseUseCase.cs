@@ -10,6 +10,7 @@ public record RefreshPulseResponse(
     SessionState State,
     SessionActivity LastActivity,
     PullRequest? PullRequest = null,
+    bool HasUnsubmittedSolution = false,
     bool IsCached = false,
     string? Warning = null
 );

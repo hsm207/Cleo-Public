@@ -363,23 +363,22 @@ public class SessionTests
         Assert.Equal(SessionState.Idle, session.State);
     }
 
-    [Fact(DisplayName = "IsDelivered should be true if Solution or PR is present.")]
-    public void IsDeliveredShouldBeTrueIfArtifactsPresent()
+    [Fact(DisplayName = "IsDelivered should be true ONLY if PullRequest is present.")]
+    public void IsDeliveredShouldOnlyBeTrueIfPrPresent()
     {
         var session = CreateSession();
 
-        // Case 1: Solution present
+        // Case 1: Solution present, but NO PR
         var patch = new GitPatch("d", "b");
         var changeSet = new ChangeSet("s", patch);
         var evidence = new List<Artifact> { changeSet };
         session.AddActivity(new ProgressActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence));
 
-        Assert.True(session.IsDelivered);
+        Assert.False(session.IsDelivered); // Expect False now!
 
         // Case 2: PR present
-        var session2 = CreateSession();
-        session2.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base"));
-        Assert.True(session2.IsDelivered);
+        session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base"));
+        Assert.True(session.IsDelivered);
     }
 
     [Fact(DisplayName = "SetPullRequest should update property.")]
