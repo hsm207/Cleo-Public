@@ -25,7 +25,6 @@ internal sealed class LogCommand
         // Subcommand: view (was activities)
         command.AddCommand(BuildViewCommand());
 
-        // Implementing Recursive Signaling 🧠✨
         command.Description += " More specialized subcommands available. Use --help to explore further.";
 
         return command;
@@ -155,7 +154,7 @@ internal sealed class LogCommand
     {
         var symbol = GetSymbol(activity);
 
-        // RFC 016: The Headline Rule 👸💎
+        // Prioritize Executive Summary if available (The Headline Rule)
         var summary = !string.IsNullOrWhiteSpace(activity.ExecutiveSummary)
             ? activity.ExecutiveSummary
             : activity.GetContentSummary();
@@ -196,7 +195,6 @@ internal sealed class LogCommand
 
         PlanningActivity => "🗺️", // Plan Generated
 
-        // RFC 016: Use 'Reasoning' for symbol logic (Breaking Change) 🧠✨
         ProgressActivity p when !string.IsNullOrWhiteSpace(p.Reasoning) => "🧠", // Agent Thought (Reasoning Signal)
         ProgressActivity => "📡", // Pulse/Heartbeat (Trace Signal)
 

@@ -27,7 +27,7 @@ internal sealed class ActivityMapperFactory
             Id = activity.Id,
             Timestamp = activity.Timestamp,
             Originator = activity.Originator.ToString(),
-            ExecutiveSummary = activity.ExecutiveSummary, // RFC 016: Executive Summary Persistence 👸💎
+            ExecutiveSummary = activity.ExecutiveSummary,
             PayloadJson = mapper.SerializePayload(activity)
         };
     }
@@ -47,6 +47,6 @@ internal sealed class ActivityMapperFactory
             envelope.Timestamp,
             originator,
             envelope.PayloadJson,
-            envelope.ExecutiveSummary); // RFC 016: Executive Summary Hydration 🛰️✨
+            envelope.ExecutiveSummary);
     }
 }

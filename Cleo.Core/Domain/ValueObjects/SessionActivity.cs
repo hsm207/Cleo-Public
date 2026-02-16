@@ -28,7 +28,7 @@ public abstract record SessionActivity(
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
     IReadOnlyCollection<Artifact> Evidence,
-    string? ExecutiveSummary = null) // RFC 016: The "Headline Rule" 👸💎
+    string? ExecutiveSummary = null)
 {
     /// <summary>
     /// Returns a human-friendly summary of the activity's primary content.
@@ -143,8 +143,8 @@ public record ProgressActivity(
     string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
-    string Intent, // Renamed from Title (RFC 016) 📖✨
-    string? Reasoning = null, // Renamed from Description (RFC 016) 🧠✨
+    string Intent,
+    string? Reasoning = null,
     IReadOnlyCollection<Artifact>? Evidence = null,
     string? ExecutiveSummary = null)
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)
