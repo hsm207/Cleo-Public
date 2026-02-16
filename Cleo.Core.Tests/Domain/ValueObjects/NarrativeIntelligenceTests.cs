@@ -83,4 +83,40 @@ public class NarrativeIntelligenceTests
 
         Assert.Equal(reason, activity.Headline);
     }
+
+    [Fact(DisplayName = "FailureActivity should provide ExecutiveSummary as SubHeadline if distinct.")]
+    public void FailureActivityProvidesSubHeadline()
+    {
+        var executiveSummary = "Session failed";
+        var reason = "403 Forbidden - Quota Exceeded";
+        var activity = new FailureActivity(
+            "id",
+            RemoteId,
+            Now,
+            ActivityOriginator.System,
+            reason,
+            null,
+            executiveSummary);
+
+        Assert.Equal(executiveSummary, activity.SubHeadline);
+    }
+
+    [Fact(DisplayName = "ProgressActivity should provide ContentSummary as SubHeadline if distinct from ExecutiveSummary.")]
+    public void ProgressActivityProvidesSubHeadline()
+    {
+        var executiveSummary = "Refactored Code";
+        var intent = "Updated SessionActivity.cs";
+        var activity = new ProgressActivity(
+            "id",
+            RemoteId,
+            Now,
+            ActivityOriginator.Agent,
+            intent,
+            "Reasoning...",
+            null,
+            executiveSummary);
+
+        Assert.Equal(executiveSummary, activity.Headline);
+        Assert.Equal(intent, activity.SubHeadline);
+    }
 }

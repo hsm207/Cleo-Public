@@ -60,6 +60,19 @@ public abstract record SessionActivity(
     /// Prioritizes the Executive Summary if available, falling back to the Content Summary.
     /// </summary>
     public virtual string Headline => !string.IsNullOrWhiteSpace(ExecutiveSummary) ? ExecutiveSummary : GetContentSummary();
+
+    /// <summary>
+    /// A secondary headline providing additional context or detail.
+    /// Returns the Content Summary if it differs from the Headline (i.e., Executive Summary was used).
+    /// </summary>
+    public virtual string? SubHeadline
+    {
+        get
+        {
+            var content = GetContentSummary();
+            return Headline == ExecutiveSummary && content != Headline ? content : null;
+        }
+    }
 }
 
 /// <summary>
@@ -228,4 +241,6 @@ public record FailureActivity(
     public override string GetSymbol() => "💥";
 
     public override string Headline => Reason;
+
+    public override string? SubHeadline => !string.IsNullOrWhiteSpace(ExecutiveSummary) && ExecutiveSummary != Reason ? ExecutiveSummary : null;
 }
