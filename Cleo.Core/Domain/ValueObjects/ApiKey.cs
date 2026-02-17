@@ -14,7 +14,7 @@ public record ApiKey
             throw new ArgumentException("API Key cannot be empty.", nameof(value));
         }
 
-        Value = value;
+        Value = value.Trim();
     }
 
     public static explicit operator ApiKey(string value) => FromString(value);

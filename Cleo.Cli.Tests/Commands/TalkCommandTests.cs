@@ -1,6 +1,7 @@
 using Cleo.Cli.Commands;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.Correspond;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -42,10 +43,10 @@ public class TalkCommandTests : IDisposable
         // Arrange
         // CorrespondResponse(SessionId Id, DateTimeOffset SentAt)
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<CorrespondRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CorrespondResponse(new SessionId("s1"), DateTimeOffset.UtcNow));
+            .ReturnsAsync(new CorrespondResponse(TestFactory.CreateSessionId("s1"), DateTimeOffset.UtcNow));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("talk s1 -m \"Hello\"");
+        var exitCode = await _command.Build().InvokeAsync("talk sessions/s1 -m \"Hello\"");
 
         // Assert
         exitCode.Should().Be(0);
@@ -60,7 +61,7 @@ public class TalkCommandTests : IDisposable
             .ThrowsAsync(new Exception("Network unavailable"));
 
         // Act
-        await _command.Build().InvokeAsync("talk s1 -m \"Hi\"");
+        await _command.Build().InvokeAsync("talk sessions/s1 -m \"Hi\"");
 
         // Assert
         _stringWriter.ToString().Should().Contain("💔 Error: Network unavailable");

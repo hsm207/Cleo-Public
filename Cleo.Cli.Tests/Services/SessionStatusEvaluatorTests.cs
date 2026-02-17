@@ -2,6 +2,7 @@ using Cleo.Cli.Models;
 using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Xunit;
 
@@ -95,7 +96,7 @@ public class SessionStatusEvaluatorTests
     {
         var dummy = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
         return new RefreshPulseResponse(
-            new SessionId("s1"),
+            TestFactory.CreateSessionId("s1"),
             new SessionPulse(SessionStatus.InProgress),
             state,
             dummy,

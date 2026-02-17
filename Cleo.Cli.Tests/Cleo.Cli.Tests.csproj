@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cleo.Cli\Cleo.Cli.csproj" />
+    <ProjectReference Include="..\Cleo.Tests.Common\Cleo.Tests.Common.csproj" />
   </ItemGroup>
 
 </Project>

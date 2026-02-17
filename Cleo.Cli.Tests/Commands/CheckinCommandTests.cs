@@ -5,6 +5,7 @@ using Cleo.Cli.Presenters;
 using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -46,13 +47,13 @@ public class CheckinCommandTests : IDisposable
     public async Task Status_WithValidSession_DisplaysDetails()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = TestFactory.CreateSessionId("test-session");
         var pulse = new SessionPulse(SessionStatus.InProgress);
         var state = SessionState.Working;
         var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, state, activity));
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId.Value), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RefreshPulseResponse(sessionId, pulse, state, activity));
 
         // Act
         var exitCode = await _command.Build().InvokeAsync($"checkin {sessionId}");
@@ -72,13 +73,13 @@ public class CheckinCommandTests : IDisposable
     public async Task Status_WithPR_DisplaysPRUrl()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = TestFactory.CreateSessionId("test-session");
         var pulse = new SessionPulse(SessionStatus.AwaitingFeedback);
         var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/1"), "Title", "Open", "head", "base");
         var activity = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshPulseResponse(new SessionId(sessionId), pulse, SessionState.AwaitingFeedback, activity, pr));
+            .ReturnsAsync(new RefreshPulseResponse(sessionId, pulse, SessionState.AwaitingFeedback, activity, pr));
 
         // Act
         await _command.Build().InvokeAsync($"checkin {sessionId}");
@@ -91,9 +92,9 @@ public class CheckinCommandTests : IDisposable
     public async Task Status_WithWarning_DisplaysWarning()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = TestFactory.CreateSessionId("test-session");
         var response = new RefreshPulseResponse(
-            new SessionId(sessionId),
+            sessionId,
             new SessionPulse(SessionStatus.InProgress),
             SessionState.Working,
             new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy"),
@@ -117,7 +118,7 @@ public class CheckinCommandTests : IDisposable
             .ThrowsAsync(new Exception("Network unavailable"));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("checkin session-123");
+        var exitCode = await _command.Build().InvokeAsync("checkin sessions/session-123");
 
         // Assert
         exitCode.Should().Be(0); // Handled exception

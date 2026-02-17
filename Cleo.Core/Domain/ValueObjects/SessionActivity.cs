@@ -124,7 +124,7 @@ public record PlanningActivity(
     string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
-    string PlanId, 
+    PlanId PlanId,
     IReadOnlyCollection<PlanStep> Steps,
     IReadOnlyCollection<Artifact>? Evidence = null,
     string? ExecutiveSummary = null)
@@ -145,7 +145,7 @@ public record ApprovalActivity(
     string RemoteId,
     DateTimeOffset Timestamp, 
     ActivityOriginator Originator,
-    string PlanId,
+    PlanId PlanId,
     IReadOnlyCollection<Artifact>? Evidence = null,
     string? ExecutiveSummary = null)
     : SessionActivity(Id, RemoteId, Timestamp, Originator, Evidence ?? Array.Empty<Artifact>(), ExecutiveSummary)

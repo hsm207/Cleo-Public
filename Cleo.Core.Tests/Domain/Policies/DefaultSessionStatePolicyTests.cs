@@ -17,7 +17,7 @@ public class DefaultSessionStatePolicyTests
         var history = new List<SessionActivity>
         {
             new SessionAssignedActivity("id1", "rem1", DateTimeOffset.UtcNow, ActivityOriginator.System, (TaskDescription)"Task"),
-            new PlanningActivity("id2", "rem2", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") })
+            new PlanningActivity("id2", "rem2", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, new PlanId("plans/Plan"), new[] { new PlanStep("1", 0, "T", "D") })
         };
         var isDelivered = false;
 
@@ -36,7 +36,7 @@ public class DefaultSessionStatePolicyTests
         var history = new List<SessionActivity>
         {
             new SessionAssignedActivity("id1", "rem1", DateTimeOffset.UtcNow, ActivityOriginator.System, (TaskDescription)"Task"),
-            new PlanningActivity("id2", "rem2", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") })
+            new PlanningActivity("id2", "rem2", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, new PlanId("plans/Plan"), new[] { new PlanStep("1", 0, "T", "D") })
         };
         var isDelivered = true;
 

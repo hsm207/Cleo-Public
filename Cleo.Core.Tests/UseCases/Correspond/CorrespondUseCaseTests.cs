@@ -1,6 +1,7 @@
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.Correspond;
+using Cleo.Tests.Common;
 using Xunit;
 using Cleo.Core.Tests.Builders;
 
@@ -21,8 +22,8 @@ public sealed class CorrespondUseCaseTests
     public async Task ShouldSendMessage()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/123");
-        var session = new SessionBuilder().WithId("sessions/123").Build();
+        var sessionId = TestFactory.CreateSessionId("123");
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
         _reader.Sessions[sessionId] = session;
         var request = new CorrespondRequest(sessionId, "Hello");
 
@@ -38,7 +39,7 @@ public sealed class CorrespondUseCaseTests
     public async Task ShouldThrowWhenHandleNotFound()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/ ghost");
+        var sessionId = TestFactory.CreateSessionId("ghost");
         var request = new CorrespondRequest(sessionId, "Hi");
 
         // Act & Assert

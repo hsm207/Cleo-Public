@@ -30,7 +30,7 @@ public class RestSessionControllerTests
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.BadRequest });
 
-        var act = async () => await _sut.ApprovePlanAsync(new SessionId("s"), CancellationToken.None);
+        var act = async () => await _sut.ApprovePlanAsync(new SessionId("sessions/s"), CancellationToken.None);
 
         await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
     }
@@ -42,7 +42,7 @@ public class RestSessionControllerTests
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-        await _sut.ApprovePlanAsync(new SessionId("s"), CancellationToken.None);
+        await _sut.ApprovePlanAsync(new SessionId("sessions/s"), CancellationToken.None);
 
         _handlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
     }

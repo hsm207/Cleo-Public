@@ -129,7 +129,7 @@ public class SessionTests
         var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep("step-1", 0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, new PlanId("plans/plan-1"), new[] { new PlanStep("step-1", 0, "T", "D") }));
         session.AddActivity(new MessageActivity("a2", "r2", now, ActivityOriginator.User, "msg"));
         session.AddActivity(new ProgressActivity("a3", "r3", now, ActivityOriginator.Agent, "working"));
         session.AddActivity(new FailureActivity("a4", "r4", now, ActivityOriginator.System, "error"));
@@ -302,7 +302,7 @@ public class SessionTests
         var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, "plan-1", new[] { new PlanStep("s1", 0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", "r1", now, ActivityOriginator.Agent, new PlanId("plans/plan-1"), new[] { new PlanStep("s1", 0, "T", "D") }));
         session.AddActivity(new ProgressActivity("a2", "r2", now, ActivityOriginator.Agent, "working")); // Not significant
         session.AddActivity(new MessageActivity("a3", "r3", now, ActivityOriginator.User, "msg"));
         session.AddActivity(new ProgressActivity("a4", "r4", now, ActivityOriginator.Agent, "working more")); // Not significant
@@ -326,7 +326,7 @@ public class SessionTests
         var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        var plan = new PlanningActivity("a1", "r1", now.AddMinutes(1), ActivityOriginator.Agent, "plan", new[] { new PlanStep("1", 0, "T", "D") });
+        var plan = new PlanningActivity("a1", "r1", now.AddMinutes(1), ActivityOriginator.Agent, new PlanId("plans/plan"), new[] { new PlanStep("1", 0, "T", "D") });
         session.AddActivity(plan);
 
         // Add a non-significant activity later
@@ -340,7 +340,7 @@ public class SessionTests
     {
         var session = CreateSession();
         // 1. Last significant activity is Planning
-        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plans/Plan"), new[] { new PlanStep("1", 0, "T", "D") }));
 
         // 2. Pulse is Idle (Completed)
         session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
@@ -355,7 +355,7 @@ public class SessionTests
     public void StateShouldNotOverrideIfPrPresent()
     {
         var session = CreateSession();
-        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") }));
+        session.AddActivity(new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plans/Plan"), new[] { new PlanStep("1", 0, "T", "D") }));
         session.UpdatePulse(new SessionPulse(SessionStatus.Completed));
         session.SetPullRequest(new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base"));
 
@@ -396,7 +396,7 @@ public class SessionTests
     public void GetLatestPlanShouldUseStrategy()
     {
         var session = CreateSession();
-        var plan = new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Plan", new[] { new PlanStep("1", 0, "T", "D") });
+        var plan = new PlanningActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plans/Plan"), new[] { new PlanStep("1", 0, "T", "D") });
         session.AddActivity(plan);
 
         var retrievedPlan = session.GetLatestPlan(); // Default strategy

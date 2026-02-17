@@ -1,6 +1,7 @@
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.ForgetSession;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.ForgetSession;
@@ -19,7 +20,7 @@ public sealed class ForgetSessionUseCaseTests
     public async Task ShouldForgetSession()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/123");
+        var sessionId = TestFactory.CreateSessionId("123");
         var request = new ForgetSessionRequest(sessionId);
 
         // Act

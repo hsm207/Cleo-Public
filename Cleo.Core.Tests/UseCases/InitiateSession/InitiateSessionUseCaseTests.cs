@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.InitiateSession;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.InitiateSession;
@@ -23,7 +24,7 @@ public class InitiateSessionUseCaseTests
         // Arrange
         var request = new InitiateSessionRequest(
             TaskDescription: "Fix the bug",
-            RepoContext: "my/repo",
+            RepoContext: "sources/my/repo",
             StartingBranch: "main"
         );
 
@@ -47,7 +48,7 @@ public class InitiateSessionUseCaseTests
         // Arrange
         var request = new InitiateSessionRequest(
             TaskDescription: "Fix the bug",
-            RepoContext: "my/repo",
+            RepoContext: "sources/my/repo",
             StartingBranch: "main",
             UserProvidedTitle: "My Cute Title"
         );
@@ -64,7 +65,7 @@ public class InitiateSessionUseCaseTests
     {
         // Arrange
         var longTask = new string('a', 100);
-        var request = new InitiateSessionRequest(longTask, "repo", "branch");
+        var request = new InitiateSessionRequest(longTask, "sources/repo", "branch");
 
         // Act
         await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
@@ -103,7 +104,7 @@ public class InitiateSessionUseCaseTests
         {
             LastOptions = options;
             var session = new Session(
-                new SessionId("sessions/fake-123"),
+                TestFactory.CreateSessionId("fake-123"),
                 "remote-fake-123",
                 task,
                 source,

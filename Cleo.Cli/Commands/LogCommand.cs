@@ -34,7 +34,7 @@ internal sealed class LogCommand
     {
         var command = new Command("view", "View the Session Log for a session 📜");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
         var allOption = new Option<bool>("--all", "Display all activities, including technical heartbeats.");

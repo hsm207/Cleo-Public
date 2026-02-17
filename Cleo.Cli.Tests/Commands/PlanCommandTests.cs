@@ -46,13 +46,13 @@ public class PlanCommandTests : IDisposable
     public async Task View_WithPlan_DisplaysDetails()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var steps = new List<PlanStepModel>
         {
             new(1, "Do thing", "Desc") // PlanStepModel(int Index, string Title, string Description)
         };
         // ViewPlanResponse(bool HasPlan, string? PlanId, DateTimeOffset? Timestamp, IReadOnlyList<PlanStepModel> Steps, bool IsApproved)
-        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, true);
+        var response = new ViewPlanResponse(true, new PlanId("plans/plan-123"), DateTimeOffset.UtcNow, steps, true);
 
         _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.Is<ViewPlanRequest>(r => r.SessionId.Value == sessionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
@@ -64,7 +64,7 @@ public class PlanCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🗺️ Approved Plan: plan-123");
+        output.Should().Contain("🗺️ Approved Plan: plans/plan-123");
         output.Should().Contain("1. Do thing");
     }
 
@@ -72,9 +72,9 @@ public class PlanCommandTests : IDisposable
     public async Task View_ProposedPlan_DisplaysProposedTitle()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var steps = new List<PlanStepModel> { new(1, "Step 1", "Desc") };
-        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, false); // IsApproved = false
+        var response = new ViewPlanResponse(true, new PlanId("plans/plan-123"), DateTimeOffset.UtcNow, steps, false); // IsApproved = false
 
         _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
@@ -86,20 +86,20 @@ public class PlanCommandTests : IDisposable
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
 
-        output.Should().Contain("🗺️ Proposed Plan: plan-123");
+        output.Should().Contain("🗺️ Proposed Plan: plans/plan-123");
     }
 
     [Fact(DisplayName = "Given a plan with descriptions, when running 'plan view', then it should display the descriptions with indentation.")]
     public async Task View_WithDescription_DisplaysIndentedDescription()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var description = "First line\nSecond line";
         var steps = new List<PlanStepModel>
         {
             new(1, "Step Title", description)
         };
-        var response = new ViewPlanResponse(true, "plan-123", DateTimeOffset.UtcNow, steps, true);
+        var response = new ViewPlanResponse(true, new PlanId("plans/plan-123"), DateTimeOffset.UtcNow, steps, true);
 
         _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
@@ -119,7 +119,7 @@ public class PlanCommandTests : IDisposable
     public async Task View_NoPlan_DisplaysMessage()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var response = ViewPlanResponse.Empty(); // HasPlan = false
 
         _viewPlanUseCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ViewPlanRequest>(), It.IsAny<CancellationToken>()))
@@ -140,7 +140,7 @@ public class PlanCommandTests : IDisposable
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("plan view s1");
+        var exitCode = await _command.Build().InvokeAsync("plan view sessions/s1");
 
         // Assert
         exitCode.Should().Be(0);

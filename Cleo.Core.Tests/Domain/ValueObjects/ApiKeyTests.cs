@@ -41,4 +41,13 @@ public class ApiKeyTests
         // 4. String Representation
         Assert.Equal(raw, key.ToString());
     }
+
+    [Fact(DisplayName = "ApiKey should trim whitespace.")]
+    public void ShouldTrimWhitespace()
+    {
+        var raw = "  my-secret-key  ";
+        var expected = "my-secret-key";
+        var key = new ApiKey(raw);
+        Assert.Equal(expected, key.Value);
+    }
 }

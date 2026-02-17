@@ -1,10 +1,12 @@
+using Cleo.Core.Domain.ValueObjects;
+
 namespace Cleo.Core.UseCases.ViewPlan;
 
 public record PlanStepModel(int Index, string Title, string Description);
 
 public record ViewPlanResponse(
     bool HasPlan,
-    string? PlanId,
+    PlanId? PlanId,
     DateTimeOffset? Timestamp,
     IReadOnlyList<PlanStepModel> Steps,
     bool IsApproved

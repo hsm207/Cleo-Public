@@ -30,7 +30,7 @@ public class RestSessionMessengerTests
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.InternalServerError });
 
-        var act = async () => await _sut.SendMessageAsync(new SessionId("s"), "msg", CancellationToken.None);
+        var act = async () => await _sut.SendMessageAsync(new SessionId("sessions/s"), "msg", CancellationToken.None);
 
         await act.Should().ThrowAsync<RemoteCollaboratorUnavailableException>();
     }
@@ -42,7 +42,7 @@ public class RestSessionMessengerTests
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-        await _sut.SendMessageAsync(new SessionId("s"), "Hello", CancellationToken.None);
+        await _sut.SendMessageAsync(new SessionId("sessions/s"), "Hello", CancellationToken.None);
 
         _handlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
     }

@@ -2,6 +2,7 @@ using Cleo.Cli.Commands;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.InitiateSession;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -48,23 +49,23 @@ public class NewCommandTests : IDisposable
     public async Task New_Valid_InitiatesSession()
     {
         // Arrange
-        var sessionId = new SessionId("session-123");
+        var sessionId = TestFactory.CreateSessionId("session-123");
         var dashboardUri = new Uri("https://portal.jules.ai/123");
         var createdSession = new Cleo.Core.Domain.Entities.Session(
-            sessionId, "remote-1", new TaskDescription("Do thing"), new SourceContext("repo", "main"),
+            sessionId, "remote-1", new TaskDescription("Do thing"), TestFactory.CreateSourceContext("repo"),
             new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
 
         _julesClientMock.Setup(x => x.CreateSessionAsync(It.IsAny<TaskDescription>(), It.IsAny<SourceContext>(), It.IsAny<SessionCreationOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdSession);
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("new \"Do the thing\" --repo my-repo");
+        var exitCode = await _command.Build().InvokeAsync("new \"Do the thing\" --repo sources/my-repo");
 
         // Assert
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
         output.Should().Contain("✨ Session initiated successfully!");
-        output.Should().Contain("session-123");
+        output.Should().Contain("sessions/session-123");
         output.Should().Contain("https://portal.jules.ai/123");
 
         // Verify persistence was called
@@ -75,16 +76,16 @@ public class NewCommandTests : IDisposable
     public async Task New_WithTitle_UsesTitle()
     {
         // Arrange
-        var sessionId = new SessionId("session-title");
+        var sessionId = TestFactory.CreateSessionId("session-title");
         var createdSession = new Cleo.Core.Domain.Entities.Session(
-            sessionId, "remote-1", new TaskDescription("Task"), new SourceContext("repo", "main"),
+            sessionId, "remote-1", new TaskDescription("Task"), TestFactory.CreateSourceContext("repo"),
             new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
         _julesClientMock.Setup(x => x.CreateSessionAsync(It.IsAny<TaskDescription>(), It.IsAny<SourceContext>(), It.Is<SessionCreationOptions>(o => o.Title == "My Title"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdSession);
 
         // Act
-        await _command.Build().InvokeAsync("new \"Task\" --repo r -t \"My Title\"");
+        await _command.Build().InvokeAsync("new \"Task\" --repo sources/r -t \"My Title\"");
 
         // Assert
         _julesClientMock.VerifyAll();
@@ -106,7 +107,7 @@ public class NewCommandTests : IDisposable
             .ThrowsAsync(new Exception("API Error"));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("new \"Fail\" --repo r");
+        var exitCode = await _command.Build().InvokeAsync("new \"Fail\" --repo sources/r");
 
         // Assert
         exitCode.Should().Be(0); // Handled

@@ -52,17 +52,19 @@ public class SessionActivityTests
     [Fact(DisplayName = "ApprovalActivity should display plan ID.")]
     public void ApprovalActivityFormatting()
     {
-        var activity = new ApprovalActivity("id", RemoteId, Now, ActivityOriginator.User, "plan-123");
-        Assert.Equal("Plan Approved: plan-123", activity.GetContentSummary());
+        var planId = new PlanId("plans/123");
+        var activity = new ApprovalActivity("id", RemoteId, Now, ActivityOriginator.User, planId);
+        Assert.Equal("Plan Approved: plans/123", activity.GetContentSummary());
     }
 
     [Fact(DisplayName = "PlanningActivity should display step count and plan ID.")]
     public void PlanningActivityFormatting()
     {
         var steps = new[] { new PlanStep("s1", 1, "T", "D") };
-        var activity = new PlanningActivity("id", RemoteId, Now, ActivityOriginator.Agent, "plan-1", steps);
+        var planId = new PlanId("plans/1");
+        var activity = new PlanningActivity("id", RemoteId, Now, ActivityOriginator.Agent, planId, steps);
 
-        Assert.Equal("Plan Generated: plan-1 (1 steps)", activity.GetContentSummary());
+        Assert.Equal("Plan Generated: plans/1 (1 steps)", activity.GetContentSummary());
         Assert.Contains("Steps: 1", activity.GetMetaDetail(), StringComparison.Ordinal);
     }
 
@@ -119,14 +121,14 @@ public class SessionActivityTests
     [Fact(DisplayName = "PlanningActivity should return 🗺️.")]
     public void PlanningActivityShouldReturnMap()
     {
-        var act = new PlanningActivity("1", "r1", Now, ActivityOriginator.Agent, "plan", Array.Empty<PlanStep>());
+        var act = new PlanningActivity("1", "r1", Now, ActivityOriginator.Agent, new PlanId("plans/p1"), Array.Empty<PlanStep>());
         Assert.Equal("🗺️", act.GetSymbol());
     }
 
     [Fact(DisplayName = "ApprovalActivity should return ✅.")]
     public void ApprovalActivityShouldReturnCheck()
     {
-        var act = new ApprovalActivity("1", "r1", Now, ActivityOriginator.User, "plan");
+        var act = new ApprovalActivity("1", "r1", Now, ActivityOriginator.User, new PlanId("plans/p1"));
         Assert.Equal("✅", act.GetSymbol());
     }
 
