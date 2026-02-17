@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Cleo.Core\Cleo.Core.csproj" />
@@ -22,6 +22,20 @@
     <AnalysisLevel>latest-all</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NoWarn>$(NoWarn);CA1303;CA2007;CA1031</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>cleo</ToolCommandName>
+    <PackageId>Cleo.Cli</PackageId>
+    <Version>0.1.0-alpha</Version>
+    <Authors>hsm207</Authors>
+    <Description>A professional command-line interface for managing development sessions and tasks.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
