@@ -1,6 +1,7 @@
 using Cleo.Cli.Commands;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ForgetSession;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -40,9 +41,9 @@ public class ForgetCommandTests : IDisposable
     public async Task Forget_Valid_RemovesSession()
     {
         // Arrange
-        var sessionId = "session-123";
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<ForgetSessionRequest>(r => r.Id.Value == sessionId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ForgetSessionResponse(new SessionId(sessionId)));
+        var sessionId = TestFactory.CreateSessionId("session-123");
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<ForgetSessionRequest>(r => r.Id.Value == sessionId.Value), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ForgetSessionResponse(sessionId));
 
         // Act
         var exitCode = await _command.Build().InvokeAsync($"forget {sessionId}");
@@ -60,7 +61,7 @@ public class ForgetCommandTests : IDisposable
             .ThrowsAsync(new Exception("Registry locked"));
 
         // Act
-        await _command.Build().InvokeAsync("forget s1");
+        await _command.Build().InvokeAsync("forget sessions/s1");
 
         // Assert
         _stringWriter.ToString().Should().Contain("Error: Registry locked");

@@ -1,6 +1,7 @@
 using Cleo.Cli.Commands;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ApprovePlan;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -42,10 +43,10 @@ public class ApproveCommandTests : IDisposable
         // Arrange
         var now = DateTimeOffset.UtcNow;
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ApprovePlanRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ApprovePlanResponse(new SessionId("s1"), "p1", now));
+            .ReturnsAsync(new ApprovePlanResponse(TestFactory.CreateSessionId("s1"), TestFactory.CreatePlanId("p1"), now));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("approve s1 p1");
+        var exitCode = await _command.Build().InvokeAsync("approve sessions/s1 plans/p1");
 
         // Assert
         exitCode.Should().Be(0);
@@ -60,7 +61,7 @@ public class ApproveCommandTests : IDisposable
             .ThrowsAsync(new Exception("Plan not found"));
 
         // Act
-        await _command.Build().InvokeAsync("approve s1 p1");
+        await _command.Build().InvokeAsync("approve sessions/s1 plans/p1");
 
         // Assert
         _stringWriter.ToString().Should().Contain("💔 Error: Plan not found");

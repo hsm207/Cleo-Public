@@ -20,6 +20,11 @@ public record SourceContext
             throw new ArgumentException("Starting branch cannot be empty.", nameof(startingBranch));
         }
 
+        if (!repository.StartsWith("sources/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Repository name must start with 'sources/'.", nameof(repository));
+        }
+
         Repository = repository;
         StartingBranch = startingBranch;
     }

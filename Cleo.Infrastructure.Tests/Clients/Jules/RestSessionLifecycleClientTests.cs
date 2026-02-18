@@ -29,16 +29,16 @@ public class RestSessionLifecycleClientTests
     {
         // Arrange
         var task = new TaskDescription("Refactor the world");
-        var source = new SourceContext("cleo-repo", "main");
+        var source = new SourceContext("sources/cleo-repo", "main");
         var options = new SessionCreationOptions(AutomationMode.AutoCreatePr, "Refactor Session", true);
         
         // The mock response
         var responseDto = new JulesSessionResponseDto(
-            Name: "session-1",
+            Name: "sessions/session-1",
             Id: "id",
             State: JulesSessionState.Queued,
             Prompt: "Refactor the world",
-            SourceContext: new JulesSourceContextDto("repo", new JulesGithubRepoContextDto("main")),
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("sources/repo")),
             Url: null,
             RequirePlanApproval: true,
             AutomationMode: JulesAutomationMode.AutoCreatePr,
@@ -56,7 +56,7 @@ public class RestSessionLifecycleClientTests
         var result = await _client.CreateSessionAsync(task, source, options, CancellationToken.None);
 
         // Assert - Verify the Result
-        Assert.Equal("session-1", result.Id.Value);
+        Assert.Equal("sessions/session-1", result.Id.Value);
 
         // Assert - Verify the Contract (The "Spec" part)
         // We ensure the client sent the EXACT structure defined in our new Request DTOs.
@@ -76,7 +76,7 @@ public class RestSessionLifecycleClientTests
     {
         // Arrange
         var task = new TaskDescription("Task");
-        var source = new SourceContext("repo", "main");
+        var source = new SourceContext("sources/repo", "main");
         var options = new SessionCreationOptions(AutomationMode.Unspecified, "Title", false);
 
         _handlerMock.Protected()
@@ -95,7 +95,7 @@ public class RestSessionLifecycleClientTests
     {
         // Arrange
         var task = new TaskDescription("Task");
-        var source = new SourceContext("repo", "main");
+        var source = new SourceContext("sources/repo", "main");
         var options = new SessionCreationOptions(AutomationMode.Unspecified, "Title", false);
 
         _handlerMock.Protected()

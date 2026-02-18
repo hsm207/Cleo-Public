@@ -1,6 +1,7 @@
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.ApprovePlan;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.ApprovePlan;
@@ -19,8 +20,8 @@ public sealed class ApprovePlanUseCaseTests
     public async Task ShouldTransmitApprovalSignal()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-session");
-        var planId = "plan-abc";
+        var sessionId = TestFactory.CreateSessionId("active-session");
+        var planId = TestFactory.CreatePlanId("plan-abc");
         var request = new ApprovePlanRequest(sessionId, planId);
 
         // Act

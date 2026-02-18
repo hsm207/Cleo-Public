@@ -3,6 +3,7 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Persistence.Mappers;
+using Cleo.Tests.Common;
 using Moq;
 
 #pragma warning disable xUnit1051 // Use TestContext.Current.CancellationToken (VIP Lounge Rules: We already are!)
@@ -67,9 +68,9 @@ public class RegistrySessionPersistenceTests : IDisposable
     public async Task Writer_ShouldSave_AndReader_ShouldLoad()
     {
         // Arrange
-        var id = new SessionId("sessions/real-vibes-1");
+        var id = TestFactory.CreateSessionId("real-vibes-1");
         var dashboardUri = new Uri("https://jules.ai/sessions/1");
-        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), new SourceContext("repo", "main"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
+        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
         var activity = new ProgressActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Initial thought");
         session.AddActivity(activity);
 
@@ -96,9 +97,9 @@ public class RegistrySessionPersistenceTests : IDisposable
     public async Task Writer_ShouldUpdate_ExistingSession()
     {
         // Arrange
-        var id = new SessionId("sessions/update-test");
-        var initial = new Session(id, "remote-2", new TaskDescription("Initial"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
-        var updated = new Session(id, "remote-2", new TaskDescription("Updated"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.Completed), DateTimeOffset.UtcNow);
+        var id = TestFactory.CreateSessionId("update-test");
+        var initial = new Session(id, "remote-2", new TaskDescription("Initial"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        var updated = new Session(id, "remote-2", new TaskDescription("Updated"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.Completed), DateTimeOffset.UtcNow);
 
         // Act
         await _writer.RememberAsync(initial, TestContext.Current.CancellationToken);
@@ -114,8 +115,8 @@ public class RegistrySessionPersistenceTests : IDisposable
     public async Task Writer_ShouldPersist_PullRequest()
     {
         // Arrange
-        var id = new SessionId("sessions/pr-persistence");
-        var session = new Session(id, "remote-pr", new TaskDescription("PR Test"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+        var id = TestFactory.CreateSessionId("pr-persistence");
+        var session = new Session(id, "remote-pr", new TaskDescription("PR Test"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
         var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/123"), "Fix bug", "Fixed it", "feature/bugfix", "main");
         session.SetPullRequest(pr);
 
@@ -142,8 +143,8 @@ public class RegistrySessionPersistenceTests : IDisposable
     public async Task Writer_ShouldDelete_Session()
     {
         // Arrange
-        var id = new SessionId("sessions/delete-me");
-        var session = new Session(id, "remote-3", new TaskDescription("Bye bye"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        var id = TestFactory.CreateSessionId("delete-me");
+        var session = new Session(id, "remote-3", new TaskDescription("Bye bye"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
         // Act
         await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
@@ -184,7 +185,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
 
         var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
-        var session = new Session(new SessionId("s"), "r", new TaskDescription("t"), new SourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        var session = new Session(TestFactory.CreateSessionId("s"), "r", new TaskDescription("t"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
 
         try
         {

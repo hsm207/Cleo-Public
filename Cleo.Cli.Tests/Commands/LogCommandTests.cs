@@ -1,6 +1,7 @@
 using Cleo.Cli.Commands;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.BrowseHistory;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -41,7 +42,7 @@ public class LogCommandTests : IDisposable
     public async Task View_WithDiverseActivities_RendersSymbols()
     {
         // Arrange
-        var sessionId = new SessionId("test-session");
+        var sessionId = TestFactory.CreateSessionId("test-session");
         var timestamp = DateTimeOffset.UtcNow;
         var steps = new List<PlanStep> { new PlanStep("step-1", 1, "Do thing", "Desc") };
         var evidence = new List<Artifact>();
@@ -50,8 +51,8 @@ public class LogCommandTests : IDisposable
         {
             new MessageActivity("msg-1", "remote-1", timestamp, ActivityOriginator.User, "User Msg"), // 👤
             new MessageActivity("msg-2", "remote-2", timestamp, ActivityOriginator.Agent, "Agent Msg"), // 👸
-            new PlanningActivity("plan-1", "remote-3", timestamp, ActivityOriginator.Agent, "plan-id", steps), // 🗺️
-            new ApprovalActivity("app-1", "remote-4", timestamp, ActivityOriginator.User, "plan-id"), // ✅
+            new PlanningActivity("plan-1", "remote-3", timestamp, ActivityOriginator.Agent, TestFactory.CreatePlanId("plan-id"), steps), // 🗺️
+            new ApprovalActivity("app-1", "remote-4", timestamp, ActivityOriginator.User, TestFactory.CreatePlanId("plan-id")), // ✅
             new ProgressActivity("prog-1", "remote-5", timestamp, ActivityOriginator.Agent, "Thinking...", "I am thinking", evidence), // 🧠 (Reasoning)
             new ProgressActivity("prog-2", "remote-6", timestamp, ActivityOriginator.Agent, "Working...", null, new List<Artifact> { new MediaArtifact("image/png", "data") }), // 📦 (Outcome)
             new CompletionActivity("comp-1", "remote-7", timestamp, ActivityOriginator.Agent), // 🏁
@@ -81,7 +82,7 @@ public class LogCommandTests : IDisposable
     public async Task View_NoActivities_DisplaysEmptyMessage()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         SetupUseCase(sessionId, new List<SessionActivity>());
 
         // Act
@@ -96,7 +97,7 @@ public class LogCommandTests : IDisposable
     public async Task View_UseCaseFailure_HandlesException()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseHistoryRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Network error"));
 
@@ -104,13 +105,6 @@ public class LogCommandTests : IDisposable
         var exitCode = await _command.Build().InvokeAsync($"log view {sessionId}");
 
         // Assert
-        // Exit code is 0 because the command handles the exception and prints an error message (it returns void Task).
-        // Wait, strictly speaking, System.CommandLine handles exceptions if not caught, but here we catch it.
-        // The command returns `Task`, not `Task<int>`. System.CommandLine infers exit code 0 if successful completion of the handler.
-        // We catch the exception, print error, and return. So exit code is 0.
-        // If we wanted non-zero, we'd need to set context.ExitCode or rethrow.
-        // The current implementation just prints "Error: ...".
-
         exitCode.Should().Be(0);
         var output = _stringWriter.ToString();
         output.Should().Contain("💔 Error: Network error");
@@ -126,13 +120,11 @@ public class LogCommandTests : IDisposable
             Times.Once);
     }
 
-    // ... Existing tests ...
-
     [Fact(DisplayName = "Given a noisy session log, when viewing the narrative summary, then it should exclude technical heartbeats and show gap markers.")]
     public async Task GivenNoisyLog_WhenViewingSummary_ThenExcludesHeartbeatsAndShowsGapMarkers()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>
         {
@@ -160,7 +152,7 @@ public class LogCommandTests : IDisposable
     public async Task GivenManyMilestones_WhenViewingSummary_ThenShowsTruncationAndFooter()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>();
 
@@ -196,7 +188,7 @@ public class LogCommandTests : IDisposable
     public async Task GivenCustomLimit_WhenViewing_ThenRespectsLimit()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>();
 
@@ -227,7 +219,7 @@ public class LogCommandTests : IDisposable
     public async Task GivenNoisyLog_WhenViewingAll_ThenShowsEverything()
     {
         // Arrange
-        var sessionId = "test-session";
+        var sessionId = "sessions/test-session";
         var now = DateTimeOffset.UtcNow;
         var history = new List<SessionActivity>
         {

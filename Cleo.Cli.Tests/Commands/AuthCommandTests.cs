@@ -24,7 +24,6 @@ public class AuthCommandTests : IDisposable
         _vaultMock = new Mock<IVault>();
         _loggerMock = new Mock<ILogger<AuthCommand>>();
 
-        // Arrange SUT
         _command = new AuthCommand(_useCaseMock.Object, _vaultMock.Object, _loggerMock.Object);
 
         _stringWriter = new StringWriter();

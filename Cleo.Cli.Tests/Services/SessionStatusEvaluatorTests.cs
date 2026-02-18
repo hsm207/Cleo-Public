@@ -2,6 +2,7 @@ using Cleo.Cli.Models;
 using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Xunit;
 
@@ -38,6 +39,20 @@ public class SessionStatusEvaluatorTests
 
         vm.StateTitle.Should().Be("Finished");
         vm.PrOutcome.Should().Be("WTF?! 🤪 (Finished with no PR)");
+    }
+
+    [Fact(DisplayName = "Given Unsubmitted Solution (Ghost Mode), Evaluator should return explicit warning.")]
+    public void ShouldEvaluateUnsubmittedSolution()
+    {
+        // Arrange
+        // No PR, but HasUnsubmittedSolution = true
+        var response = CreateResponse(SessionState.Idle, null, hasUnsubmittedSolution: true);
+
+        // Act
+        var vm = SessionStatusEvaluator.Evaluate(response);
+
+        // Assert
+        vm.PrOutcome.Should().Be("⚠️ Solution Ready (Unsubmitted) | Open a PR!");
     }
 
     [Fact(DisplayName = "Given AwaitingPlanApproval, Evaluator should return Waiting for You")]
@@ -91,14 +106,15 @@ public class SessionStatusEvaluatorTests
         vm.PrOutcome.Should().Be("🔄 Iterating | feature | https://github.com/pr/1");
     }
 
-    private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr)
+    private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr, bool hasUnsubmittedSolution = false)
     {
         var dummy = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
         return new RefreshPulseResponse(
-            new SessionId("s1"),
+            TestFactory.CreateSessionId("s1"),
             new SessionPulse(SessionStatus.InProgress),
             state,
             dummy,
-            pr);
+            pr,
+            HasUnsubmittedSolution: hasUnsubmittedSolution);
     }
 }

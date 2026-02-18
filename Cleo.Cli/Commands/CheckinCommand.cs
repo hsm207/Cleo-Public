@@ -29,7 +29,7 @@ internal sealed class CheckinCommand
     {
         var command = new Command("checkin", "Check in on the progress and state of a session 🧘‍♀️");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);

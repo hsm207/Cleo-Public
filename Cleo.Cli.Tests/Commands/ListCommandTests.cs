@@ -2,6 +2,7 @@ using Cleo.Cli.Commands;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ListSessions;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -43,7 +44,7 @@ public class ListCommandTests : IDisposable
         // Arrange
         var sessions = new List<Session>
         {
-            new Session(new SessionId("s1"), "r1", new TaskDescription("Task 1"), new SourceContext("src", "main"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow)
+            new Session(TestFactory.CreateSessionId("s1"), "r1", new TaskDescription("Task 1"), TestFactory.CreateSourceContext("src"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow)
         };
         var response = new ListSessionsResponse(sessions);
 

@@ -24,7 +24,7 @@ internal sealed class TalkCommand
     {
         var command = new Command("talk", "Send a message to Jules 💬");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
         var messageOption = new Option<string>(MessageAliases, "The message or guidance to send.")

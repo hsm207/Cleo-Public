@@ -3,6 +3,7 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Clients.Jules;
 using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
 using Cleo.Infrastructure.Clients.Jules.Mapping;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Xunit;
 
@@ -22,7 +23,7 @@ public class JulesMapperTests
             Id: "remote-123",
             State: JulesSessionState.InProgress,
             Prompt: "Task prompt",
-            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main")),
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("sources/repo")),
             Url: new Uri("https://dash"),
             RequirePlanApproval: true,
             AutomationMode: JulesAutomationMode.AutomationModeUnspecified,
@@ -46,7 +47,7 @@ public class JulesMapperTests
             Id: "remote-123",
             State: JulesSessionState.InProgress,
             Prompt: expectedTask,
-            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("sources/main"))
         );
 
         var session = JulesMapper.Map(dto, _statusMapper);
@@ -62,37 +63,41 @@ public class JulesMapperTests
             Id: "remote-123",
             State: JulesSessionState.InProgress,
             Prompt: "",
-            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main"))
+            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("sources/main"))
         );
 
         Assert.Throws<ArgumentException>(() => JulesMapper.Map(dto, _statusMapper));
     }
 
-    [Fact(DisplayName = "JulesMapper should map PullRequest data with High Fidelity.")]
-    public void JulesMapper_ShouldMap_PullRequest_WithFidelity()
+    [Fact(DisplayName = "JulesMapper should heal dirty legacy remote data by applying prefixes.")]
+    public void JulesMapper_ShouldHeal_DirtyRemoteData()
     {
         // Arrange
-        var prDto = new PullRequestDto(new Uri("https://pr"), "PR", "Desc", "main", "feature");
-        var outputDto = new JulesOutputDto(null, prDto);
+        // Simulate a "Dirty" response from a legacy API version or mock
+        var dirtyId = TestFactory.Data.LegacySessionId; // "123"
+        var dirtyRepo = TestFactory.Data.LegacyRepo;    // "user/repo"
+
         var dto = new JulesSessionResponseDto(
-            Name: "sessions/123",
+            Name: dirtyId,
             Id: "remote-123",
             State: JulesSessionState.InProgress,
             Prompt: "Task",
-            SourceContext: new JulesSourceContextDto("org", new JulesGithubRepoContextDto("main")),
-            Outputs: new[] { outputDto }
+            SourceContext: new JulesSourceContextDto(dirtyRepo, new JulesGithubRepoContextDto("main")),
+            Url: null,
+            RequirePlanApproval: false,
+            AutomationMode: JulesAutomationMode.AutomationModeUnspecified,
+            CreateTime: TestTimeStr,
+            UpdateTime: null,
+            Title: "Title",
+            Outputs: null
         );
 
         // Act
         var session = JulesMapper.Map(dto, _statusMapper);
 
         // Assert
-        session.PullRequest.Should().NotBeNull();
-        session.PullRequest!.Url.Should().Be(prDto.Url);
-        session.PullRequest.Title.Should().Be(prDto.Title);
-        session.PullRequest.Description.Should().Be(prDto.Description);
-        session.PullRequest.HeadRef.Should().Be(prDto.HeadRef);
-        session.PullRequest.BaseRef.Should().Be(prDto.BaseRef);
+        session.Id.Value.Should().Be($"sessions/{dirtyId}");
+        session.Source.Repository.Should().Be($"sources/{dirtyRepo}");
     }
 
     [Fact(DisplayName = "Given a planGenerated DTO, PlanningActivityMapper should map it to a PlanningActivity.")]
@@ -105,7 +110,7 @@ public class JulesMapperTests
             new("step1", "Do thing", "Desc", 0)
         };
         // JulesPlanDto(Id, Steps, CreateTime)
-        var plan = new JulesPlanDto("plan-1", steps, TestTimeStr);
+        var plan = new JulesPlanDto("plans/plan-1", steps, TestTimeStr);
         var payload = new JulesPlanGeneratedPayloadDto(plan);
         var metadata = new JulesActivityMetadataDto("act-1", "rem-1", "desc", TestTimeStr, "agent", null);
         var dto = new JulesActivityDto(metadata, payload);
@@ -117,7 +122,7 @@ public class JulesMapperTests
 
         // Assert
         var activity = result.Should().BeOfType<PlanningActivity>().Subject;
-        activity.PlanId.Should().Be("plan-1");
+        activity.PlanId.Value.Should().Be("plans/plan-1");
         activity.Steps.Should().HaveCount(1);
         activity.Steps.First().Title.Should().Be("Do thing");
         activity.Timestamp.Should().BeCloseTo(TestTime, TimeSpan.FromSeconds(1));
@@ -211,7 +216,7 @@ public class JulesMapperTests
     public void ApprovalActivityMapper_ShouldMap_PlanApproved()
     {
         // Arrange
-        var payload = new JulesPlanApprovedPayloadDto("plan-123");
+        var payload = new JulesPlanApprovedPayloadDto("plans/plan-123");
         var metadata = new JulesActivityMetadataDto("act-app", "rem-app", null, TestTimeStr, "user", null);
         var dto = new JulesActivityDto(metadata, payload);
 
@@ -222,7 +227,7 @@ public class JulesMapperTests
 
         // Assert
         var activity = result.Should().BeOfType<ApprovalActivity>().Subject;
-        activity.PlanId.Should().Be("plan-123");
+        activity.PlanId.Value.Should().Be("plans/plan-123");
         activity.Originator.Should().Be(ActivityOriginator.User);
     }
 

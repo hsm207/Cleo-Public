@@ -22,7 +22,7 @@ internal sealed class ForgetCommand
     {
         var command = new Command("forget", "Forget a session from the local Session Registry 🧹");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);

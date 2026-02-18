@@ -3,6 +3,7 @@ using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.UseCases.BrowseHistory;
 using Cleo.Core.Tests.Builders;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.BrowseHistory;
@@ -22,7 +23,7 @@ public sealed class BrowseHistoryUseCaseTests
     public async Task ShouldReturnChronologicalHistory()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/active-session");
+        var sessionId = TestFactory.CreateSessionId("active-session");
         var activity = new ProgressActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Did a thing");
         _archivist.History[sessionId] = new List<SessionActivity> { activity };
         

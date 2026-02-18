@@ -39,7 +39,7 @@ internal sealed class PlanCommand
     {
         var command = new Command("view", "View the authoritative roadmap for a session 🔭");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteViewAsync(sessionId), sessionIdArgument);

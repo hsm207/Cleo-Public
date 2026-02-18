@@ -14,6 +14,11 @@ public record SessionId
             throw new ArgumentException("Session identifier cannot be empty.", nameof(value));
         }
 
+        if (!value.StartsWith("sessions/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Session identifier must start with 'sessions/'.", nameof(value));
+        }
+
         Value = value;
     }
 

@@ -29,7 +29,7 @@ internal sealed class NewCommand
         var taskArgument = new Argument<string>("task", "The high-level goal or task for Jules.");
         command.AddArgument(taskArgument);
 
-        var repoOption = new Option<string>(RepoAliases, "The repository name (format: sources/{source})");
+        var repoOption = new Option<string>(RepoAliases, "The repository name (e.g., sources/github/user/repo)");
         command.AddOption(repoOption);
 
         var branchOption = new Option<string>(BranchAliases, () => "main", "The starting branch");

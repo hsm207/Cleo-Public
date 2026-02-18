@@ -22,10 +22,10 @@ internal sealed class ApproveCommand
     {
         var command = new Command("approve", "Approve a generated plan 👍");
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID.");
+        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
 
-        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve.");
+        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve (e.g., plans/456).");
         command.AddArgument(planIdArgument);
 
         command.SetHandler(async (sessionId, planId) => await ExecuteAsync(sessionId, planId), sessionIdArgument, planIdArgument);
@@ -37,7 +37,7 @@ internal sealed class ApproveCommand
     {
         try
         {
-            var request = new ApprovePlanRequest(new SessionId(sessionId), planId);
+            var request = new ApprovePlanRequest(new SessionId(sessionId), new PlanId(planId));
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
             Console.WriteLine($"✅ Plan {response.PlanId} approved for session {sessionId} at {response.ApprovedAt:t}! Let's go! 🚀");

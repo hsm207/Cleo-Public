@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Persistence.Mappers;
+using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -47,7 +48,8 @@ public class HighFidelityArchaeologyTests
             new("step-1", 0, "Step 1", "Description 1"),
             new("step-2", 1, "Step 2", "Description 2")
         };
-        var original = new PlanningActivity("act-123", "remote-123", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-456", originalSteps);
+        // Raw Truth: Use TestFactory.CreatePlanId (which now returns bare "plan-456")
+        var original = new PlanningActivity("act-123", "remote-123", DateTimeOffset.UtcNow, ActivityOriginator.Agent, TestFactory.CreatePlanId("plan-456"), originalSteps);
 
         // Act
         var envelope = factory.ToEnvelope(original);
@@ -55,7 +57,7 @@ public class HighFidelityArchaeologyTests
 
         // Assert
         hydrated.Should().NotBeNull();
-        hydrated!.PlanId.Should().Be("plan-456");
+        hydrated!.PlanId.Value.Should().Be("plan-456");
         hydrated.Steps.Should().BeEquivalentTo(originalSteps);
     }
 
@@ -89,7 +91,7 @@ public class HighFidelityArchaeologyTests
     {
         // Arrange
         var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
-        var activity = new PlanningActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "p1", new List<PlanStep>());
+        var activity = new PlanningActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, TestFactory.CreatePlanId("p1"), new List<PlanStep>());
 
         // Act
         var envelope = factory.ToEnvelope(activity);
@@ -102,15 +104,15 @@ public class HighFidelityArchaeologyTests
     public void Session_EvaluatesSessionStateLogically_WhenIdleButBlockedOnPlan()
     {
         // Arrange
-        var sessionId = new SessionId("sessions/123");
+        var sessionId = TestFactory.CreateSessionId("123");
         var task = (TaskDescription)"Fix bug";
-        var source = new SourceContext("repo", "main");
+        var source = TestFactory.CreateSourceContext("repo");
         
         // A session that is physically IDLE (Completed) but has a Plan and NO PR
         var pulse = new SessionPulse(SessionStatus.Completed);
         var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
         
-        session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "plan-1", new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
+        session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, TestFactory.CreatePlanId("plan-1"), new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
 
         // Act & Assert
         session.Pulse.Status.Should().Be(SessionStatus.Completed); 
@@ -172,7 +174,8 @@ public class HighFidelityArchaeologyTests
     {
         // Arrange
         var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
-        var original = new ApprovalActivity("app-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.User, "plan-123");
+        // Raw Truth: Use TestFactory.CreatePlanId (which now returns bare "plan-123")
+        var original = new ApprovalActivity("app-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.User, TestFactory.CreatePlanId("plan-123"));
 
         // Act
         var envelope = factory.ToEnvelope(original);
@@ -180,7 +183,7 @@ public class HighFidelityArchaeologyTests
 
         // Assert
         hydrated.Should().NotBeNull();
-        hydrated!.PlanId.Should().Be("plan-123");
+        hydrated!.PlanId.Value.Should().Be("plan-123");
     }
 
     [Fact(DisplayName = "Round-Trip: SessionAssignedActivity preserves task 🏺")]
@@ -205,10 +208,10 @@ public class HighFidelityArchaeologyTests
         // Arrange
         var mapper = _serviceProvider.GetRequiredService<IRegistryTaskMapper>();
         var original = new Session(
-            new SessionId("sessions/1"),
+            TestFactory.CreateSessionId("1"),
             "remote-1",
             (TaskDescription)"Mission",
-            new SourceContext("repo", "main"),
+            TestFactory.CreateSourceContext("repo"),
             new SessionPulse(SessionStatus.Completed),
             DateTimeOffset.UtcNow);
 

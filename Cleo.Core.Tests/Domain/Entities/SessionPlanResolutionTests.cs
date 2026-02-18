@@ -37,7 +37,7 @@ public class SessionPlanResolutionTests
     {
         // Given
         var session = CreateSession();
-        var plan = new PlanningActivity("plan-1", "remote-p1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "p1", Array.Empty<PlanStep>());
+        var plan = new PlanningActivity("plan-1", "remote-p1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plans/p1"), Array.Empty<PlanStep>());
 
         session.AddActivity(new ProgressActivity("prog-1", "remote-prog-1", DateTimeOffset.UtcNow.AddMinutes(1), ActivityOriginator.Agent, "working..."));
         session.AddActivity(plan);
@@ -58,8 +58,8 @@ public class SessionPlanResolutionTests
         var session = CreateSession();
         var now = DateTimeOffset.UtcNow;
 
-        var planAlpha = new PlanningActivity("plan-alpha", "remote-alpha", now, ActivityOriginator.Agent, "alpha", Array.Empty<PlanStep>());
-        var planBeta = new PlanningActivity("plan-beta", "remote-beta", now.AddHours(1), ActivityOriginator.Agent, "beta", Array.Empty<PlanStep>());
+        var planAlpha = new PlanningActivity("plan-alpha", "remote-alpha", now, ActivityOriginator.Agent, new PlanId("plans/alpha"), Array.Empty<PlanStep>());
+        var planBeta = new PlanningActivity("plan-beta", "remote-beta", now.AddHours(1), ActivityOriginator.Agent, new PlanId("plans/beta"), Array.Empty<PlanStep>());
 
         session.AddActivity(planAlpha);
         session.AddActivity(new ProgressActivity("prog-1", "remote-prog-1", now.AddMinutes(30), ActivityOriginator.Agent, "working on alpha"));

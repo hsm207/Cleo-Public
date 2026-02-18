@@ -17,6 +17,16 @@ public class SessionIdTests
         Assert.Throws<ArgumentNullException>(() => (string)nullId!);
     }
 
+    [Theory(DisplayName = "SessionId should enforce validity invariants (prefix).")]
+    [InlineData("123")]
+    [InlineData("session/123")] // missing 's'
+    [InlineData("projects/123")]
+    public void ShouldEnforcePrefix(string invalidValue)
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new SessionId(invalidValue));
+        Assert.Contains("must start with 'sessions/'", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact(DisplayName = "SessionId should behave as a valid value object (Factory, Conversion, Equality).")]
     public void ShouldBehaveAsValidValue()
     {

@@ -19,12 +19,16 @@ internal static class JulesMapper
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
         
         // High-Fidelity Mapping: Use 'Prompt' as the authoritative TaskDescription.
-        // We strictly trust the NRT contract. If Prompt is null/empty, the Value Object constructor will throw (Fail Fast).
+        // Self-Healing Strategy 🩹: Ensure incoming API IDs conform to new Domain Prefixes.
+
+        var safeSource = EnsurePrefix(dto.SourceContext.Source, "sources/");
+        var safeSessionId = EnsurePrefix(dto.Name, "sessions/");
+
         var session = new Session(
-            new SessionId(dto.Name),
+            new SessionId(safeSessionId),
             dto.Id,
             (TaskDescription)dto.Prompt,
-            new SourceContext(dto.SourceContext.Source, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
+            new SourceContext(safeSource, dto.SourceContext.GithubRepoContext?.StartingBranch ?? string.Empty),
             pulse,
             ParseDateTime(dto.CreateTime),
             dto.UpdateTime != null ? ParseDateTime(dto.UpdateTime) : null,
@@ -77,5 +81,15 @@ internal static class JulesMapper
     {
         if (string.IsNullOrEmpty(date)) return DateTimeOffset.UtcNow;
         return DateTimeOffset.Parse(date, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Ensures that the provided value starts with the specified prefix.
+    /// If not, it prepends the prefix (Self-Healing).
+    /// </summary>
+    private static string EnsurePrefix(string value, string prefix)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return value; // Let Domain throw if empty
+        return value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? value : $"{prefix}{value}";
     }
 }
