@@ -79,39 +79,29 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Contains("Remote system unreachable", result.Warning, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact(DisplayName = "Given a Handle not in the Registry, when refreshing the Pulse, then it should synchronize and heal the Registry.")]
-    public async Task ShouldSynchronizeRecoveredSession()
+    [Fact(DisplayName = "Given a session missing from local registry, when refreshing, then it should recover identity and perform a full initial sync (Since=null).")]
+    public async Task ShouldRecoverMissingSessionWithFullInitialSync()
     {
         // Arrange
-        var sessionId = TestFactory.CreateSessionId("lost-session");
-        // Not in Reader!
-
-        var remoteSession = new SessionBuilder().WithId(sessionId.Value).WithPulse(SessionStatus.InProgress).Build();
-        _monitor.RemoteSession = remoteSession;
-
-        var request = new RefreshPulseRequest(sessionId);
-
-        // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(sessionId, result.Id);
-        Assert.Equal(SessionState.Working, result.State);
-        Assert.NotNull(_writer.LastSavedSession);
-        Assert.Equal(sessionId, _writer.LastSavedSession.Id);
-    }
-
-    [Fact(DisplayName = "Given a session found on Remote but missing locally, when refreshing, it should synchronize the 'Task Description' from the Remote Truth.")]
-    public async Task ShouldSynchronizeTaskFromRemoteTruthForRecoveredSessions()
-    {
-        // Arrange
-        var sessionId = TestFactory.CreateSessionId("recovered-identity");
+        var sessionId = TestFactory.CreateSessionId("recovered-session");
         var remoteTask = "The Authoritative Task";
+
+        // Remote Session exists with State and Task
         var remoteSession = new SessionBuilder()
             .WithId(sessionId.Value)
             .WithTask(remoteTask)
+            .WithPulse(SessionStatus.InProgress)
             .Build();
         _monitor.RemoteSession = remoteSession;
+
+        // Remote has history (e.g. 5 activities)
+        var remoteActivities = Enumerable.Range(1, 5)
+            .Select(i => new ProgressActivity($"rem-{i}", $"rem-{i}", DateTimeOffset.UtcNow.AddMinutes(i), ActivityOriginator.Agent, $"Step {i}"))
+            .Cast<SessionActivity>()
+            .ToList();
+        _activitySource.ActivitiesToReturn = remoteActivities;
+
+        // Local Registry is Empty (implicit via _reader default state for this ID)
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -119,8 +109,19 @@ public sealed class RefreshPulseUseCaseTests
         var result = await _sut.ExecuteAsync(request, CancellationToken.None);
 
         // Assert
+        // 1. Session Identity Recovered
+        Assert.Equal(sessionId, result.Id);
         Assert.NotNull(_writer.LastSavedSession);
+        Assert.Equal(sessionId, _writer.LastSavedSession.Id);
+
+        // 2. Task Synced
         Assert.Equal((TaskDescription)remoteTask, _writer.LastSavedSession.Task);
+
+        // 3. Initial Sync Performed (Since = null)
+        Assert.Null(_activitySource.LastOptions?.Since);
+
+        // 4. Log Hydrated
+        Assert.Equal(5, _writer.LastSavedSession.SessionLog.Count(a => a.Id.StartsWith("rem-", StringComparison.Ordinal)));
     }
 
     [Fact(DisplayName = "Given remote session has a PR, when refreshing, then it should sync the PR to local session.")]
@@ -263,47 +264,6 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(3, logs.Count);
     }
 
-    [Fact(DisplayName = "Given no local history, when refreshing, then it should perform an Initial Sync by fetching all activities (Since=null).")]
-    public async Task ShouldPerformInitialSyncWhenLocalHistoryIsMissing()
-    {
-        // Arrange
-        var sessionId = TestFactory.CreateSessionId("initial-sync");
-        var session = new SessionBuilder().WithId(sessionId.Value).Build();
-        // SessionBuilder adds an initial activity by default. We need to clear it to simulate empty history if possible,
-        // OR we just use a session that has NO history manually constructed, OR we accept the initial activity as "local history".
-        // BUT, the requirement is "Local Registry is Empty" (or effectively empty of synced activities).
-        // If SessionBuilder creates a session with 1 activity, then Since will be that activity's timestamp.
-        // To test Since=null, we need session.SessionLog to be empty.
-        // However, Session invariant might require at least one activity?
-        // Let's check Session constructor. It defaults to creating SessionAssignedActivity if history is null/empty.
-        // So a Session ALWAYS has history?
-        // If so, "Initial Sync" (Since=null) only happens if the session is NOT in the registry at all (Recovered Session).
-
-        // Scenario: Session is NOT in reader (Recovered).
-        // In this case, 'session' var in UseCase is null initially.
-        // Then we fetch remote session. Remote session has history?
-        // Wait, UseCase logic:
-        // var session = await _sessionReader.RecallAsync...
-        // if (session != null && session.SessionLog.Count > 0) -> Since = Max.
-        // else -> Since = null.
-
-        // So if session is null (not in registry), Since should be null.
-
-        _monitor.RemoteSession = new SessionBuilder().WithId(sessionId.Value).WithPulse(SessionStatus.InProgress).Build();
-        // Ensure remote session has some activity to fetch
-        var remoteActivity = new ProgressActivity("rem-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Remote");
-        _activitySource.ActivitiesToReturn = new List<SessionActivity> { remoteActivity };
-
-        var request = new RefreshPulseRequest(sessionId);
-
-        // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Null(_activitySource.LastOptions?.Since);
-        Assert.NotNull(_writer.LastSavedSession);
-        Assert.Contains(_writer.LastSavedSession.SessionLog, a => a.Id == "rem-1");
-    }
 
     [Fact(DisplayName = "RefreshPulseResponse should support equality semantics (Record coverage).")]
     public void RefreshPulseResponseEquality()

@@ -40,26 +40,45 @@ public class RegistrySessionArchivistTests
         Assert.Contains(result, a => a.Id == "act-1");
     }
 
-    [Fact(DisplayName = "GetHistoryAsync should respect criteria.")]
-    public async Task GetHistoryAsync_RespectsCriteria()
+    [Fact(DisplayName = "GetHistoryAsync should respect filtering criteria (Type, Time, Text).")]
+    public async Task GetHistoryAsync_RespectsAllCriteria()
     {
         // Arrange
         var now = DateTimeOffset.UtcNow;
-        var activity1 = new ProgressActivity("act-1", "rem-1", now.AddMinutes(-10), ActivityOriginator.Agent, "Old Work");
-        var activity2 = new ProgressActivity("act-2", "rem-2", now, ActivityOriginator.Agent, "New Work");
+        var planning = new PlanningActivity("plan-1", "rem-1", now.AddMinutes(-10), ActivityOriginator.Agent, new PlanId("plan-1"), Array.Empty<PlanStep>());
+        var progressOld = new ProgressActivity("prog-1", "rem-2", now.AddMinutes(-5), ActivityOriginator.Agent, "Thinking about life");
+        var progressNew = new ProgressActivity("prog-2", "rem-3", now, ActivityOriginator.Agent, "Executing plan");
+
         var session = new SessionBuilder().WithId(_testId.Value).Build();
-        session.AddActivity(activity1);
-        session.AddActivity(activity2);
+        session.AddActivity(planning);
+        session.AddActivity(progressOld);
+        session.AddActivity(progressNew);
 
         _readerMock.Setup(r => r.RecallAsync(_testId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
-        // Act
-        var result = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(Since: now.AddMinutes(-5)), CancellationToken.None);
+        // 1. Filter by Type
+        var typeResult = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(ActivityTypes: new[] { typeof(PlanningActivity) }), CancellationToken.None);
+        Assert.Single(typeResult);
+        Assert.IsType<PlanningActivity>(typeResult[0]);
 
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("act-2", result[0].Id);
+        // 2. Filter by Time (Since)
+        var sinceResult = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(Since: now.AddMinutes(-2)), CancellationToken.None);
+        Assert.Single(sinceResult);
+        Assert.Equal("prog-2", sinceResult[0].Id);
+
+        // 3. Filter by Time (Until)
+        // Note: We expect 2 items here because the SessionAssignedActivity (created by Builder at -60m)
+        // also satisfies the condition (< -8m).
+        var untilResult = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(Until: now.AddMinutes(-8)), CancellationToken.None);
+        Assert.Equal(2, untilResult.Count);
+        Assert.Contains(untilResult, a => a.Id == "plan-1");
+        Assert.Contains(untilResult, a => a is SessionAssignedActivity);
+
+        // 4. Filter by Text
+        var textResult = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(SearchText: "Thinking"), CancellationToken.None);
+        Assert.Single(textResult);
+        Assert.Equal("prog-1", textResult[0].Id);
     }
 
     [Fact(DisplayName = "GetHistoryAsync should return empty list if session does not exist.")]
