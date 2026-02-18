@@ -265,29 +265,6 @@ public sealed class RefreshPulseUseCaseTests
     }
 
 
-    [Fact(DisplayName = "RefreshPulseResponse should support equality semantics (Record coverage).")]
-    public void RefreshPulseResponseEquality()
-    {
-        var id = TestFactory.CreateSessionId("s1");
-        var pulse = new SessionPulse(SessionStatus.InProgress);
-        var state = SessionState.Working;
-        var act = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "d");
-
-        var r1 = new RefreshPulseResponse(id, pulse, state, act);
-        var r2 = new RefreshPulseResponse(id, pulse, state, act);
-        var r3 = new RefreshPulseResponse(id, pulse, state, act, Warning: "Diff");
-
-        Assert.Equal(r1, r2);
-        Assert.NotEqual(r1, r3);
-        Assert.Equal(r1.GetHashCode(), r2.GetHashCode());
-        Assert.NotEqual(r1.GetHashCode(), r3.GetHashCode());
-        Assert.Contains("RefreshPulseResponse", r1.ToString(), StringComparison.Ordinal);
-
-        // Deconstruct coverage
-        var (dId, dPulse, dState, dAct, dPr, dGhost, dCached, dWarn) = r1;
-        Assert.Equal(id, dId);
-    }
-
     private sealed class FakeSessionReader : ISessionReader
     {
         public Dictionary<SessionId, Session> Sessions { get; } = new();

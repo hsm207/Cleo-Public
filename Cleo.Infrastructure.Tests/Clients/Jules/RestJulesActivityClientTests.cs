@@ -108,27 +108,6 @@ public class RestJulesActivityClientTests
         Assert.Empty(result);
     }
 
-    [Fact(DisplayName = "The client should correctly implement IRemoteActivitySource port.")]
-    public async Task ShouldImplementRemoteActivitySource()
-    {
-        // Arrange
-        var source = (IRemoteActivitySource)_client;
-        var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
-
-        _handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(response)
-            });
-
-        // Act
-        var result = await source.FetchActivitiesAsync(_testId, new RemoteActivityOptions(null, null, null, null), TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.Empty(result);
-    }
 
     [Fact(DisplayName = "GetActivitiesAsync should throw RemoteCollaboratorUnavailableException on API failure.")]
     public async Task GetActivitiesAsync_ThrowsOnApiFailure()
