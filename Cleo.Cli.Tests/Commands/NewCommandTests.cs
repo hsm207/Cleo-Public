@@ -95,14 +95,6 @@ public class NewCommandTests : IDisposable
     public async Task New_Error_HandlesException()
     {
         // Arrange
-        // Note: NewCommand is wired to InitiateSessionUseCase, which creates a SourceContext.
-        // SourceContext throws if repo is empty. When we run "new 'Fail'", repo option is missing (null/empty).
-        // InitiateSessionUseCase validates request params. If we want to test the *Command's* exception handling of the UseCase throwing,
-        // we must provide valid args to get past early validation, OR we rely on the UseCase throwing due to invalid args.
-        // In the previous run, "Repository name cannot be empty" was thrown by SourceContext constructor inside UseCase.
-        // This *is* an exception handled by the catch block! But my assertion expected "API Error".
-        // Let's provide a valid repo so we hit the Mock.
-
         _julesClientMock.Setup(x => x.CreateSessionAsync(It.IsAny<TaskDescription>(), It.IsAny<SourceContext>(), It.IsAny<SessionCreationOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("API Error"));
 
