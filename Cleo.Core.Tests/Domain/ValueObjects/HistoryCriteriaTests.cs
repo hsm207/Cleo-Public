@@ -16,10 +16,10 @@ public class HistoryCriteriaTests
         Assert.True(criteria.IsSatisfiedBy(DefaultActivity));
     }
 
-    [Fact(DisplayName = "Given Type criteria, IsSatisfiedBy should respect it.")]
+    [Fact(DisplayName = "Given ActivityTypes criteria, IsSatisfiedBy should respect it.")]
     public void TypeFiltersCorrectly()
     {
-        var criteria = new HistoryCriteria(Types: new[] { typeof(ProgressActivity) });
+        var criteria = new HistoryCriteria(ActivityTypes: new[] { typeof(ProgressActivity) });
 
         Assert.True(criteria.IsSatisfiedBy(DefaultActivity));
         Assert.False(criteria.IsSatisfiedBy(new CompletionActivity("c", "r", Now, ActivityOriginator.System)));
@@ -49,31 +49,31 @@ public class HistoryCriteriaTests
         Assert.True(criteria.IsSatisfiedBy(older));
     }
 
-    [Fact(DisplayName = "Given Text criteria, IsSatisfiedBy should match Intent (Content Summary).")]
+    [Fact(DisplayName = "Given SearchText criteria, IsSatisfiedBy should match Intent (Content Summary).")]
     public void TextMatchesIntent()
     {
-        var criteria = new HistoryCriteria(Text: "Intent");
+        var criteria = new HistoryCriteria(SearchText: "Intent");
         Assert.True(criteria.IsSatisfiedBy(DefaultActivity));
     }
 
-    [Fact(DisplayName = "Given Text criteria, IsSatisfiedBy should match Reasoning.")]
+    [Fact(DisplayName = "Given SearchText criteria, IsSatisfiedBy should match Reasoning.")]
     public void TextMatchesReasoning()
     {
-        var criteria = new HistoryCriteria(Text: "Thinking");
+        var criteria = new HistoryCriteria(SearchText: "Thinking");
         Assert.True(criteria.IsSatisfiedBy(DefaultActivity));
     }
 
-    [Fact(DisplayName = "Given Text criteria, IsSatisfiedBy should be case insensitive.")]
+    [Fact(DisplayName = "Given SearchText criteria, IsSatisfiedBy should be case insensitive.")]
     public void TextIsCaseInsensitive()
     {
-        var criteria = new HistoryCriteria(Text: "INTENT");
+        var criteria = new HistoryCriteria(SearchText: "INTENT");
         Assert.True(criteria.IsSatisfiedBy(DefaultActivity));
     }
 
-    [Fact(DisplayName = "Given Text criteria, IsSatisfiedBy should return false if no match.")]
+    [Fact(DisplayName = "Given SearchText criteria, IsSatisfiedBy should return false if no match.")]
     public void TextReturnsFalseOnMismatch()
     {
-        var criteria = new HistoryCriteria(Text: "Banana");
+        var criteria = new HistoryCriteria(SearchText: "Banana");
         Assert.False(criteria.IsSatisfiedBy(DefaultActivity));
     }
 

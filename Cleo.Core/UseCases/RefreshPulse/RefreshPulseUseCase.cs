@@ -49,8 +49,8 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 since = session.SessionLog.Max(a => a.Timestamp);
             }
 
-            var fetchOptions = new RemoteFetchOptions(since, null, null);
-            var activitiesTask = _activitySource.FetchSinceAsync(request.Id, fetchOptions, cancellationToken);
+            var fetchOptions = new RemoteActivityOptions(since, null, null, null);
+            var activitiesTask = _activitySource.FetchActivitiesAsync(request.Id, fetchOptions, cancellationToken);
 
             await Task.WhenAll(remoteSessionTask, activitiesTask).ConfigureAwait(false);
 

@@ -124,7 +124,7 @@ public class RestJulesActivityClientTests
             });
 
         // Act
-        var result = await source.FetchSinceAsync(_testId, new RemoteFetchOptions(null, null, null), TestContext.Current.CancellationToken);
+        var result = await source.FetchActivitiesAsync(_testId, new RemoteActivityOptions(null, null, null, null), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -199,12 +199,12 @@ public class RestJulesActivityClientTests
             ItExpr.IsAny<CancellationToken>());
     }
 
-    [Fact(DisplayName = "FetchSinceAsync should append filter query parameters correctly.")]
-    public async Task FetchSinceAsync_ShouldUseFilter()
+    [Fact(DisplayName = "FetchActivitiesAsync should append filter query parameters correctly.")]
+    public async Task FetchActivitiesAsync_ShouldUseFilter()
     {
         // Arrange
         var since = new DateTimeOffset(2023, 10, 27, 10, 0, 0, TimeSpan.Zero);
-        var options = new RemoteFetchOptions(since, null, 50);
+        var options = new RemoteActivityOptions(since, null, 50, null);
 
         var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
 
@@ -222,7 +222,7 @@ public class RestJulesActivityClientTests
             });
 
         // Act
-        await _client.FetchSinceAsync(_testId, options, TestContext.Current.CancellationToken);
+        await _client.FetchActivitiesAsync(_testId, options, TestContext.Current.CancellationToken);
 
         // Assert
         _handlerMock.Protected().Verify(

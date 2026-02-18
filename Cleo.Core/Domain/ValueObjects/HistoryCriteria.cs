@@ -6,10 +6,10 @@ namespace Cleo.Core.Domain.ValueObjects;
 /// Criteria for filtering session history.
 /// </summary>
 public sealed record HistoryCriteria(
-    IReadOnlyCollection<Type>? Types = null,
+    IReadOnlyCollection<Type>? ActivityTypes = null,
     DateTimeOffset? Since = null,
     DateTimeOffset? Until = null,
-    string? Text = null
+    string? SearchText = null
 )
 {
     public static readonly HistoryCriteria None = new();
@@ -18,7 +18,7 @@ public sealed record HistoryCriteria(
     {
         ArgumentNullException.ThrowIfNull(activity);
 
-        if (Types != null && Types.Count > 0 && !Types.Contains(activity.GetType()))
+        if (ActivityTypes != null && ActivityTypes.Count > 0 && !ActivityTypes.Contains(activity.GetType()))
         {
             return false;
         }
@@ -33,14 +33,14 @@ public sealed record HistoryCriteria(
             return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(Text))
+        if (!string.IsNullOrWhiteSpace(SearchText))
         {
             var content = activity.GetContentSummary();
             var thoughts = string.Join(" ", activity.GetThoughts());
 
             // Simple containment check across summary and thoughts
-            if (!content.Contains(Text, StringComparison.OrdinalIgnoreCase) &&
-                !thoughts.Contains(Text, StringComparison.OrdinalIgnoreCase))
+            if (!content.Contains(SearchText, StringComparison.OrdinalIgnoreCase) &&
+                !thoughts.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }

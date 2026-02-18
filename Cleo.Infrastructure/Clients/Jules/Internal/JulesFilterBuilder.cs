@@ -4,7 +4,7 @@ namespace Cleo.Infrastructure.Clients.Jules.Internal;
 
 internal static class JulesFilterBuilder
 {
-    public static string? Build(RemoteFetchOptions options)
+    public static string? Build(RemoteActivityOptions options)
     {
         var clauses = new List<string>();
 

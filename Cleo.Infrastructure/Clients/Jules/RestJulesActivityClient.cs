@@ -27,19 +27,20 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
     }
 
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
-    public async Task<IReadOnlyCollection<SessionActivity>> FetchSinceAsync(SessionId id, RemoteFetchOptions options, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<SessionActivity>> FetchActivitiesAsync(SessionId id, RemoteActivityOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
             var allActivities = new List<SessionActivity>();
-            string? nextPageToken = null;
+            // Use PageToken from options for the first request, then follow API responses
+            string? nextPageToken = options.PageToken;
 
             do
             {
                 var uri = $"v1alpha/{id.Value}/activities";
                 var queryParams = new List<string>();
 
-                if (nextPageToken != null)
+                if (!string.IsNullOrEmpty(nextPageToken))
                 {
                     queryParams.Add($"pageToken={nextPageToken}");
                 }
@@ -74,7 +75,7 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
 
                 nextPageToken = dto?.NextPageToken;
 
-            } while (nextPageToken != null);
+            } while (!string.IsNullOrEmpty(nextPageToken));
 
             return allActivities.AsReadOnly();
         }
@@ -86,6 +87,6 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
 
     public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        return FetchSinceAsync(id, new RemoteFetchOptions(null, null, null), cancellationToken);
+        return FetchActivitiesAsync(id, new RemoteActivityOptions(null, null, null, null), cancellationToken);
     }
 }

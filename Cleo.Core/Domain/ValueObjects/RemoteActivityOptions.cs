@@ -1,7 +1,8 @@
 namespace Cleo.Core.Domain.ValueObjects;
 
-public record RemoteFetchOptions(
+public record RemoteActivityOptions(
     DateTimeOffset? Since,
     DateTimeOffset? Until,
-    int? PageSize
+    int? PageSize,
+    string? PageToken
 );

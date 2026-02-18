@@ -332,9 +332,9 @@ public sealed class RefreshPulseUseCaseTests
     private sealed class FakeActivitySource : IRemoteActivitySource
     {
         public List<SessionActivity> ActivitiesToReturn { get; set; } = new();
-        public RemoteFetchOptions? LastOptions { get; private set; }
+        public RemoteActivityOptions? LastOptions { get; private set; }
 
-        public Task<IReadOnlyCollection<SessionActivity>> FetchSinceAsync(SessionId id, RemoteFetchOptions options, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SessionActivity>> FetchActivitiesAsync(SessionId id, RemoteActivityOptions options, CancellationToken cancellationToken = default)
         {
             LastOptions = options;
             // Simple mock filtering to ensure we respect "Since" in tests if needed

@@ -9,5 +9,5 @@ namespace Cleo.Core.Domain.Ports;
 /// </summary>
 public interface IRemoteActivitySource
 {
-    Task<IReadOnlyCollection<SessionActivity>> FetchSinceAsync(SessionId id, RemoteFetchOptions options, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<SessionActivity>> FetchActivitiesAsync(SessionId id, RemoteActivityOptions options, CancellationToken cancellationToken = default);
 }
