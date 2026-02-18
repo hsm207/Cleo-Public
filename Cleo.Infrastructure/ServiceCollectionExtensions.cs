@@ -127,6 +127,7 @@ public static class ServiceCollectionExtensions
 
         // Domain Services
         services.AddSingleton<Cleo.Core.Domain.Services.IPrResolver, Cleo.Core.Domain.Services.RemoteFirstPrResolver>();
+        services.AddSingleton<Cleo.Core.Domain.Services.ISessionSynchronizer, Cleo.Core.Domain.Services.SessionSynchronizer>();
 
         // Use Cases
         services.AddScoped<Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
