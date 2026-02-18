@@ -33,11 +33,33 @@ public class RegistrySessionArchivistTests
             .ReturnsAsync(session);
 
         // Act
-        var result = await _sut.GetHistoryAsync(_testId, CancellationToken.None);
+        var result = await _sut.GetHistoryAsync(_testId, null, CancellationToken.None);
 
         // Assert
         Assert.NotEmpty(result);
         Assert.Contains(result, a => a.Id == "act-1");
+    }
+
+    [Fact(DisplayName = "GetHistoryAsync should respect criteria.")]
+    public async Task GetHistoryAsync_RespectsCriteria()
+    {
+        // Arrange
+        var now = DateTimeOffset.UtcNow;
+        var activity1 = new ProgressActivity("act-1", "rem-1", now.AddMinutes(-10), ActivityOriginator.Agent, "Old Work");
+        var activity2 = new ProgressActivity("act-2", "rem-2", now, ActivityOriginator.Agent, "New Work");
+        var session = new SessionBuilder().WithId(_testId.Value).Build();
+        session.AddActivity(activity1);
+        session.AddActivity(activity2);
+
+        _readerMock.Setup(r => r.RecallAsync(_testId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        // Act
+        var result = await _sut.GetHistoryAsync(_testId, new HistoryCriteria(Since: now.AddMinutes(-5)), CancellationToken.None);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("act-2", result[0].Id);
     }
 
     [Fact(DisplayName = "GetHistoryAsync should return empty list if session does not exist.")]
@@ -48,7 +70,7 @@ public class RegistrySessionArchivistTests
             .ReturnsAsync((Session?)null);
 
         // Act
-        var result = await _sut.GetHistoryAsync(_testId, CancellationToken.None);
+        var result = await _sut.GetHistoryAsync(_testId, null, CancellationToken.None);
 
         // Assert
         Assert.Empty(result);

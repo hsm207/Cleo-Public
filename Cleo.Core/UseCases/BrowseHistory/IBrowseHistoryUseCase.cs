@@ -2,7 +2,7 @@ using Cleo.Core.Domain.ValueObjects;
 
 namespace Cleo.Core.UseCases.BrowseHistory;
 
-public record BrowseHistoryRequest(SessionId Id);
+public record BrowseHistoryRequest(SessionId Id, HistoryCriteria? Criteria = null);
 
 public record BrowseHistoryResponse(
     SessionId Id,

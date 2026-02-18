@@ -7,6 +7,6 @@ namespace Cleo.Core.Domain.Ports;
 /// </summary>
 public interface ISessionArchivist
 {
-    Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, HistoryCriteria? criteria = null, CancellationToken cancellationToken = default);
     Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default);
 }

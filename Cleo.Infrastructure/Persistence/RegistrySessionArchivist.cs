@@ -19,10 +19,22 @@ public sealed class RegistrySessionArchivist : ISessionArchivist
         _writer = writer;
     }
 
-    public async Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, HistoryCriteria? criteria = null, CancellationToken cancellationToken = default)
     {
         var session = await _reader.RecallAsync(id, cancellationToken).ConfigureAwait(false);
-        return session?.SessionLog.ToList().AsReadOnly() ?? new List<SessionActivity>().AsReadOnly();
+        if (session == null)
+        {
+            return Array.Empty<SessionActivity>();
+        }
+
+        var history = session.SessionLog;
+
+        if (criteria == null || criteria == HistoryCriteria.None)
+        {
+            return history.ToList().AsReadOnly();
+        }
+
+        return history.Where(criteria.IsSatisfiedBy).ToList().AsReadOnly();
     }
 
     public async Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)

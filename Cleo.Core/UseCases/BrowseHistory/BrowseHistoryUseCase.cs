@@ -17,7 +17,7 @@ public class BrowseHistoryUseCase : IBrowseHistoryUseCase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var historyTask = _archivist.GetHistoryAsync(request.Id, cancellationToken);
+        var historyTask = _archivist.GetHistoryAsync(request.Id, request.Criteria, cancellationToken);
         var sessionTask = _sessionReader.RecallAsync(request.Id, cancellationToken);
 
         await Task.WhenAll(historyTask, sessionTask).ConfigureAwait(false);

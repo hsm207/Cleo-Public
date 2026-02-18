@@ -43,12 +43,43 @@ public sealed class BrowseHistoryUseCaseTests
         Assert.Equal(pr, result.PullRequest);
     }
 
+    [Fact(DisplayName = "Given valid criteria, when browsing history, then it should return filtered results.")]
+    public async Task ShouldReturnFilteredHistory()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("filtered-session");
+        var now = DateTimeOffset.UtcNow;
+        var activity1 = new ProgressActivity("act-1", "rem-1", now.AddMinutes(-10), ActivityOriginator.Agent, "Old");
+        var activity2 = new ProgressActivity("act-2", "rem-2", now, ActivityOriginator.Agent, "New");
+
+        _archivist.History[sessionId] = new List<SessionActivity> { activity1, activity2 };
+        _sessionReader.Sessions[sessionId] = new SessionBuilder().WithId(sessionId.Value).Build();
+
+        var criteria = new HistoryCriteria(Since: now.AddMinutes(-5));
+        var request = new BrowseHistoryRequest(sessionId, criteria);
+
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Single(result.History);
+        Assert.Equal("act-2", result.History[0].Id);
+    }
+
     private sealed class FakeArchivist : ISessionArchivist
     {
         public Dictionary<SessionId, List<SessionActivity>> History { get; } = new();
-        public Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, CancellationToken cancellationToken = default)
+
+        public Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, HistoryCriteria? criteria = null, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyList<SessionActivity>>(History.GetValueOrDefault(id) ?? new List<SessionActivity>());
+            var activities = History.GetValueOrDefault(id) ?? new List<SessionActivity>();
+
+            if (criteria != null)
+            {
+                activities = activities.Where(criteria.IsSatisfiedBy).ToList();
+            }
+
+            return Task.FromResult<IReadOnlyList<SessionActivity>>(activities);
         }
 
         public Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)
