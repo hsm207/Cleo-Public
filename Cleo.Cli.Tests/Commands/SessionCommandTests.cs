@@ -18,16 +18,6 @@ public class SessionCommandTests
 
     public SessionCommandTests()
     {
-        // Mock dependencies for subcommands
-        // NewCommand requires concrete InitiateSessionUseCase, which is tricky to mock if it's not an interface.
-        // Looking at NewCommand.cs, it takes InitiateSessionUseCase (concrete class).
-        // InitiateSessionUseCase takes (IJulesSessionClient, ISessionWriter).
-
-        // Strategy: Create a mock of the dependencies of InitiateSessionUseCase, pass them to a real instance,
-        // OR (preferred for unit test of SessionCommand) mock NewCommand itself if possible?
-        // No, NewCommand is internal sealed.
-        // We must construct a real NewCommand with mocked dependencies.
-
         var julesClientMock = new Mock<IJulesSessionClient>();
         var sessionWriterMock = new Mock<ISessionWriter>();
         var initiateUseCase = new InitiateSessionUseCase(julesClientMock.Object, sessionWriterMock.Object);
