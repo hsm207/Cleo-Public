@@ -37,29 +37,7 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
 
             do
             {
-                var uri = $"v1alpha/{id.Value}/activities";
-                var queryParams = new List<string>();
-
-                if (!string.IsNullOrEmpty(nextPageToken))
-                {
-                    queryParams.Add($"pageToken={nextPageToken}");
-                }
-
-                if (options.PageSize.HasValue)
-                {
-                    queryParams.Add($"pageSize={options.PageSize.Value}");
-                }
-
-                var filter = JulesFilterBuilder.Build(options);
-                if (!string.IsNullOrEmpty(filter))
-                {
-                    queryParams.Add($"filter={Uri.EscapeDataString(filter)}");
-                }
-
-                if (queryParams.Count > 0)
-                {
-                    uri += "?" + string.Join("&", queryParams);
-                }
+                var uri = JulesQueryBuilder.BuildListActivitiesUri(id, options, nextPageToken);
 
                 var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
                 await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
