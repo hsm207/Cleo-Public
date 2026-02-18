@@ -18,7 +18,7 @@ public record PlanId
     }
 
     public static explicit operator PlanId(string value) => FromString(value);
-    public static SessionId FromString(string value) => new(value);
+    public static PlanId FromString(string value) => new(value);
 
     public static implicit operator string(PlanId id)
     {

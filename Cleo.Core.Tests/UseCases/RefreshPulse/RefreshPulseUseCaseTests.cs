@@ -24,6 +24,12 @@ public sealed class RefreshPulseUseCaseTests
         _sut = new RefreshPulseUseCase(_monitor, _activityClient, _reader, _writer, _prResolver);
     }
 
+    [Fact(DisplayName = "Given a null request, when executing, then it should throw ArgumentNullException.")]
+    public async Task ShouldThrowIfRequestIsNull()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, CancellationToken.None));
+    }
+
     [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
     public async Task ShouldRetrieveLatestPulse()
     {
@@ -34,6 +40,7 @@ public sealed class RefreshPulseUseCaseTests
 
         var latestPulse = new SessionPulse(SessionStatus.InProgress);
         _monitor.NextPulse = latestPulse;
+        // Fix: Ensure remote session is present to avoid InvalidOperationException in mock
         _monitor.RemoteSession = new SessionBuilder().WithId(sessionId.Value).WithPulse(SessionStatus.InProgress).Build();
 
         var request = new RefreshPulseRequest(sessionId);
@@ -170,9 +177,107 @@ public sealed class RefreshPulseUseCaseTests
     {
         // Arrange
         var sessionId = TestFactory.CreateSessionId("missing-session");
+        _monitor.ShouldThrow = true; // Ensure RemoteCollaboratorUnavailableException is caught, triggering the "not found" check.
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(new RefreshPulseRequest(sessionId), CancellationToken.None));
+    }
+
+    [Fact(DisplayName = "Given a solution exists but PR is missing, when refreshing, then it should flag HasUnsubmittedSolution.")]
+    public async Task ShouldIndicateUnsubmittedSolution()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("ghost-session");
+        var remoteSession = new SessionBuilder().WithId(sessionId.Value).Build();
+        // Add a "Solution" via a GitPatch output (CompletionActivity)
+        var patch = new GitPatch("diff", "sha");
+        var changeSet = new ChangeSet("repo", patch);
+        var completion = new CompletionActivity("out-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.System, new[] { changeSet });
+
+        remoteSession.AddActivity(completion);
+        // Ensure no PR is set on remoteSession (it is null by default in builder unless SetPullRequest is called)
+
+        _monitor.RemoteSession = remoteSession;
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.HasUnsubmittedSolution);
+        Assert.Null(result.PullRequest);
+    }
+
+    [Fact(DisplayName = "Given duplicated activities, when refreshing, then it should synchronize only new activities (Idempotency).")]
+    public async Task ShouldNotDuplicateExistingActivities()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("duplicate-check");
+        // Ensure timestamps are identical for value equality if used, but ID check should suffice
+        var now = DateTimeOffset.UtcNow;
+        var existingActivity = new ProgressActivity("act-1", "rem-1", now, ActivityOriginator.Agent, "Existing");
+        var newActivity = new ProgressActivity("act-2", "rem-2", now.AddMinutes(1), ActivityOriginator.Agent, "New");
+
+        // The SessionBuilder creates a session with an initial "SessionAssignedActivity" (Zero-Hollow Invariant)
+        // So session.SessionLog count is 1.
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
+        session.AddActivity(existingActivity); // Now count is 2
+        _reader.Sessions[sessionId] = session;
+
+        var remoteSession = new SessionBuilder().WithId(sessionId.Value).Build();
+        _monitor.RemoteSession = remoteSession;
+
+        // Mock activity client returns 'existingActivity' (which is already in local session) and 'newActivity'
+        _activityClient.ActivitiesToReturn = new List<SessionActivity> { existingActivity, newActivity };
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(_writer.LastSavedSession);
+        var logs = _writer.LastSavedSession.SessionLog;
+
+        // Expected:
+        // 1. Initial "Session Assigned" (from builder)
+        // 2. "Existing" (added manually)
+        // 3. "New" (synced from client)
+        // "Existing" from client should be skipped.
+        // Total = 3.
+
+        Assert.Contains(logs, a => a.Id == "act-1");
+        Assert.Contains(logs, a => a.Id == "act-2");
+
+        // Verify no duplicates of act-1
+        Assert.Equal(1, logs.Count(a => a.Id == "act-1"));
+
+        // Verify total count (Initial + Existing + New)
+        Assert.Equal(3, logs.Count);
+    }
+
+    [Fact(DisplayName = "RefreshPulseResponse should support equality semantics (Record coverage).")]
+    public void RefreshPulseResponseEquality()
+    {
+        var id = TestFactory.CreateSessionId("s1");
+        var pulse = new SessionPulse(SessionStatus.InProgress);
+        var state = SessionState.Working;
+        var act = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "d");
+
+        var r1 = new RefreshPulseResponse(id, pulse, state, act);
+        var r2 = new RefreshPulseResponse(id, pulse, state, act);
+        var r3 = new RefreshPulseResponse(id, pulse, state, act, Warning: "Diff");
+
+        Assert.Equal(r1, r2);
+        Assert.NotEqual(r1, r3);
+        Assert.Equal(r1.GetHashCode(), r2.GetHashCode());
+        Assert.NotEqual(r1.GetHashCode(), r3.GetHashCode());
+        Assert.Contains("RefreshPulseResponse", r1.ToString(), StringComparison.Ordinal);
+
+        // Deconstruct coverage
+        var (dId, dPulse, dState, dAct, dPr, dGhost, dCached, dWarn) = r1;
+        Assert.Equal(id, dId);
     }
 
     private sealed class FakeSessionReader : ISessionReader
@@ -220,9 +325,11 @@ public sealed class RefreshPulseUseCaseTests
 
     private sealed class FakeActivityClient : IJulesActivityClient
     {
+        public List<SessionActivity> ActivitiesToReturn { get; set; } = new();
+
         public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyCollection<SessionActivity>>(Array.Empty<SessionActivity>());
+            return Task.FromResult<IReadOnlyCollection<SessionActivity>>(ActivitiesToReturn);
         }
     }
 }

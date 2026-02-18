@@ -17,14 +17,15 @@ public class PlanIdTests
         Assert.Throws<ArgumentNullException>(() => (string)nullId!);
     }
 
-    [Theory(DisplayName = "PlanId should enforce prefix.")]
+    [Theory(DisplayName = "PlanId should accept any non-empty string (Raw Truth).")]
     [InlineData("123")]
     [InlineData("plan/123")]
     [InlineData("sessions/123")]
-    public void ShouldEnforcePrefix(string invalidValue)
+    [InlineData("random-string")]
+    public void ShouldAcceptAnyNonEmptyString(string validValue)
     {
-        var ex = Assert.Throws<ArgumentException>(() => new PlanId(invalidValue));
-        Assert.Contains("must start with 'plans/'", ex.Message, StringComparison.OrdinalIgnoreCase);
+        var id = new PlanId(validValue);
+        Assert.Equal(validValue, id.Value);
     }
 
     [Fact(DisplayName = "PlanId should behave as a valid value object.")]
