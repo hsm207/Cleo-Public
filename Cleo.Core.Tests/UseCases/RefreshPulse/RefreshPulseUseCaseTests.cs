@@ -209,7 +209,7 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Null(result.PullRequest);
     }
 
-    [Fact(DisplayName = "Given duplicated activities, when refreshing, then it should synchronize only new activities (Idempotency).")]
+    [Fact(DisplayName = "Given existing history, when refreshing, then it should only fetch and append new activities since the last local timestamp.")]
     public async Task ShouldNotDuplicateExistingActivities()
     {
         // Arrange
