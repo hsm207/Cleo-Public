@@ -263,6 +263,48 @@ public sealed class RefreshPulseUseCaseTests
         Assert.Equal(3, logs.Count);
     }
 
+    [Fact(DisplayName = "Given no local history, when refreshing, then it should perform an Initial Sync by fetching all activities (Since=null).")]
+    public async Task ShouldPerformInitialSyncWhenLocalHistoryIsMissing()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("initial-sync");
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
+        // SessionBuilder adds an initial activity by default. We need to clear it to simulate empty history if possible,
+        // OR we just use a session that has NO history manually constructed, OR we accept the initial activity as "local history".
+        // BUT, the requirement is "Local Registry is Empty" (or effectively empty of synced activities).
+        // If SessionBuilder creates a session with 1 activity, then Since will be that activity's timestamp.
+        // To test Since=null, we need session.SessionLog to be empty.
+        // However, Session invariant might require at least one activity?
+        // Let's check Session constructor. It defaults to creating SessionAssignedActivity if history is null/empty.
+        // So a Session ALWAYS has history?
+        // If so, "Initial Sync" (Since=null) only happens if the session is NOT in the registry at all (Recovered Session).
+
+        // Scenario: Session is NOT in reader (Recovered).
+        // In this case, 'session' var in UseCase is null initially.
+        // Then we fetch remote session. Remote session has history?
+        // Wait, UseCase logic:
+        // var session = await _sessionReader.RecallAsync...
+        // if (session != null && session.SessionLog.Count > 0) -> Since = Max.
+        // else -> Since = null.
+
+        // So if session is null (not in registry), Since should be null.
+
+        _monitor.RemoteSession = new SessionBuilder().WithId(sessionId.Value).WithPulse(SessionStatus.InProgress).Build();
+        // Ensure remote session has some activity to fetch
+        var remoteActivity = new ProgressActivity("rem-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Remote");
+        _activitySource.ActivitiesToReturn = new List<SessionActivity> { remoteActivity };
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Null(_activitySource.LastOptions?.Since);
+        Assert.NotNull(_writer.LastSavedSession);
+        Assert.Contains(_writer.LastSavedSession.SessionLog, a => a.Id == "rem-1");
+    }
+
     [Fact(DisplayName = "RefreshPulseResponse should support equality semantics (Record coverage).")]
     public void RefreshPulseResponseEquality()
     {
