@@ -8,20 +8,20 @@ namespace Cleo.Core.UseCases.RefreshPulse;
 public class RefreshPulseUseCase : IRefreshPulseUseCase
 {
     private readonly IPulseMonitor _pulseMonitor;
-    private readonly IJulesActivityClient _activityClient;
+    private readonly IRemoteActivitySource _activitySource;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
     private readonly IPrResolver _prResolver;
 
     public RefreshPulseUseCase(
         IPulseMonitor pulseMonitor, 
-        IJulesActivityClient activityClient,
+        IRemoteActivitySource activitySource,
         ISessionReader sessionReader, 
         ISessionWriter sessionWriter,
         IPrResolver prResolver)
     {
         _pulseMonitor = pulseMonitor;
-        _activityClient = activityClient;
+        _activitySource = activitySource;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
         _prResolver = prResolver;
@@ -40,7 +40,17 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             // It will be corrected once we fetch the remote session.
             var task = session?.Task ?? (TaskDescription)"Unknown Task (Recovered)";
             var remoteSessionTask = _pulseMonitor.GetRemoteSessionAsync(request.Id, task, cancellationToken);
-            var activitiesTask = _activityClient.GetActivitiesAsync(request.Id, cancellationToken);
+
+            // Incremental Sync Strategy ⚡: Only fetch what we don't have.
+            // If we have local history, use the last timestamp as the watermark.
+            DateTimeOffset? since = null;
+            if (session != null && session.SessionLog.Count > 0)
+            {
+                since = session.SessionLog.Max(a => a.Timestamp);
+            }
+
+            var fetchOptions = new RemoteFetchOptions(since, null, null);
+            var activitiesTask = _activitySource.FetchSinceAsync(request.Id, fetchOptions, cancellationToken);
 
             await Task.WhenAll(remoteSessionTask, activitiesTask).ConfigureAwait(false);
 

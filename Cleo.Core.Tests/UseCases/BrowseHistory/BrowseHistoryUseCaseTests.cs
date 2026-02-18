@@ -50,6 +50,17 @@ public sealed class BrowseHistoryUseCaseTests
         {
             return Task.FromResult<IReadOnlyList<SessionActivity>>(History.GetValueOrDefault(id) ?? new List<SessionActivity>());
         }
+
+        public Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)
+        {
+            if (!History.TryGetValue(id, out var list))
+            {
+                list = new List<SessionActivity>();
+                History[id] = list;
+            }
+            list.AddRange(activities);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeSessionReader : ISessionReader

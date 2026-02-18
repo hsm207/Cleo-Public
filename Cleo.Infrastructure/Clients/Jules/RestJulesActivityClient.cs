@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Net.Sockets;
-using Cleo.Core.Domain.Entities; // Needed?
+using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -15,7 +15,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// <summary>
 /// A REST-based implementation of the Jules activity history client.
 /// </summary>
-public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArchivist
+public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActivityClient
 {
     private readonly HttpClient _httpClient;
     private readonly IJulesActivityMapper _mapper;
@@ -27,7 +27,7 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     }
 
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
-    public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<SessionActivity>> FetchSinceAsync(SessionId id, RemoteFetchOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -37,9 +37,27 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
             do
             {
                 var uri = $"v1alpha/{id.Value}/activities";
+                var queryParams = new List<string>();
+
                 if (nextPageToken != null)
                 {
-                    uri += $"?pageToken={nextPageToken}";
+                    queryParams.Add($"pageToken={nextPageToken}");
+                }
+
+                if (options.PageSize.HasValue)
+                {
+                    queryParams.Add($"pageSize={options.PageSize.Value}");
+                }
+
+                var filter = JulesFilterBuilder.Build(options);
+                if (!string.IsNullOrEmpty(filter))
+                {
+                    queryParams.Add($"filter={Uri.EscapeDataString(filter)}");
+                }
+
+                if (queryParams.Count > 0)
+                {
+                    uri += "?" + string.Join("&", queryParams);
                 }
 
                 var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
@@ -66,9 +84,8 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
         }
     }
 
-    async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)
+    public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        var activities = await GetActivitiesAsync(id, cancellationToken).ConfigureAwait(false);
-        return activities.ToList().AsReadOnly();
+        return FetchSinceAsync(id, new RemoteFetchOptions(null, null, null), cancellationToken);
     }
 }

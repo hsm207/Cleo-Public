@@ -15,13 +15,13 @@ public sealed class RefreshPulseUseCaseTests
     private readonly FakeSessionReader _reader = new();
     private readonly FakeSessionWriter _writer = new();
     private readonly FakePulseMonitor _monitor = new();
-    private readonly FakeActivityClient _activityClient = new();
+    private readonly FakeActivitySource _activitySource = new();
     private readonly RemoteFirstPrResolver _prResolver = new();
     private readonly RefreshPulseUseCase _sut;
 
     public RefreshPulseUseCaseTests()
     {
-        _sut = new RefreshPulseUseCase(_monitor, _activityClient, _reader, _writer, _prResolver);
+        _sut = new RefreshPulseUseCase(_monitor, _activitySource, _reader, _writer, _prResolver);
     }
 
     [Fact(DisplayName = "Given a null request, when executing, then it should throw ArgumentNullException.")]
@@ -229,7 +229,9 @@ public sealed class RefreshPulseUseCaseTests
         _monitor.RemoteSession = remoteSession;
 
         // Mock activity client returns 'existingActivity' (which is already in local session) and 'newActivity'
-        _activityClient.ActivitiesToReturn = new List<SessionActivity> { existingActivity, newActivity };
+        // Incremental fetch will ask for >= 'now'.
+        // Mock will filter and return existing (>= now) and new (> now).
+        _activitySource.ActivitiesToReturn = new List<SessionActivity> { existingActivity, newActivity };
 
         var request = new RefreshPulseRequest(sessionId);
 
@@ -239,6 +241,10 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.NotNull(_writer.LastSavedSession);
         var logs = _writer.LastSavedSession.SessionLog;
+
+        // Verify incremental fetching was used
+        Assert.NotNull(_activitySource.LastOptions?.Since);
+        Assert.Equal(now, _activitySource.LastOptions?.Since);
 
         // Expected:
         // 1. Initial "Session Assigned" (from builder)
@@ -323,12 +329,20 @@ public sealed class RefreshPulseUseCaseTests
         }
     }
 
-    private sealed class FakeActivityClient : IJulesActivityClient
+    private sealed class FakeActivitySource : IRemoteActivitySource
     {
         public List<SessionActivity> ActivitiesToReturn { get; set; } = new();
+        public RemoteFetchOptions? LastOptions { get; private set; }
 
-        public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SessionActivity>> FetchSinceAsync(SessionId id, RemoteFetchOptions options, CancellationToken cancellationToken = default)
         {
+            LastOptions = options;
+            // Simple mock filtering to ensure we respect "Since" in tests if needed
+            if (options.Since.HasValue)
+            {
+                return Task.FromResult<IReadOnlyCollection<SessionActivity>>(
+                    ActivitiesToReturn.Where(a => a.Timestamp >= options.Since.Value).ToList());
+            }
             return Task.FromResult<IReadOnlyCollection<SessionActivity>>(ActivitiesToReturn);
         }
     }

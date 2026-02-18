@@ -108,11 +108,11 @@ public class RestJulesActivityClientTests
         Assert.Empty(result);
     }
 
-    [Fact(DisplayName = "The client should correctly implement ISessionArchivist port.")]
-    public async Task ShouldImplementPort()
+    [Fact(DisplayName = "The client should correctly implement IRemoteActivitySource port.")]
+    public async Task ShouldImplementRemoteActivitySource()
     {
         // Arrange
-        var archivist = (ISessionArchivist)_client;
+        var source = (IRemoteActivitySource)_client;
         var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
 
         _handlerMock.Protected()
@@ -124,7 +124,7 @@ public class RestJulesActivityClientTests
             });
 
         // Act
-        var result = await archivist.GetHistoryAsync(_testId, TestContext.Current.CancellationToken);
+        var result = await source.FetchSinceAsync(_testId, new RemoteFetchOptions(null, null, null), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -195,6 +195,39 @@ public class RestJulesActivityClientTests
         _handlerMock.Protected().Verify(
             "SendAsync",
             Times.Exactly(2),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact(DisplayName = "FetchSinceAsync should append filter query parameters correctly.")]
+    public async Task FetchSinceAsync_ShouldUseFilter()
+    {
+        // Arrange
+        var since = new DateTimeOffset(2023, 10, 27, 10, 0, 0, TimeSpan.Zero);
+        var options = new RemoteFetchOptions(since, null, 50);
+
+        var response = new JulesListActivitiesResponseDto(Array.Empty<JulesActivityDto>(), null);
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.RequestUri.Query.Contains("pageSize=50") &&
+                    req.RequestUri.Query.Contains("filter=" + Uri.EscapeDataString($"create_time >= \"2023-10-27T10:00:00Z\""))
+                ),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(response)
+            });
+
+        // Act
+        await _client.FetchSinceAsync(_testId, options, TestContext.Current.CancellationToken);
+
+        // Assert
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
             ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>());
     }
