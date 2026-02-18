@@ -11,7 +11,8 @@ public static class TestFactory
 
     public static SessionId CreateSessionId(string suffix) => new($"sessions/{suffix}");
 
-    public static PlanId CreatePlanId(string suffix) => new($"plans/{suffix}");
+    // Raw Truth: PlanId no longer requires a prefix. We return the suffix directly.
+    public static PlanId CreatePlanId(string suffix) => new(suffix);
 
     public static SourceContext CreateSourceContext(string repo, string branch = Constants.DefaultBranch)
         => new($"sources/{repo}", branch);

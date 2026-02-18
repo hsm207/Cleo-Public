@@ -35,7 +35,7 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
             timestamp, 
             originator,
-            new PlanId(dto.PlanId ?? "plans/unknown"),
+            new PlanId(dto.PlanId ?? "unknown"), // Raw Truth: No prefix needed
             dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),
             executiveSummary);
     }

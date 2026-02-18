@@ -50,7 +50,12 @@ public class ApproveCommandTests : IDisposable
 
         // Assert
         exitCode.Should().Be(0);
-        _stringWriter.ToString().Should().Contain("✅ Plan plans/p1 approved");
+        // Raw Truth: The CLI outputs the PlanId value directly. Since we relaxed validation,
+        // "p1" is a valid PlanId, so the output will just contain "p1", not "plans/p1".
+        // Wait, TestFactory.CreatePlanId("p1") creates a PlanId with value "p1".
+        // The command outputs: $"✅ Plan {response.PlanId} approved..."
+        // So expected string is "✅ Plan p1 approved".
+        _stringWriter.ToString().Should().Contain("✅ Plan p1 approved");
     }
 
     [Fact(DisplayName = "Given an error, when running 'approve', then it should handle exception.")]

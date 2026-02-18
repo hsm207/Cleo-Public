@@ -48,6 +48,7 @@ public class HighFidelityArchaeologyTests
             new("step-1", 0, "Step 1", "Description 1"),
             new("step-2", 1, "Step 2", "Description 2")
         };
+        // Raw Truth: Use TestFactory.CreatePlanId (which now returns bare "plan-456")
         var original = new PlanningActivity("act-123", "remote-123", DateTimeOffset.UtcNow, ActivityOriginator.Agent, TestFactory.CreatePlanId("plan-456"), originalSteps);
 
         // Act
@@ -56,7 +57,7 @@ public class HighFidelityArchaeologyTests
 
         // Assert
         hydrated.Should().NotBeNull();
-        hydrated!.PlanId.Value.Should().Be("plans/plan-456");
+        hydrated!.PlanId.Value.Should().Be("plan-456");
         hydrated.Steps.Should().BeEquivalentTo(originalSteps);
     }
 
@@ -173,6 +174,7 @@ public class HighFidelityArchaeologyTests
     {
         // Arrange
         var factory = _serviceProvider.GetRequiredService<ActivityMapperFactory>();
+        // Raw Truth: Use TestFactory.CreatePlanId (which now returns bare "plan-123")
         var original = new ApprovalActivity("app-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.User, TestFactory.CreatePlanId("plan-123"));
 
         // Act
@@ -181,7 +183,7 @@ public class HighFidelityArchaeologyTests
 
         // Assert
         hydrated.Should().NotBeNull();
-        hydrated!.PlanId.Value.Should().Be("plans/plan-123");
+        hydrated!.PlanId.Value.Should().Be("plan-123");
     }
 
     [Fact(DisplayName = "Round-Trip: SessionAssignedActivity preserves task 🏺")]

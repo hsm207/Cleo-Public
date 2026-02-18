@@ -14,16 +14,11 @@ public record PlanId
             throw new ArgumentException("Plan identifier cannot be empty.", nameof(value));
         }
 
-        if (!value.StartsWith("plans/", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException("Plan identifier must start with 'plans/'.", nameof(value));
-        }
-
         Value = value;
     }
 
     public static explicit operator PlanId(string value) => FromString(value);
-    public static PlanId FromString(string value) => new(value);
+    public static SessionId FromString(string value) => new(value);
 
     public static implicit operator string(PlanId id)
     {

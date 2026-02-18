@@ -17,7 +17,7 @@ internal sealed class PlanningActivityMapper : IJulesActivityMapper<JulesPlanGen
             dto.Metadata.Id, 
             DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
             ActivityOriginatorMapper.Map(dto.Metadata.Originator),
-            new PlanId(payload.Plan.Id ?? "plans/unknown"),
+            new PlanId(payload.Plan.Id ?? "unknown"), // Raw Truth: No prefix needed
             payload.Plan.Steps?.Select(s => new PlanStep(s.Id, s.Index ?? 0, s.Title ?? string.Empty, s.Description ?? string.Empty)).ToList() ?? new List<PlanStep>(),
             ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
             dto.Metadata.Description);
