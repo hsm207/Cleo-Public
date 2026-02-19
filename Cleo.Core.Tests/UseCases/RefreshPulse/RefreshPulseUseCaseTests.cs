@@ -53,6 +53,8 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionState.Working, result.State);
+        Assert.Equal(latestPulse, result.Pulse);
+        Assert.NotNull(result.LastActivity);
         
         // Verify Persistence
         Assert.NotNull(_writer.LastSavedSession);
@@ -77,6 +79,7 @@ public sealed class RefreshPulseUseCaseTests
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionState.Planning, result.State);
+        Assert.True(result.IsCached);
         Assert.NotNull(result.Warning);
         Assert.Contains("Remote system unreachable", result.Warning, StringComparison.OrdinalIgnoreCase);
     }
