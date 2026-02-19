@@ -32,12 +32,11 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
         try
         {
             var allActivities = new List<SessionActivity>();
-            // Use PageToken from options for the first request, then follow API responses
-            string? nextPageToken = options.PageToken;
+            var currentOptions = options;
 
             do
             {
-                var uri = JulesQueryBuilder.BuildListActivitiesUri(id, options, nextPageToken);
+                var uri = JulesQueryBuilder.BuildListActivitiesUri(id, currentOptions);
 
                 var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
                 await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
@@ -51,9 +50,9 @@ public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActiv
                     }
                 }
 
-                nextPageToken = dto?.NextPageToken;
+                currentOptions = options with { PageToken = dto?.NextPageToken };
 
-            } while (!string.IsNullOrEmpty(nextPageToken));
+            } while (!string.IsNullOrEmpty(currentOptions.PageToken));
 
             return allActivities.AsReadOnly();
         }
