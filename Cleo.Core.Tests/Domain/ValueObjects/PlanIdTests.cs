@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class PlanIdTests
+internal class PlanIdTests
 {
     [Theory(DisplayName = "PlanId should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]

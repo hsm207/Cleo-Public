@@ -27,7 +27,7 @@ public class Session : AggregateRoot
     public DateTimeOffset? UpdatedAt { get; }
     public bool? RequiresPlanApproval { get; }
     public AutomationMode Mode { get; }
-    
+
     public IReadOnlyCollection<SessionActivity> SessionLog => _sessionLog.AsReadOnly();
 
     public IReadOnlyCollection<SessionActivity> GetSignificantHistory() => _sessionLog.Where(a => a.IsSignificant).ToList().AsReadOnly();

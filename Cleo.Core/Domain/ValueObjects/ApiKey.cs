@@ -19,7 +19,7 @@ public record ApiKey
 
     public static explicit operator ApiKey(string value) => FromString(value);
     public static ApiKey FromString(string value) => new(value);
-    
+
     public static implicit operator string(ApiKey key)
     {
         ArgumentNullException.ThrowIfNull(key);

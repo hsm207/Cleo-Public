@@ -12,8 +12,8 @@ namespace Cleo.Infrastructure.Tests.Clients.Jules;
 
 public class JulesFidelityTests
 {
-    private static readonly JsonSerializerOptions Options = new() 
-    { 
+    private static readonly JsonSerializerOptions Options = new()
+    {
         PropertyNameCaseInsensitive = true,
         WriteIndented = false,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -61,7 +61,7 @@ public class JulesFidelityTests
 
         // Identity
         domain.Id.Value.Should().Be(dto.Name);
-        
+
         // 🛑 FAILING CHECKS (PROVING DATA LOSS):
         domain.RemoteId.Should().Be(dto.Id, "the short ID must be preserved for bug correlation");
         domain.CreatedAt.Should().Be(DateTimeOffset.Parse(dto.CreateTime!), "the session must know when it was born");

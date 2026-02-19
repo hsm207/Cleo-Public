@@ -39,7 +39,7 @@ internal sealed class JsonRegistrySerializer : IRegistrySerializer
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
     public string Serialize(IEnumerable<RegisteredSessionDto> sessions) => JsonSerializer.Serialize(sessions, Options);
-    public IEnumerable<RegisteredSessionDto> Deserialize(string content) => 
+    public IEnumerable<RegisteredSessionDto> Deserialize(string content) =>
         JsonSerializer.Deserialize<List<RegisteredSessionDto>>(content) ?? new List<RegisteredSessionDto>();
 }
 

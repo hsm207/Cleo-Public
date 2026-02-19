@@ -1,4 +1,4 @@
-﻿namespace Cleo.Infrastructure;
+namespace Cleo.Infrastructure;
 
 public class Class1
 {

@@ -11,8 +11,8 @@ internal sealed class CompletionActivityMapper : IJulesActivityMapper<JulesSessi
 {
     public SessionActivity Map(JulesActivityDto dto) => new CompletionActivity(
         dto.Metadata.Name,
-        dto.Metadata.Id, 
-        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture), 
+        dto.Metadata.Id,
+        DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture),
         ActivityOriginatorMapper.Map(dto.Metadata.Originator),
         ArtifactMappingHelper.MapArtifacts(dto.Metadata.Artifacts),
         dto.Metadata.Description);

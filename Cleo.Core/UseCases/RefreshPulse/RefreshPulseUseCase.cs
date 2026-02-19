@@ -14,9 +14,9 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     private readonly ISessionSynchronizer _synchronizer;
 
     public RefreshPulseUseCase(
-        IPulseMonitor pulseMonitor, 
+        IPulseMonitor pulseMonitor,
         IRemoteActivitySource activitySource,
-        ISessionReader sessionReader, 
+        ISessionReader sessionReader,
         ISessionWriter sessionWriter,
         ISessionSynchronizer synchronizer)
     {
@@ -32,7 +32,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
         ArgumentNullException.ThrowIfNull(request);
 
         var session = await _sessionReader.RecallAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        
+
         try
         {
             // 1. Happy Path: Get the latest authoritative state and History from the remote system 💓📜
@@ -50,7 +50,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
 
             var remoteSession = await remoteSessionTask.ConfigureAwait(false);
             var activities = await activitiesTask.ConfigureAwait(false);
-            
+
             // 2. Mirror Reality: Synchronize the local session with the remote truth 🔄💎
             // If the session was missing, we use the remote one as our base!
             session ??= remoteSession;
@@ -59,7 +59,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             _synchronizer.Synchronize(session, remoteSession, activities);
 
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
-            
+
             return new RefreshPulseResponse(
                 request.Id,
                 remoteSession.Pulse,
@@ -67,7 +67,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 session.LastActivity,
                 session.PullRequest,
                 HasUnsubmittedSolution: session.Solution != null && session.PullRequest == null);
-            
+
         }
         catch (RemoteCollaboratorUnavailableException)
         {
@@ -86,7 +86,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
                 HasUnsubmittedSolution: session.Solution != null && session.PullRequest == null,
                 IsCached: true,
                 Warning: "⚠️ Remote system unreachable. Showing last known state from Task Registry.");
-            
+
         }
     }
 }

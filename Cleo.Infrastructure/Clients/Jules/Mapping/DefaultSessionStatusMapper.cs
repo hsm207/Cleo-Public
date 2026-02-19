@@ -22,6 +22,6 @@ internal sealed class DefaultSessionStatusMapper : ISessionStatusMapper
         [JulesSessionState.Failed] = SessionStatus.Failed
     };
 
-    public SessionStatus Map(JulesSessionState? state) => 
+    public SessionStatus Map(JulesSessionState? state) =>
         (state.HasValue && StatusMap.TryGetValue(state.Value, out var status)) ? status : SessionStatus.StateUnspecified;
 }

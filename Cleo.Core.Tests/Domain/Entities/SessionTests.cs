@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
 
-public class SessionTests
+internal class SessionTests
 {
     private static readonly SessionId Id = new("sessions/123");
     private const string RemoteId = "remote-123";
@@ -89,7 +89,7 @@ public class SessionTests
     public void AddFeedbackShouldCreateMessageActivity()
     {
         var session = CreateSession();
-        
+
         session.AddFeedback("This looks great!", "act/3");
 
         var activity = Assert.IsType<MessageActivity>(session.SessionLog.Last());
@@ -141,7 +141,7 @@ public class SessionTests
     public void UpdatePulseShouldHandleAllStatuses()
     {
         var session = CreateSession();
-        
+
         // Test normal transition
         session.UpdatePulse(new SessionPulse(SessionStatus.InProgress));
         Assert.Equal(SessionStatus.InProgress, session.Pulse.Status);
@@ -162,7 +162,7 @@ public class SessionTests
     public void UpdatePulseShouldExerciseAllStatuses()
     {
         var session = CreateSession();
-        
+
         foreach (SessionStatus status in Enum.GetValues<SessionStatus>())
         {
             var pulse = new SessionPulse(status);
@@ -177,7 +177,7 @@ public class SessionTests
         var now = DateTimeOffset.UtcNow;
         var patch = new GitPatch("d", "b");
         var changeSet = new ChangeSet("s", patch);
-        
+
         var e1 = new SessionAssigned(Id, Task, now);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse, now);
         var e3 = new FeedbackRequested(Id, "prompt", now);
@@ -238,8 +238,8 @@ public class SessionTests
     public void SessionShouldNotSeedIfHistoryProvided()
     {
         // Arrange
-        var history = new List<SessionActivity> { 
-            new MessageActivity("a1", "r1", Now, ActivityOriginator.User, "Existing") 
+        var history = new List<SessionActivity> {
+            new MessageActivity("a1", "r1", Now, ActivityOriginator.User, "Existing")
         };
 
         // Act
@@ -255,7 +255,7 @@ public class SessionTests
     public void MethodsShouldValidateArgs()
     {
         var session = CreateSession();
-        
+
         // Validation for feedback
         Assert.Throws<ArgumentNullException>(() => session.AddFeedback(null!, "id"));
         Assert.Throws<ArgumentException>(() => session.AddFeedback(" ", "id"));
@@ -271,7 +271,7 @@ public class SessionTests
         var now = DateTimeOffset.UtcNow;
         var patch = new GitPatch("d", "b");
         var changeSet = new ChangeSet("s", patch);
-        
+
         var e1 = new SessionAssigned(Id, Task);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse);
         var e3 = new FeedbackRequested(Id, "prompt");
@@ -282,7 +282,7 @@ public class SessionTests
         Assert.Equal(InitialPulse, e2.Pulse);
         Assert.Equal("prompt", e3.Prompt);
         Assert.Equal(changeSet, e4.Solution);
-        
+
         // Exercise the 'OccurredOn' from secondary constructor
         Assert.True((DateTimeOffset.UtcNow - e1.OccurredOn).TotalSeconds < 5);
     }
@@ -460,7 +460,7 @@ public class SessionTests
     {
         // Arrange
         var session = CreateSession();
-        
+
         // Act
         session.UpdatePulse(new SessionPulse((SessionStatus)999));
 

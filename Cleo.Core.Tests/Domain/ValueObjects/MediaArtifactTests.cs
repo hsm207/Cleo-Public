@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class MediaArtifactTests
+internal class MediaArtifactTests
 {
     [Fact(DisplayName = "MediaArtifact should be created with valid arguments.")]
     public void ShouldCreateWithValidArgs()

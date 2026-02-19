@@ -33,8 +33,8 @@ public record ChangeSet : Artifact
         var files = Patch.GetModifiedFiles();
         var fileSummary = GetNarrativeFileSummary(files);
 
-        var shortSha = Patch.BaseCommitId.Length >= 7 
-            ? Patch.BaseCommitId[..7] 
+        var shortSha = Patch.BaseCommitId.Length >= 7
+            ? Patch.BaseCommitId[..7]
             : Patch.BaseCommitId;
 
         return $"ChangeSet [{shortSha}]: {fileSummary}";

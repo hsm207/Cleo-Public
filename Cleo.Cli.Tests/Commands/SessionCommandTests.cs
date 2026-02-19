@@ -32,7 +32,7 @@ public class SessionCommandTests
 
         var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ListCommand>>().Object);
         var statusCommand = new CheckinCommand(
-            new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object, 
+            new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object,
             presenterMock.Object,
             new Mock<ILogger<CheckinCommand>>().Object);
         var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ForgetCommand>>().Object);

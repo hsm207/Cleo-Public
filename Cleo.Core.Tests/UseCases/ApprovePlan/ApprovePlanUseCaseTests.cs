@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.ApprovePlan;
 
-public sealed class ApprovePlanUseCaseTests
+internal sealed class ApprovePlanUseCaseTests
 {
     private readonly FakeController _controller = new();
     private readonly ApprovePlanUseCase _sut;
@@ -25,7 +25,7 @@ public sealed class ApprovePlanUseCaseTests
         var request = new ApprovePlanRequest(sessionId, planId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -37,7 +37,7 @@ public sealed class ApprovePlanUseCaseTests
     private sealed class FakeController : ISessionController
     {
         public bool WasApproved { get; private set; }
-        
+
         public Task ApprovePlanAsync(SessionId id, CancellationToken cancellationToken = default)
         {
             WasApproved = true;

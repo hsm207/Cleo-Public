@@ -56,7 +56,7 @@ internal sealed class SpyHandler : INotificationHandler<DomainEventNotification<
     public Task Handle(DomainEventNotification<TestDomainEvent> notification, CancellationToken cancellationToken)
     {
         Handled = true;
-            ReceivedEvent = notification.Event;
+        ReceivedEvent = notification.Event;
         return Task.CompletedTask;
     }
 }

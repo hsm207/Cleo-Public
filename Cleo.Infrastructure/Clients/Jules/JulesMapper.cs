@@ -17,7 +17,7 @@ internal static class JulesMapper
     {
         var pulse = MapPulse(dto, statusMapper);
         var automationMode = dto.AutomationMode == JulesAutomationMode.AutoCreatePr ? AutomationMode.AutoCreatePr : AutomationMode.Unspecified;
-        
+
         // High-Fidelity Mapping: Use 'Prompt' as the authoritative TaskDescription.
         // Self-Healing Strategy 🩹: Ensure incoming API IDs conform to new Domain Prefixes.
 
@@ -45,12 +45,12 @@ internal static class JulesMapper
             var patch = changeSetOutput.ChangeSet!.GitPatch!;
             var source = changeSetOutput.ChangeSet.Source ?? "remote-source";
             var evidence = new List<Artifact> { new ChangeSet(source, new GitPatch(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
-            
+
             // Attach the patch to a synthetic completion activity to mark delivery
             session.AddActivity(new CompletionActivity(
-                $"output-{session.Id.Value}", 
+                $"output-{session.Id.Value}",
                 "remote-output-id",
-                DateTimeOffset.UtcNow, 
+                DateTimeOffset.UtcNow,
                 ActivityOriginator.System,
                 evidence));
         }

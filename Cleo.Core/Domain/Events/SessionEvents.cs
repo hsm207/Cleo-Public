@@ -7,11 +7,11 @@ namespace Cleo.Core.Domain.Events;
 /// Fired when a new task is successfully assigned to a remote Jules session.
 /// </summary>
 public record SessionAssigned(
-    SessionId SessionId, 
-    TaskDescription Task, 
+    SessionId SessionId,
+    TaskDescription Task,
     DateTimeOffset OccurredOn) : IDomainEvent
 {
-    public SessionAssigned(SessionId sessionId, TaskDescription task) 
+    public SessionAssigned(SessionId sessionId, TaskDescription task)
         : this(sessionId, task, DateTimeOffset.UtcNow) { }
 }
 
@@ -19,11 +19,11 @@ public record SessionAssigned(
 /// Fired when a new heartbeat pulse is received from Jules.
 /// </summary>
 public record StatusHeartbeatReceived(
-    SessionId SessionId, 
-    SessionPulse Pulse, 
+    SessionId SessionId,
+    SessionPulse Pulse,
     DateTimeOffset OccurredOn) : IDomainEvent
 {
-    public StatusHeartbeatReceived(SessionId sessionId, SessionPulse pulse) 
+    public StatusHeartbeatReceived(SessionId sessionId, SessionPulse pulse)
         : this(sessionId, pulse, DateTimeOffset.UtcNow) { }
 }
 
@@ -31,11 +31,11 @@ public record StatusHeartbeatReceived(
 /// Fired when Jules is paused and waiting for developer feedback.
 /// </summary>
 public record FeedbackRequested(
-    SessionId SessionId, 
-    string? Prompt, 
+    SessionId SessionId,
+    string? Prompt,
     DateTimeOffset OccurredOn) : IDomainEvent
 {
-    public FeedbackRequested(SessionId sessionId, string? prompt) 
+    public FeedbackRequested(SessionId sessionId, string? prompt)
         : this(sessionId, prompt, DateTimeOffset.UtcNow) { }
 }
 
@@ -43,10 +43,10 @@ public record FeedbackRequested(
 /// Fired when a code solution (patch) is ready for pull.
 /// </summary>
 public record SolutionReady(
-    SessionId SessionId, 
-    ChangeSet Solution, 
+    SessionId SessionId,
+    ChangeSet Solution,
     DateTimeOffset OccurredOn) : IDomainEvent
 {
-    public SolutionReady(SessionId sessionId, ChangeSet solution) 
+    public SolutionReady(SessionId sessionId, ChangeSet solution)
         : this(sessionId, solution, DateTimeOffset.UtcNow) { }
 }

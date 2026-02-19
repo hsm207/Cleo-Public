@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.ForgetSession;
 
-public sealed class ForgetSessionUseCaseTests
+internal sealed class ForgetSessionUseCaseTests
 {
     private readonly FakeSessionWriter _writer = new();
     private readonly ForgetSessionUseCase _sut;
@@ -24,7 +24,7 @@ public sealed class ForgetSessionUseCaseTests
         var request = new ForgetSessionRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(sessionId, result.Id);

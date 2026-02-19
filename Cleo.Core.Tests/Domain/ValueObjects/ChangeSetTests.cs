@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class ChangeSetTests
+internal class ChangeSetTests
 {
     private static readonly GitPatch Patch = new("diff", "sha");
 

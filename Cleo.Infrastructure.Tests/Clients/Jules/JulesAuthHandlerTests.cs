@@ -47,8 +47,8 @@ public class JulesAuthHandlerTests : IDisposable
         _innerHandlerMock.Protected().Verify(
             "SendAsync",
             Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Headers.Contains("x-goog-api-key") && 
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Headers.Contains("x-goog-api-key") &&
                 req.Headers.GetValues("x-goog-api-key").First() == apiKey),
             ItExpr.IsAny<CancellationToken>());
     }
@@ -58,7 +58,7 @@ public class JulesAuthHandlerTests : IDisposable
     {
         // Arrange: Vault is empty (ensure file is gone)
         if (File.Exists(_tempFile)) File.Delete(_tempFile);
-        
+
         var handler = new JulesAuthHandler(_vault)
         {
             InnerHandler = _innerHandlerMock.Object

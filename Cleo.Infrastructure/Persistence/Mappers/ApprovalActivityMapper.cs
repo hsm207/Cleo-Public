@@ -31,9 +31,9 @@ internal sealed class ApprovalActivityMapper : IActivityPersistenceMapper
         var dto = JsonSerializer.Deserialize<ApprovalPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ApprovalActivity(
-            id, 
+            id,
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
-            timestamp, 
+            timestamp,
             originator,
             new PlanId(dto.PlanId ?? "unknown"), // Raw Truth: No prefix needed
             dto.Evidence.Select(_artifactFactory.FromEnvelope).ToList(),

@@ -8,5 +8,5 @@ namespace Cleo.Infrastructure.Messaging;
 /// This isolates the library dependency to the infrastructure layer.
 /// </summary>
 /// <typeparam name="TEvent">The type of the domain event.</typeparam>
-internal sealed record DomainEventNotification<TEvent>(TEvent Event) : INotification 
+internal sealed record DomainEventNotification<TEvent>(TEvent Event) : INotification
     where TEvent : IDomainEvent;

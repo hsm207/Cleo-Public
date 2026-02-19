@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class HistoryCriteriaTests
+internal class HistoryCriteriaTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private static readonly ProgressActivity DefaultActivity = new("act-1", "rem-1", Now, ActivityOriginator.Agent, "Intent", "Thinking");

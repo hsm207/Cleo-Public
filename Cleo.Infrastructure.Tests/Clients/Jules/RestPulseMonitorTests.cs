@@ -32,7 +32,7 @@ public class RestPulseMonitorTests
         // Arrange
         // JulesSessionResponseDto(Name, Id, State, Prompt, SourceContext, Url, RequirePlanApproval, AutomationMode, CreateTime, UpdateTime, Title, Outputs)
         var dto = new JulesSessionResponseDto("sessions/session-123", "id", JulesSessionState.InProgress, "prompt", new JulesSourceContextDto("sources/repo", null), null, true, JulesAutomationMode.AutomationModeUnspecified, null, null);
-        
+
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = JsonContent.Create(dto) });
@@ -42,13 +42,13 @@ public class RestPulseMonitorTests
 
         // Assert
         result.Status.Should().Be(SessionStatus.InProgress);
-        
+
         // Verify we used GET on the correct resource URI
         _handlerMock.Protected().Verify(
             "SendAsync",
             Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Get && 
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Method == HttpMethod.Get &&
                 req.RequestUri!.ToString().Contains("session-123")
             ),
             ItExpr.IsAny<CancellationToken>());

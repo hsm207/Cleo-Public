@@ -10,7 +10,7 @@ namespace Cleo.Core.Tests.UseCases.RefreshPulse;
 
 using Cleo.Core.Domain.Services;
 
-public sealed class RefreshPulseUseCaseTests
+internal sealed class RefreshPulseUseCaseTests
 {
     private readonly FakeSessionReader _reader = new();
     private readonly FakeSessionWriter _writer = new();
@@ -29,7 +29,7 @@ public sealed class RefreshPulseUseCaseTests
     [Fact(DisplayName = "Given a null request, when executing, then it should throw ArgumentNullException.")]
     public async Task ShouldThrowIfRequestIsNull()
     {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.ExecuteAsync(null!, CancellationToken.None)).ConfigureAwait(false);
     }
 
     [Fact(DisplayName = "Given a valid Handle, when refreshing the Pulse, then it should retrieve the latest State and History and update the Task Registry.")]
@@ -48,14 +48,14 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
         Assert.Equal(SessionState.Working, result.State);
         Assert.Equal(latestPulse, result.Pulse);
         Assert.NotNull(result.LastActivity);
-        
+
         // Verify Persistence
         Assert.NotNull(_writer.LastSavedSession);
         Assert.Equal(latestPulse, _writer.LastSavedSession.Pulse);
@@ -74,7 +74,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -111,7 +111,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         // 1. Session Identity Recovered
@@ -146,7 +146,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(pr, result.PullRequest);
@@ -171,7 +171,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Null(result.PullRequest);
@@ -186,7 +186,7 @@ public sealed class RefreshPulseUseCaseTests
         _monitor.ShouldThrow = true; // Ensure RemoteCollaboratorUnavailableException is caught, triggering the "not found" check.
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(new RefreshPulseRequest(sessionId), CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(new RefreshPulseRequest(sessionId), CancellationToken.None)).ConfigureAwait(false);
     }
 
     [Fact(DisplayName = "Given a solution exists but PR is missing, when refreshing, then it should flag HasUnsubmittedSolution.")]
@@ -208,7 +208,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.True(result.HasUnsubmittedSolution);
@@ -239,7 +239,7 @@ public sealed class RefreshPulseUseCaseTests
         var request = new RefreshPulseRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(_writer.LastSavedSession);

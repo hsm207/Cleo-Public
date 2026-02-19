@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases;
 
-public class ViewPlanUseCaseTests
+internal class ViewPlanUseCaseTests
 {
     private readonly FakeSessionReader _sessionReader = new();
     private readonly ViewPlanUseCase _useCase;
@@ -21,8 +21,8 @@ public class ViewPlanUseCaseTests
     [Fact(DisplayName = "Given an unknown session, when viewing the plan, it should return an empty response.")]
     public async Task ShouldReturnEmptyWhenSessionNotFound()
     {
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(TestFactory.CreateSessionId("unknown")), TestContext.Current.CancellationToken);
-        
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(TestFactory.CreateSessionId("unknown")), TestContext.Current.CancellationToken).ConfigureAwait(false);
+
         response.HasPlan.Should().BeFalse();
         response.Timestamp.Should().BeNull();
     }
@@ -41,7 +41,7 @@ public class ViewPlanUseCaseTests
         );
         _sessionReader.Sessions[sessionId] = session;
 
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         response.HasPlan.Should().BeFalse();
         response.Timestamp.Should().BeNull();
@@ -66,7 +66,7 @@ public class ViewPlanUseCaseTests
         session.AddActivity(planActivity);
         _sessionReader.Sessions[sessionId] = session;
 
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         response.HasPlan.Should().BeTrue();
         response.PlanId.Should().Be(TestFactory.CreatePlanId("PLAN-A"));
@@ -94,7 +94,7 @@ public class ViewPlanUseCaseTests
         session.AddActivity(planActivity);
         _sessionReader.Sessions[sessionId] = session;
 
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         response.HasPlan.Should().BeTrue();
         response.IsApproved.Should().BeFalse();
@@ -119,7 +119,7 @@ public class ViewPlanUseCaseTests
         session.AddActivity(planActivity);
         _sessionReader.Sessions[sessionId] = session;
 
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         response.HasPlan.Should().BeTrue();
         response.IsApproved.Should().BeTrue();
@@ -145,7 +145,7 @@ public class ViewPlanUseCaseTests
         session.AddActivity(planActivity);
         _sessionReader.Sessions[sessionId] = session;
 
-        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken);
+        var response = await _useCase.ExecuteAsync(new ViewPlanRequest(sessionId), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         response.HasPlan.Should().BeTrue();
         response.Steps.Should().HaveCount(1);

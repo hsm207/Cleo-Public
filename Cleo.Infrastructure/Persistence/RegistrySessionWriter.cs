@@ -71,7 +71,7 @@ public sealed class RegistrySessionWriter : ISessionWriter
     {
         var path = _pathProvider.GetRegistryPath();
         var directory = Path.GetDirectoryName(path);
-        
+
         if (!string.IsNullOrWhiteSpace(directory) && !_fileSystem.DirectoryExists(directory))
         {
             _fileSystem.CreateDirectory(directory);

@@ -34,9 +34,9 @@ internal sealed class PlanningActivityMapper : IActivityPersistenceMapper
         var steps = dto.Steps.Select(s => new PlanStep(s.Id, s.Index, s.Title, s.Description)).ToList();
 
         return new PlanningActivity(
-            id, 
+            id,
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
-            timestamp, 
+            timestamp,
             originator,
             new PlanId(dto.PlanId ?? "plans/unknown"), // Raw Truth: No prefix needed, but fallback is still safe
             steps,

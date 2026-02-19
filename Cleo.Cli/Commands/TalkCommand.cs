@@ -50,9 +50,9 @@ internal sealed class TalkCommand : ICommandGroup
         }
         catch (Exception ex)
         {
-            #pragma warning disable CA1848
+#pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to send message.");
-            #pragma warning restore CA1848
+#pragma warning restore CA1848
             Console.WriteLine($"💔 Error: {ex.Message}");
         }
     }

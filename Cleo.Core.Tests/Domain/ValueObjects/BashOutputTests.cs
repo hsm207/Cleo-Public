@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class BashOutputTests
+internal class BashOutputTests
 {
     [Fact(DisplayName = "BashOutput should be created with valid arguments.")]
     public void ShouldCreateWithValidArgs()

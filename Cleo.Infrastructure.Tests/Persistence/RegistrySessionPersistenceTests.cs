@@ -83,9 +83,9 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
-        Assert.Equal(SessionStatus.Planning, result.Pulse.Status); 
+        Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
-        
+
         // Verify file actually exists and has content
         Assert.True(File.Exists(_tempFile));
         var json = await File.ReadAllTextAsync(_tempFile);
@@ -107,7 +107,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status); 
+        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
         Assert.Equal((TaskDescription)"Updated", result.Task);
     }
 
@@ -163,12 +163,12 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         // Assert
         Assert.Empty(result);
-        
+
         // Now test empty file
         await File.WriteAllTextAsync(_tempFile, "[]");
         result = await _reader.ListAsync(TestContext.Current.CancellationToken);
         Assert.Empty(result);
-        
+
         // Now test whitespace
         await File.WriteAllTextAsync(_tempFile, "   ");
         result = await _reader.ListAsync(TestContext.Current.CancellationToken);

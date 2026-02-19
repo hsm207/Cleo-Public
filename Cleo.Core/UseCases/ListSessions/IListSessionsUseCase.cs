@@ -1,4 +1,3 @@
-using Cleo.Core.Domain.Ports;
 
 namespace Cleo.Core.UseCases.ListSessions;
 

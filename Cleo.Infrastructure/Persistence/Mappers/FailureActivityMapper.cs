@@ -31,9 +31,9 @@ internal sealed class FailureActivityMapper : IActivityPersistenceMapper
         var dto = JsonSerializer.Deserialize<FailurePayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new FailureActivity(
-            id, 
+            id,
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
-            timestamp, 
+            timestamp,
             originator,
             dto.Reason ?? "Unknown failure",
             (dto.Evidence ?? []).Select(_artifactFactory.FromEnvelope).ToList(),

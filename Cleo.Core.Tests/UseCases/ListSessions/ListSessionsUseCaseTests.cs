@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.ListSessions;
 
-public sealed class ListSessionsUseCaseTests
+internal sealed class ListSessionsUseCaseTests
 {
     private readonly FakeSessionReader _reader = new();
     private readonly ListSessionsUseCase _sut;
@@ -25,7 +25,7 @@ public sealed class ListSessionsUseCaseTests
         _reader.Sessions[session.Id] = session;
 
         // Act
-        var result = await _sut.ExecuteAsync(new ListSessionsRequest(), TestContext.Current.CancellationToken);
+        var result = await _sut.ExecuteAsync(new ListSessionsRequest(), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         Assert.Single(result.Sessions);
