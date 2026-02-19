@@ -30,12 +30,12 @@ public class SessionCommandTests
 
         var newCommand = new NewCommand(initiateUseCase, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<NewCommand>>().Object);
 
-        var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, new Mock<ILogger<ListCommand>>().Object);
+        var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ListCommand>>().Object);
         var statusCommand = new CheckinCommand(
             new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object, 
             presenterMock.Object,
             new Mock<ILogger<CheckinCommand>>().Object);
-        var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
+        var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ForgetCommand>>().Object);
 
         _command = new SessionCommand(newCommand, listCommand, statusCommand, forgetCommand, helpProviderMock.Object);
     }

@@ -159,5 +159,215 @@ namespace Cleo.Cli.Resources {
                 return ResourceManager.GetString("Session_Description", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to List sessions in the local Session Registry 📋.
+        /// </summary>
+        internal static string List_Description {
+            get {
+                return ResourceManager.GetString("List_Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📭 No active sessions found. Time to start something new? 💖.
+        /// </summary>
+        internal static string List_Empty {
+            get {
+                return ResourceManager.GetString("List_Empty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📋 Current Sessions:.
+        /// </summary>
+        internal static string List_Header {
+            get {
+                return ResourceManager.GetString("List_Header", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to - [{0}] {1} [{2}].
+        /// </summary>
+        internal static string List_Item_Format {
+            get {
+                return ResourceManager.GetString("List_Item_Format", resourceCulture);
+            }
+        }
+
+        internal static string Log_Description {
+            get {
+                return ResourceManager.GetString("Log_Description", resourceCulture);
+            }
+        }
+
+        internal static string Log_Empty {
+            get {
+                return ResourceManager.GetString("Log_Empty", resourceCulture);
+            }
+        }
+
+        internal static string Log_Header {
+            get {
+                return ResourceManager.GetString("Log_Header", resourceCulture);
+            }
+        }
+
+        internal static string Log_PullRequest {
+            get {
+                return ResourceManager.GetString("Log_PullRequest", resourceCulture);
+            }
+        }
+
+        internal static string Log_ShowingAll {
+            get {
+                return ResourceManager.GetString("Log_ShowingAll", resourceCulture);
+            }
+        }
+
+        internal static string Log_HiddenEarlier {
+            get {
+                return ResourceManager.GetString("Log_HiddenEarlier", resourceCulture);
+            }
+        }
+
+        internal static string Log_HiddenHeartbeats {
+            get {
+                return ResourceManager.GetString("Log_HiddenHeartbeats", resourceCulture);
+            }
+        }
+
+        internal static string Log_ShowingSignificant {
+            get {
+                return ResourceManager.GetString("Log_ShowingSignificant", resourceCulture);
+            }
+        }
+
+        internal static string Log_DefaultSummary {
+            get {
+                return ResourceManager.GetString("Log_DefaultSummary", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Empty {
+            get {
+                return ResourceManager.GetString("Plan_Empty", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Title_Approved {
+            get {
+                return ResourceManager.GetString("Plan_Title_Approved", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Title_Proposed {
+            get {
+                return ResourceManager.GetString("Plan_Title_Proposed", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Header {
+            get {
+                return ResourceManager.GetString("Plan_Header", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Generated {
+            get {
+                return ResourceManager.GetString("Plan_Generated", resourceCulture);
+            }
+        }
+
+        internal static string Plan_Description {
+            get {
+                return ResourceManager.GetString("Plan_Description", resourceCulture);
+            }
+        }
+
+        internal static string Plan_View_Description {
+            get {
+                return ResourceManager.GetString("Plan_View_Description", resourceCulture);
+            }
+        }
+
+        internal static string Approve_Description {
+            get {
+                return ResourceManager.GetString("Approve_Description", resourceCulture);
+            }
+        }
+
+        internal static string Approve_Success {
+            get {
+                return ResourceManager.GetString("Approve_Success", resourceCulture);
+            }
+        }
+
+        internal static string Auth_Description {
+            get {
+                return ResourceManager.GetString("Auth_Description", resourceCulture);
+            }
+        }
+
+        internal static string Auth_Login_Description {
+            get {
+                return ResourceManager.GetString("Auth_Login_Description", resourceCulture);
+            }
+        }
+
+        internal static string Auth_Key_Description {
+            get {
+                return ResourceManager.GetString("Auth_Key_Description", resourceCulture);
+            }
+        }
+
+        internal static string Auth_Logout_Description {
+            get {
+                return ResourceManager.GetString("Auth_Logout_Description", resourceCulture);
+            }
+        }
+
+        internal static string Auth_Logout_Success {
+            get {
+                return ResourceManager.GetString("Auth_Logout_Success", resourceCulture);
+            }
+        }
+
+        internal static string Repos_Description {
+            get {
+                return ResourceManager.GetString("Repos_Description", resourceCulture);
+            }
+        }
+
+        internal static string Repos_Empty {
+            get {
+                return ResourceManager.GetString("Repos_Empty", resourceCulture);
+            }
+        }
+
+        internal static string Repos_Header {
+            get {
+                return ResourceManager.GetString("Repos_Header", resourceCulture);
+            }
+        }
+
+        internal static string Repos_Item_Format {
+            get {
+                return ResourceManager.GetString("Repos_Item_Format", resourceCulture);
+            }
+        }
+
+        internal static string Forget_Description {
+            get {
+                return ResourceManager.GetString("Forget_Description", resourceCulture);
+            }
+        }
+
+        internal static string Forget_Success {
+            get {
+                return ResourceManager.GetString("Forget_Success", resourceCulture);
+            }
+        }
     }
 }

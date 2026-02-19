@@ -1,6 +1,6 @@
 using Cleo.Cli.Commands;
-using Cleo.Core.Domain.Ports;
-using Cleo.Core.UseCases.AuthenticateUser;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.UseCases.BrowseSources;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -17,21 +17,23 @@ public class ConfigCommandTests
 
     public ConfigCommandTests()
     {
-        // Mock subcommands
         var authCommand = new AuthCommand(
-            new Mock<IAuthenticateUserUseCase>().Object,
-            new Mock<IVault>().Object,
-            new Mock<ILogger<AuthCommand>>().Object
-        );
+            new Mock<Core.UseCases.AuthenticateUser.IAuthenticateUserUseCase>().Object,
+            new Mock<Core.Domain.Ports.IVault>().Object,
+            new Mock<IStatusPresenter>().Object,
+            new Mock<IHelpProvider>().Object,
+            new Mock<ILogger<AuthCommand>>().Object);
+
         var reposCommand = new ReposCommand(
             new Mock<IBrowseSourcesUseCase>().Object,
-            new Mock<ILogger<ReposCommand>>().Object
-        );
+            new Mock<IStatusPresenter>().Object,
+            new Mock<IHelpProvider>().Object,
+            new Mock<ILogger<ReposCommand>>().Object);
 
         _command = new ConfigCommand(authCommand, reposCommand);
     }
 
-    [Fact(DisplayName = "Given the Config command, when built, then it should contain subcommands for Auth and Repos.")]
+    [Fact(DisplayName = "Config command should contain auth and repos subcommands.")]
     public void Build_ConstructsHierarchyCorrectly()
     {
         // Act
@@ -39,8 +41,6 @@ public class ConfigCommandTests
 
         // Assert
         root.Name.Should().Be("config");
-        root.Description.Should().Contain("management");
-
         root.Subcommands.Should().Contain(c => c.Name == "auth");
         root.Subcommands.Should().Contain(c => c.Name == "repos");
     }

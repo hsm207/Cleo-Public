@@ -1,5 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.UseCases.BrowseSources;
 using Microsoft.Extensions.Logging;
 
@@ -9,17 +11,25 @@ namespace Cleo.Cli.Commands;
 internal sealed class ReposCommand
 {
     private readonly IBrowseSourcesUseCase _useCase;
+    private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<ReposCommand> _logger;
 
-    public ReposCommand(IBrowseSourcesUseCase useCase, ILogger<ReposCommand> logger)
+    public ReposCommand(
+        IBrowseSourcesUseCase useCase,
+        IStatusPresenter presenter,
+        IHelpProvider helpProvider,
+        ILogger<ReposCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("repos", "List available GitHub repositories for collaboration 🛰️");
+        var command = new Command("repos", _helpProvider.GetCommandDescription("Repos_Description"));
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -34,22 +44,24 @@ internal sealed class ReposCommand
 
             if (response.Sources.Count == 0)
             {
-                Console.WriteLine("📭 No sources found. Ensure your GitHub account is connected to Jules! 💖");
+                _presenter.PresentEmptyRepositories();
                 return;
             }
 
-            Console.WriteLine("🛰️ Available Repositories:");
+            var repoList = new List<string>();
             foreach (var source in response.Sources)
             {
-                Console.WriteLine($"- {source.Name}");
+                repoList.Add(source.Name);
             }
+
+            _presenter.PresentRepositories(repoList);
         }
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch repositories.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }
