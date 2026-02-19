@@ -76,3 +76,5 @@ dotnet_naming_style.underscore_camel_case.required_prefix = _
 # Suppress CA1515 (Types that are not exported should be internal) for test classes as xUnit requires them to be public
 [**Tests.cs]
 dotnet_diagnostic.CA1515.severity = none
+# Suppress CA2007 (Do not directly await a Task) for test classes as xUnit tests should not use ConfigureAwait
+dotnet_diagnostic.CA2007.severity = none
