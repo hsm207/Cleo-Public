@@ -25,8 +25,8 @@ public class SessionCommandTests
         var presenterMock = new Mock<IStatusPresenter>();
         var helpProviderMock = new Mock<IHelpProvider>();
 
-        // Mock help provider for NewCommand
-        helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+        // Mock help provider for NewCommand and SessionCommand
+        helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k == "Session_Description" ? "Lifecycle Management" : k);
 
         var newCommand = new NewCommand(initiateUseCase, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<NewCommand>>().Object);
 
@@ -37,7 +37,7 @@ public class SessionCommandTests
             new Mock<ILogger<CheckinCommand>>().Object);
         var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, new Mock<ILogger<ForgetCommand>>().Object);
 
-        _command = new SessionCommand(newCommand, listCommand, statusCommand, forgetCommand);
+        _command = new SessionCommand(newCommand, listCommand, statusCommand, forgetCommand, helpProviderMock.Object);
     }
 
     [Fact(DisplayName = "Given the Session command, when built, then it should contain all required subcommands.")]
