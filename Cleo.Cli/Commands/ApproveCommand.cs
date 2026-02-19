@@ -1,5 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ApprovePlan;
 using Microsoft.Extensions.Logging;
@@ -10,17 +12,21 @@ namespace Cleo.Cli.Commands;
 internal sealed class ApproveCommand
 {
     private readonly IApprovePlanUseCase _useCase;
+    private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<ApproveCommand> _logger;
 
-    public ApproveCommand(IApprovePlanUseCase useCase, ILogger<ApproveCommand> logger)
+    public ApproveCommand(IApprovePlanUseCase useCase, IStatusPresenter presenter, IHelpProvider helpProvider, ILogger<ApproveCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("approve", "Approve a generated plan 👍");
+        var command = new Command("approve", _helpProvider.GetCommandDescription("Approve_Description"));
 
         var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
         command.AddArgument(sessionIdArgument);
@@ -40,14 +46,14 @@ internal sealed class ApproveCommand
             var request = new ApprovePlanRequest(new SessionId(sessionId), new PlanId(planId));
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            Console.WriteLine($"✅ Plan {response.PlanId} approved for session {sessionId} at {response.ApprovedAt:t}! Let's go! 🚀");
+            _presenter.PresentSuccess(string.Format(System.Globalization.CultureInfo.CurrentCulture, _helpProvider.GetResource("Approve_Success"), response.PlanId, sessionId, response.ApprovedAt));
         }
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to approve plan.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }

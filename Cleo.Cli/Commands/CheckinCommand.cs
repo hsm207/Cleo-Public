@@ -47,18 +47,18 @@ internal sealed class CheckinCommand
 
             if (response.Warning != null)
             {
-                Console.WriteLine(response.Warning);
+                _presenter.PresentWarning(response.Warning);
             }
 
             var viewModel = SessionStatusEvaluator.Evaluate(response);
-            Console.Write(_presenter.Format(viewModel));
+            _presenter.PresentStatus(viewModel);
         }
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch status.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ListSessions;
 using Cleo.Core.UseCases.RefreshPulse;
@@ -12,17 +13,21 @@ namespace Cleo.Cli.Commands;
 internal sealed class ListCommand
 {
     private readonly IListSessionsUseCase _useCase;
+    private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<ListCommand> _logger;
 
-    public ListCommand(IListSessionsUseCase useCase, ILogger<ListCommand> logger)
+    public ListCommand(IListSessionsUseCase useCase, IStatusPresenter presenter, IHelpProvider helpProvider, ILogger<ListCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("list", "List sessions in the local Session Registry 📋");
+        var command = new Command("list", _helpProvider.GetCommandDescription("List_Description"));
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -37,14 +42,13 @@ internal sealed class ListCommand
 
             if (response.Sessions.Count == 0)
             {
-                Console.WriteLine("📭 No active sessions found. Time to start something new? 💖");
+                _presenter.PresentEmptyList();
                 return;
             }
 
-            Console.WriteLine("📋 Current Sessions:");
+            var sessionList = new List<(string Id, string Task, string State)>();
             foreach (var session in response.Sessions)
             {
-                // Map the session to a RefreshPulseResponse so we can use the Evaluator
                 var statusResponse = new RefreshPulseResponse(
                     session.Id,
                     session.Pulse,
@@ -53,15 +57,17 @@ internal sealed class ListCommand
                     session.PullRequest);
 
                 var vm = SessionStatusEvaluator.Evaluate(statusResponse);
-                Console.WriteLine($"- [{session.Id}] {session.Task} [{vm.StateTitle}]");
+                sessionList.Add((session.Id.ToString(), session.Task.ToString(), vm.StateTitle));
             }
+
+            _presenter.PresentSessionList(sessionList);
         }
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to list sessions.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }

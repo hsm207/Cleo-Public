@@ -1,4 +1,6 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.BrowseSources;
 using FluentAssertions;
@@ -10,61 +12,33 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ReposCommandTests : IDisposable
+public class ReposCommandTests
 {
     private readonly Mock<IBrowseSourcesUseCase> _useCaseMock;
-    private readonly Mock<ILogger<ReposCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly ReposCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public ReposCommandTests()
     {
         _useCaseMock = new Mock<IBrowseSourcesUseCase>();
-        _loggerMock = new Mock<ILogger<ReposCommand>>();
-        _command = new ReposCommand(_useCaseMock.Object, _loggerMock.Object);
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
 
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+
+        _command = new ReposCommand(
+            _useCaseMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            new Mock<ILogger<ReposCommand>>().Object);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    [Fact(DisplayName = "Given available sources, when running 'repos', then it should list them.")]
-    public async Task Repos_WithSources_ListsThem()
+    [Fact(DisplayName = "Repos should call UseCase and PresentRepositories.")]
+    public async Task Repos_Valid_PresentsRepos()
     {
         // Arrange
-        // SessionSource(Name, Owner, Repo)
-        var sources = new List<SessionSource>
-        {
-            new("my-repo", "owner", "my-repo")
-        };
-
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BrowseSourcesResponse(sources));
-
-        // Act
-        var exitCode = await _command.Build().InvokeAsync("repos");
-
-        // Assert
-        exitCode.Should().Be(0);
-        var output = _stringWriter.ToString();
-        output.Should().Contain("🛰️ Available Repositories:");
-        output.Should().Contain("my-repo");
-    }
-
-    [Fact(DisplayName = "Given no sources, when running 'repos', then it should display empty message.")]
-    public async Task Repos_NoSources_DisplaysEmptyMessage()
-    {
-        // Arrange
-        var sources = new List<SessionSource>();
-
+        var sources = new[] { new SessionSource("repo1", "owner", "repo1") };
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new BrowseSourcesResponse(sources));
 
@@ -72,21 +46,34 @@ public class ReposCommandTests : IDisposable
         await _command.Build().InvokeAsync("repos");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("📭 No sources found");
+        _presenterMock.Verify(x => x.PresentRepositories(It.Is<IEnumerable<string>>(l => l.Contains("repo1"))), Times.Once);
     }
 
-    [Fact(DisplayName = "Given an error, when running 'repos', then it should handle exception.")]
-    public async Task Repos_Error_HandlesException()
+    [Fact(DisplayName = "Repos should call PresentEmptyRepositories when none found.")]
+    public async Task Repos_Empty_PresentsEmpty()
     {
         // Arrange
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("API Down"));
+            .ReturnsAsync(new BrowseSourcesResponse(Array.Empty<SessionSource>()));
 
         // Act
         await _command.Build().InvokeAsync("repos");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("💔 Error: API Down");
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentEmptyRepositories(), Times.Once);
+    }
+
+    [Fact(DisplayName = "Repos should call PresentError on exception.")]
+    public async Task Repos_Error_PresentsError()
+    {
+        // Arrange
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Fail"));
+
+        // Act
+        await _command.Build().InvokeAsync("repos");
+
+        // Assert
+        _presenterMock.Verify(x => x.PresentError("Fail"), Times.Once);
     }
 }

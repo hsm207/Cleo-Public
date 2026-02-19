@@ -1,6 +1,9 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.AuthenticateUser;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.CommandLine;
@@ -9,103 +12,83 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class AuthCommandTests : IDisposable
+public class AuthCommandTests
 {
     private readonly Mock<IAuthenticateUserUseCase> _useCaseMock;
     private readonly Mock<IVault> _vaultMock;
-    private readonly Mock<ILogger<AuthCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly AuthCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public AuthCommandTests()
     {
         _useCaseMock = new Mock<IAuthenticateUserUseCase>();
         _vaultMock = new Mock<IVault>();
-        _loggerMock = new Mock<ILogger<AuthCommand>>();
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
 
-        _command = new AuthCommand(_useCaseMock.Object, _vaultMock.Object, _loggerMock.Object);
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => k);
 
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _command = new AuthCommand(
+            _useCaseMock.Object,
+            _vaultMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            new Mock<ILogger<AuthCommand>>().Object);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    [Fact(DisplayName = "Given valid key, when running 'auth login', then it should authenticate and display success.")]
-    public async Task Login_ValidKey_DisplaysSuccess()
+    [Fact(DisplayName = "Login with valid key should call UseCase and PresentSuccess.")]
+    public async Task Login_ValidKey_Authenticates()
     {
         // Arrange
-        // Simulate successful login logic
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<AuthenticateUserRequest>(r => r.ApiKey == "valid-key"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AuthenticateUserResponse(true, "Welcome!"));
 
-        var cmd = _command.Build();
-
         // Act
-        var result = await cmd.InvokeAsync("login my-key");
+        await _command.Build().InvokeAsync("auth login valid-key");
 
         // Assert
-        Assert.Equal(0, result);
-        var output = _stringWriter.ToString();
-        Assert.Contains("✅ Welcome!", output);
+        _presenterMock.Verify(x => x.PresentSuccess("Welcome!"), Times.Once);
+        _presenterMock.Verify(x => x.PresentError(It.IsAny<string>()), Times.Never);
     }
 
-    [Fact(DisplayName = "Given invalid key, when running 'auth login', then it should display error.")]
-    public async Task Login_InvalidKey_DisplaysError()
+    [Fact(DisplayName = "Login failure should PresentError.")]
+    public async Task Login_InvalidKey_PresentsError()
     {
         // Arrange
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AuthenticateUserResponse(false, "Invalid key"));
 
-        var cmd = _command.Build();
-
         // Act
-        var result = await cmd.InvokeAsync("login bad-key");
+        await _command.Build().InvokeAsync("auth login bad-key");
 
         // Assert
-        Assert.Equal(0, result); // Command handled it gracefully
-        var output = _stringWriter.ToString();
-        Assert.Contains("❌ Error: Invalid key", output);
+        _presenterMock.Verify(x => x.PresentError("Invalid key"), Times.Once);
     }
 
-    [Fact(DisplayName = "When running 'auth logout', then it should clear credentials and say goodbye.")]
-    public async Task Logout_ClearsCredentials()
-    {
-        // Arrange
-        var cmd = _command.Build();
-
-        // Act
-        var result = await cmd.InvokeAsync("logout");
-
-        // Assert
-        Assert.Equal(0, result);
-        var output = _stringWriter.ToString();
-        Assert.Contains("🗑️ Credentials cleared", output);
-        _vaultMock.Verify(x => x.ClearAsync(It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact(DisplayName = "Given exception, when running 'auth login', then it should handle it.")]
-    public async Task Login_Exception_HandlesIt()
+    [Fact(DisplayName = "Login exception should PresentError.")]
+    public async Task Login_Exception_PresentsError()
     {
         // Arrange
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<AuthenticateUserRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Vault locked"));
-
-        var cmd = _command.Build();
+            .ThrowsAsync(new Exception("Network Error"));
 
         // Act
-        var result = await cmd.InvokeAsync("login key");
+        await _command.Build().InvokeAsync("auth login bad-key");
 
         // Assert
-        Assert.Equal(0, result);
-        var output = _stringWriter.ToString();
-        Assert.Contains("💔 Error: Vault locked", output);
+        _presenterMock.Verify(x => x.PresentError("Network Error"), Times.Once);
+    }
+
+    [Fact(DisplayName = "Logout should clear vault and PresentSuccess.")]
+    public async Task Logout_ClearsVault()
+    {
+        // Act
+        await _command.Build().InvokeAsync("auth logout");
+
+        // Assert
+        _vaultMock.Verify(x => x.ClearAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentSuccess("Auth_Logout_Success"), Times.Once);
     }
 }

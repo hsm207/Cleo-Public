@@ -1,7 +1,8 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ForgetSession;
-using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -11,60 +12,55 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ForgetCommandTests : IDisposable
+public class ForgetCommandTests
 {
     private readonly Mock<IForgetSessionUseCase> _useCaseMock;
-    private readonly Mock<ILogger<ForgetCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly ForgetCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public ForgetCommandTests()
     {
         _useCaseMock = new Mock<IForgetSessionUseCase>();
-        _loggerMock = new Mock<ILogger<ForgetCommand>>();
-        _command = new ForgetCommand(_useCaseMock.Object, _loggerMock.Object);
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
 
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => "{0}");
+
+        _command = new ForgetCommand(
+            _useCaseMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            new Mock<ILogger<ForgetCommand>>().Object);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    [Fact(DisplayName = "Given a session ID, when running 'forget', then it should remove the session and display success.")]
-    public async Task Forget_Valid_RemovesSession()
+    [Fact(DisplayName = "Forget should call UseCase and PresentSuccess.")]
+    public async Task Forget_Valid_ForgetsSession()
     {
         // Arrange
-        var sessionId = TestFactory.CreateSessionId("session-123");
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<ForgetSessionRequest>(r => r.Id.Value == sessionId.Value), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ForgetSessionResponse(sessionId));
+        var sessionId = new SessionId("sessions/123");
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync($"forget {sessionId}");
+        await _command.Build().InvokeAsync($"forget {sessionId}");
 
         // Assert
-        exitCode.Should().Be(0);
-        _stringWriter.ToString().Should().Contain($"🧹 Session {sessionId} removed");
+        _useCaseMock.Verify(x => x.ExecuteAsync(It.Is<ForgetSessionRequest>(r => r.Id == sessionId), It.IsAny<CancellationToken>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentSuccess(It.IsAny<string>()), Times.Once);
     }
 
-    [Fact(DisplayName = "Given an error, when running 'forget', then it should handle the exception.")]
-    public async Task Forget_Error_HandlesException()
+    [Fact(DisplayName = "Forget should call PresentError on exception.")]
+    public async Task Forget_Error_PresentsError()
     {
         // Arrange
+        var sessionId = new SessionId("sessions/123");
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ForgetSessionRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Registry locked"));
+            .ThrowsAsync(new Exception("Fail"));
 
         // Act
-        await _command.Build().InvokeAsync("forget sessions/s1");
+        await _command.Build().InvokeAsync($"forget {sessionId}");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("Error: Registry locked");
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentError("Fail"), Times.Once);
     }
 }

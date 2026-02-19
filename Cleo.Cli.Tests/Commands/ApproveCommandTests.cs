@@ -1,7 +1,8 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.ApprovePlan;
-using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -11,60 +12,61 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ApproveCommandTests : IDisposable
+public class ApproveCommandTests
 {
     private readonly Mock<IApprovePlanUseCase> _useCaseMock;
-    private readonly Mock<ILogger<ApproveCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly ApproveCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public ApproveCommandTests()
     {
         _useCaseMock = new Mock<IApprovePlanUseCase>();
-        _loggerMock = new Mock<ILogger<ApproveCommand>>();
-        _command = new ApproveCommand(_useCaseMock.Object, _loggerMock.Object);
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
 
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => "{0} {1} {2}");
+
+        _command = new ApproveCommand(
+            _useCaseMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            new Mock<ILogger<ApproveCommand>>().Object);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    [Fact(DisplayName = "Given valid inputs, when running 'approve', then it should approve the plan and display success.")]
-    public async Task Approve_Valid_DisplaysSuccess()
+    [Fact(DisplayName = "Approve should call UseCase and PresentSuccess.")]
+    public async Task Approve_Valid_ApprovesPlan()
     {
         // Arrange
-        var now = DateTimeOffset.UtcNow;
+        var planId = new PlanId("plans/123");
+        var sessionId = new SessionId("sessions/abc");
+
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ApprovePlanRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ApprovePlanResponse(TestFactory.CreateSessionId("s1"), TestFactory.CreatePlanId("p1"), now));
+            .ReturnsAsync(new ApprovePlanResponse(sessionId, planId, DateTimeOffset.UtcNow));
 
         // Act
-        var exitCode = await _command.Build().InvokeAsync("approve sessions/s1 plans/p1");
+        await _command.Build().InvokeAsync($"approve {sessionId} {planId}");
 
         // Assert
-        exitCode.Should().Be(0);
-        _stringWriter.ToString().Should().Contain("✅ Plan p1 approved");
+        _useCaseMock.Verify(x => x.ExecuteAsync(It.Is<ApprovePlanRequest>(r => r.PlanId == planId && r.Id == sessionId), It.IsAny<CancellationToken>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentSuccess(It.IsAny<string>()), Times.Once);
     }
 
-    [Fact(DisplayName = "Given an error, when running 'approve', then it should handle exception.")]
-    public async Task Approve_Error_HandlesException()
+    [Fact(DisplayName = "Approve should call PresentError on exception.")]
+    public async Task Approve_Error_PresentsError()
     {
         // Arrange
+        var planId = new PlanId("plans/123");
+        var sessionId = new SessionId("sessions/abc");
+
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ApprovePlanRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Plan not found"));
+            .ThrowsAsync(new Exception("Fail"));
 
         // Act
-        await _command.Build().InvokeAsync("approve sessions/s1 plans/p1");
+        await _command.Build().InvokeAsync($"approve {sessionId} {planId}");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("💔 Error: Plan not found");
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentError("Fail"), Times.Once);
     }
 }

@@ -2,6 +2,7 @@ using System.CommandLine;
 using Cleo.Cli;
 using Cleo.Cli.Commands;
 using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.ApprovePlan;
 using Cleo.Core.UseCases.AuthenticateUser;
@@ -52,11 +53,15 @@ public class ProgramTests : IDisposable
 
         // Assert
         // Try to resolve the Root dependencies to ensure graph is complete
-        var sessionCmd = sp.GetService<SessionCommand>();
-        Assert.NotNull(sessionCmd);
+        // ICommandGroup should return multiple services
+        var commandGroups = sp.GetServices<ICommandGroup>();
+        Assert.NotEmpty(commandGroups);
 
-        var configCmd = sp.GetService<ConfigCommand>();
-        Assert.NotNull(configCmd);
+        Assert.Contains(commandGroups, x => x is SessionCommand);
+        Assert.Contains(commandGroups, x => x is LogCommand);
+        Assert.Contains(commandGroups, x => x is PlanCommand);
+        Assert.Contains(commandGroups, x => x is TalkCommand);
+        Assert.Contains(commandGroups, x => x is ConfigCommand);
     }
 
     [Fact(DisplayName = "Given --help argument, Program.Main should execute and return success (0).")]
@@ -81,37 +86,20 @@ public class ProgramTests : IDisposable
         // Arrange
         var services = new ServiceCollection();
 
-        // 1. Register Real Commands (Leafs & Groups)
-        services.AddTransient<AuthCommand>();
-        services.AddTransient<ListCommand>();
-        services.AddTransient<NewCommand>();
-        services.AddTransient<CheckinCommand>();
-        services.AddTransient<ReposCommand>();
-        services.AddTransient<TalkCommand>();
-        services.AddTransient<ApproveCommand>();
-        services.AddTransient<ForgetCommand>();
+        // Mock ICommandGroup
+        var sessionGroupMock = new Mock<ICommandGroup>();
+        sessionGroupMock.Setup(x => x.Build()).Returns(new Command("session"));
 
-        services.AddTransient<SessionCommand>();
-        services.AddTransient<LogCommand>();
-        services.AddTransient<PlanCommand>();
-        services.AddTransient<ConfigCommand>();
+        var logGroupMock = new Mock<ICommandGroup>();
+        logGroupMock.Setup(x => x.Build()).Returns(new Command("log"));
 
-        // 3. Register Mocked Dependencies (Infrastructure Ports & Use Cases)
-        services.AddLogging();
-        services.AddTransient(_ => new Mock<IAuthenticateUserUseCase>().Object);
-        services.AddTransient(_ => new Mock<IVault>().Object);
-        services.AddTransient(_ => new Mock<IListSessionsUseCase>().Object);
-        services.AddTransient(_ => new Mock<IRefreshPulseUseCase>().Object);
-        services.AddTransient(_ => new Mock<IBrowseSourcesUseCase>().Object);
-        services.AddTransient(_ => new Mock<ICorrespondUseCase>().Object);
-        services.AddTransient(_ => new Mock<IApprovePlanUseCase>().Object);
-        services.AddTransient(_ => new Mock<IForgetSessionUseCase>().Object);
-        services.AddTransient(_ => new Mock<IBrowseHistoryUseCase>().Object);
-        services.AddTransient(_ => new Mock<IViewPlanUseCase>().Object);
-        services.AddTransient(_ => new Mock<IStatusPresenter>().Object);
+        services.AddSingleton(sessionGroupMock.Object);
+        services.AddSingleton(logGroupMock.Object);
 
-        // Special handling for concrete use cases that are dependencies
-        services.AddTransient(_ => new InitiateSessionUseCase(new Mock<IJulesSessionClient>().Object, new Mock<ISessionWriter>().Object));
+        // Mock HelpProvider
+        var helpProviderMock = new Mock<IHelpProvider>();
+        helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns("Root Description");
+        services.AddSingleton(helpProviderMock.Object);
 
         var sp = services.BuildServiceProvider();
 
@@ -122,8 +110,6 @@ public class ProgramTests : IDisposable
         Assert.NotNull(root);
         Assert.Contains(root.Children, c => c.Name == "session");
         Assert.Contains(root.Children, c => c.Name == "log");
-        Assert.Contains(root.Children, c => c.Name == "plan");
-        Assert.Contains(root.Children, c => c.Name == "talk");
-        Assert.Contains(root.Children, c => c.Name == "config");
+        Assert.Equal("Root Description", root.Description);
     }
 }

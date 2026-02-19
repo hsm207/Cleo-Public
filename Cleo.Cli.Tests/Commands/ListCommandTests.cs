@@ -1,8 +1,8 @@
 using Cleo.Cli.Commands;
-using Cleo.Core.Domain.Entities;
-using Cleo.Core.Domain.ValueObjects;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
+using Cleo.Core.Domain.Ports;
 using Cleo.Core.UseCases.ListSessions;
-using Cleo.Tests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,83 +12,77 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ListCommandTests : IDisposable
+public class ListCommandTests
 {
     private readonly Mock<IListSessionsUseCase> _useCaseMock;
-    private readonly Mock<ILogger<ListCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly ListCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public ListCommandTests()
     {
         _useCaseMock = new Mock<IListSessionsUseCase>();
-        _loggerMock = new Mock<ILogger<ListCommand>>();
-        _command = new ListCommand(_useCaseMock.Object, _loggerMock.Object);
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
 
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+
+        _command = new ListCommand(
+            _useCaseMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            new Mock<ILogger<ListCommand>>().Object);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    [Fact(DisplayName = "Given sessions exist, when running 'list', then it should display them.")]
-    public async Task List_WithSessions_DisplaysList()
+    [Fact(DisplayName = "List should call UseCase and PresentSessionList.")]
+    public async Task List_Valid_PresentsList()
     {
         // Arrange
-        var sessions = new List<Session>
-        {
-            new Session(TestFactory.CreateSessionId("s1"), "r1", new TaskDescription("Task 1"), TestFactory.CreateSourceContext("src"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow)
+        var sessions = new[] {
+            new Cleo.Core.Domain.Entities.Session(
+                new Cleo.Core.Domain.ValueObjects.SessionId("sessions/1"),
+                "rem",
+                new Cleo.Core.Domain.ValueObjects.TaskDescription("Task"),
+                new Cleo.Core.Domain.ValueObjects.SourceContext("sources/repo", "main"),
+                new Cleo.Core.Domain.ValueObjects.SessionPulse(Cleo.Core.Domain.ValueObjects.SessionStatus.InProgress),
+                DateTimeOffset.UtcNow)
         };
-        var response = new ListSessionsResponse(sessions);
 
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ListSessionsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
-
-        // Act
-        var exitCode = await _command.Build().InvokeAsync("list");
-
-        // Assert
-        exitCode.Should().Be(0);
-        var output = _stringWriter.ToString();
-        output.Should().Contain("s1");
-        output.Should().Contain("Task 1");
-        output.Should().Contain("Working");
-    }
-
-    [Fact(DisplayName = "Given no sessions, when running 'list', then it should display a friendly empty message.")]
-    public async Task List_NoSessions_DisplaysEmptyMessage()
-    {
-        // Arrange
-        var response = new ListSessionsResponse(new List<Session>());
-
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ListSessionsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync(new ListSessionsResponse(sessions));
 
         // Act
         await _command.Build().InvokeAsync("list");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("📭 No active sessions found");
+        _presenterMock.Verify(x => x.PresentSessionList(It.Is<IEnumerable<(string, string, string)>>(l => l.Count() == 1)), Times.Once);
     }
 
-    [Fact(DisplayName = "Given an error, when running 'list', then it should handle the exception.")]
-    public async Task List_Error_HandlesException()
+    [Fact(DisplayName = "List should call PresentEmptyList when no sessions found.")]
+    public async Task List_Empty_PresentsEmpty()
     {
         // Arrange
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ListSessionsRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Disk error"));
+            .ReturnsAsync(new ListSessionsResponse(Array.Empty<Cleo.Core.Domain.Entities.Session>()));
 
         // Act
         await _command.Build().InvokeAsync("list");
 
         // Assert
-        _stringWriter.ToString().Should().Contain("💔 Error: Disk error");
+        _presenterMock.Verify(x => x.PresentEmptyList(), Times.Once);
+    }
+
+    [Fact(DisplayName = "List should call PresentError on exception.")]
+    public async Task List_Error_PresentsError()
+    {
+        // Arrange
+        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<ListSessionsRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Fail"));
+
+        // Act
+        await _command.Build().InvokeAsync("list");
+
+        // Assert
+        _presenterMock.Verify(x => x.PresentError("Fail"), Times.Once);
     }
 }

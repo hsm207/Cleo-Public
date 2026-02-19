@@ -1,31 +1,35 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
+using Cleo.Cli.Services;
 
 namespace Cleo.Cli.Commands;
 
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
-internal sealed class SessionCommand
+internal sealed class SessionCommand : ICommandGroup
 {
     private readonly NewCommand _newCommand;
     private readonly ListCommand _listCommand;
     private readonly CheckinCommand _checkinCommand;
     private readonly ForgetCommand _forgetCommand;
+    private readonly IHelpProvider _helpProvider;
 
     public SessionCommand(
         NewCommand newCommand,
         ListCommand listCommand,
         CheckinCommand checkinCommand,
-        ForgetCommand forgetCommand)
+        ForgetCommand forgetCommand,
+        IHelpProvider helpProvider)
     {
         _newCommand = newCommand;
         _listCommand = listCommand;
         _checkinCommand = checkinCommand;
         _forgetCommand = forgetCommand;
+        _helpProvider = helpProvider;
     }
 
     public Command Build()
     {
-        var command = new Command("session", "Lifecycle Management. Use this to initiate, list, recover, or check in on an engineering collaboration. More specialized subcommands available. Use --help to explore further.");
+        var command = new Command("session", _helpProvider.GetCommandDescription("Session_Description"));
 
         command.AddCommand(_newCommand.Build());
         command.AddCommand(_listCommand.Build());
