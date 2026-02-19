@@ -8,23 +8,23 @@ namespace Cleo.Core.UseCases.RefreshPulse;
 public class RefreshPulseUseCase : IRefreshPulseUseCase
 {
     private readonly IPulseMonitor _pulseMonitor;
-    private readonly IJulesActivityClient _activityClient;
+    private readonly IRemoteActivitySource _activitySource;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
-    private readonly IPrResolver _prResolver;
+    private readonly ISessionSynchronizer _synchronizer;
 
     public RefreshPulseUseCase(
         IPulseMonitor pulseMonitor, 
-        IJulesActivityClient activityClient,
+        IRemoteActivitySource activitySource,
         ISessionReader sessionReader, 
         ISessionWriter sessionWriter,
-        IPrResolver prResolver)
+        ISessionSynchronizer synchronizer)
     {
         _pulseMonitor = pulseMonitor;
-        _activityClient = activityClient;
+        _activitySource = activitySource;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
-        _prResolver = prResolver;
+        _synchronizer = synchronizer;
     }
 
     public async Task<RefreshPulseResponse> ExecuteAsync(RefreshPulseRequest request, CancellationToken cancellationToken = default)
@@ -40,7 +40,11 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             // It will be corrected once we fetch the remote session.
             var task = session?.Task ?? (TaskDescription)"Unknown Task (Recovered)";
             var remoteSessionTask = _pulseMonitor.GetRemoteSessionAsync(request.Id, task, cancellationToken);
-            var activitiesTask = _activityClient.GetActivitiesAsync(request.Id, cancellationToken);
+
+            // Incremental Sync Strategy ⚡: Only fetch what we don't have.
+            var since = _synchronizer.GetWatermark(session);
+            var fetchOptions = new RemoteActivityOptions(since, null, null, null);
+            var activitiesTask = _activitySource.FetchActivitiesAsync(request.Id, fetchOptions, cancellationToken);
 
             await Task.WhenAll(remoteSessionTask, activitiesTask).ConfigureAwait(false);
 
@@ -51,22 +55,8 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             // If the session was missing, we use the remote one as our base!
             session ??= remoteSession;
 
-            session.UpdatePulse(remoteSession.Pulse);
-            
-            // Resolve the Pull Request (Remote First).
-            // If the resolver returns null (remote is missing), we must purge the local PR (Zombie Artifact).
-            var resolvedPr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
-            session.SetPullRequest(resolvedPr);
-
-            foreach (var activity in activities)
-            {
-                // Simple synchronization: Add only if not already present
-                // NOTE: Use local ID check for robustness
-                if (session.SessionLog.All(a => a.Id != activity.Id))
-                {
-                    session.AddActivity(activity);
-                }
-            }
+            // Delegate synchronization logic to the Domain Service
+            _synchronizer.Synchronize(session, remoteSession, activities);
 
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
             

@@ -116,14 +116,18 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ISourceCatalog>(sp => (RestJulesSourceClient)sp.GetRequiredService<IJulesSourceClient>());
 
-        services.AddHttpClient<IJulesActivityClient, RestJulesActivityClient>(ConfigureJulesClient)
+        services.AddHttpClient<RestJulesActivityClient>(ConfigureJulesClient)
             .AddHttpMessageHandler<JulesAuthHandler>()
             .AddHttpMessageHandler<JulesLoggingHandler>();
 
-        services.AddScoped<ISessionArchivist>(sp => (RestJulesActivityClient)sp.GetRequiredService<IJulesActivityClient>());
+        services.AddScoped<IJulesActivityClient>(sp => sp.GetRequiredService<RestJulesActivityClient>());
+        services.AddScoped<IRemoteActivitySource>(sp => sp.GetRequiredService<RestJulesActivityClient>());
+
+        services.AddSingleton<ISessionArchivist, RegistrySessionArchivist>();
 
         // Domain Services
         services.AddSingleton<Cleo.Core.Domain.Services.IPrResolver, Cleo.Core.Domain.Services.RemoteFirstPrResolver>();
+        services.AddSingleton<Cleo.Core.Domain.Services.ISessionSynchronizer, Cleo.Core.Domain.Services.SessionSynchronizer>();
 
         // Use Cases
         services.AddScoped<Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();

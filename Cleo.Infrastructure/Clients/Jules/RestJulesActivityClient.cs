@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Net.Sockets;
-using Cleo.Core.Domain.Entities; // Needed?
+using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Exceptions;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
@@ -15,7 +15,7 @@ namespace Cleo.Infrastructure.Clients.Jules;
 /// <summary>
 /// A REST-based implementation of the Jules activity history client.
 /// </summary>
-public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArchivist
+public sealed class RestJulesActivityClient : IRemoteActivitySource, IJulesActivityClient
 {
     private readonly HttpClient _httpClient;
     private readonly IJulesActivityMapper _mapper;
@@ -27,20 +27,16 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
     }
 
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
-    public async Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<SessionActivity>> FetchActivitiesAsync(SessionId id, RemoteActivityOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
             var allActivities = new List<SessionActivity>();
-            string? nextPageToken = null;
+            var currentOptions = options;
 
             do
             {
-                var uri = $"v1alpha/{id.Value}/activities";
-                if (nextPageToken != null)
-                {
-                    uri += $"?pageToken={nextPageToken}";
-                }
+                var uri = JulesQueryBuilder.BuildListActivitiesUri(id, currentOptions);
 
                 var response = await _httpClient.GetAsync(new Uri(uri, UriKind.Relative), cancellationToken).ConfigureAwait(false);
                 await response.EnsureSuccessWithDetailAsync(cancellationToken).ConfigureAwait(false);
@@ -54,9 +50,9 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
                     }
                 }
 
-                nextPageToken = dto?.NextPageToken;
+                currentOptions = options with { PageToken = dto?.NextPageToken };
 
-            } while (nextPageToken != null);
+            } while (!string.IsNullOrEmpty(currentOptions.PageToken));
 
             return allActivities.AsReadOnly();
         }
@@ -66,9 +62,8 @@ public sealed class RestJulesActivityClient : IJulesActivityClient, ISessionArch
         }
     }
 
-    async Task<IReadOnlyList<SessionActivity>> ISessionArchivist.GetHistoryAsync(SessionId id, CancellationToken cancellationToken)
+    public Task<IReadOnlyCollection<SessionActivity>> GetActivitiesAsync(SessionId id, CancellationToken cancellationToken = default)
     {
-        var activities = await GetActivitiesAsync(id, cancellationToken).ConfigureAwait(false);
-        return activities.ToList().AsReadOnly();
+        return FetchActivitiesAsync(id, new RemoteActivityOptions(null, null, null, null), cancellationToken);
     }
 }
