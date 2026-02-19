@@ -12,7 +12,7 @@ public record BashOutput : Artifact
     public BashOutput(string command, string output, int exitCode)
     {
         ArgumentNullException.ThrowIfNull(command);
-        
+
         if (string.IsNullOrWhiteSpace(command))
         {
             throw new ArgumentException("Command cannot be empty.", nameof(command));

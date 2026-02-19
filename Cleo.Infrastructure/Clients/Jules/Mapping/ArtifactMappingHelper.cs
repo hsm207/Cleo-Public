@@ -18,21 +18,21 @@ internal static class ArtifactMappingHelper
                 artifacts.Add(new ChangeSet(
                     dto.ChangeSet.Source ?? "unknown-source",
                     new GitPatch(
-                        patch.UnidiffPatch ?? string.Empty, 
-                        patch.BaseCommitId ?? string.Empty, 
+                        patch.UnidiffPatch ?? string.Empty,
+                        patch.BaseCommitId ?? string.Empty,
                         patch.SuggestedCommitMessage)));
             }
             else if (dto.BashOutput != null)
             {
                 artifacts.Add(new BashOutput(
-                    dto.BashOutput.Command ?? string.Empty, 
-                    dto.BashOutput.Output ?? string.Empty, 
+                    dto.BashOutput.Command ?? string.Empty,
+                    dto.BashOutput.Output ?? string.Empty,
                     dto.BashOutput.ExitCode ?? 0));
             }
             else if (dto.Media != null)
             {
                 artifacts.Add(new MediaArtifact(
-                    dto.Media.MimeType ?? string.Empty, 
+                    dto.Media.MimeType ?? string.Empty,
                     dto.Media.Data ?? string.Empty));
             }
         }

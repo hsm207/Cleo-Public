@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class ApiKeyTests
+internal class ApiKeyTests
 {
     [Theory(DisplayName = "ApiKey should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]
@@ -13,7 +13,7 @@ public class ApiKeyTests
     {
         // 1. Constructor Invariant
         Assert.Throws<ArgumentException>(() => new ApiKey(invalidValue!));
-        
+
         // 2. Implicit Cast Invariant
         ApiKey? nullKey = null;
         Assert.Throws<ArgumentNullException>(() => (string)nullKey!);
@@ -23,21 +23,21 @@ public class ApiKeyTests
     public void ShouldBehaveAsValidValue()
     {
         var raw = "AQ.TestKey_123";
-        
+
         // 1. Creation
         var key = new ApiKey(raw);
-        
+
         // 2. Equality (Structural)
         Assert.Equal(raw, key.Value);
         Assert.Equal(key, new ApiKey(raw)); // Value Equality
-        
+
         // 3. Conversion (Explicit & Implicit)
         var castedKey = (ApiKey)raw;
         string backToString = key;
-        
+
         Assert.Equal(key, castedKey);
         Assert.Equal(raw, backToString);
-        
+
         // 4. String Representation
         Assert.Equal(raw, key.ToString());
     }

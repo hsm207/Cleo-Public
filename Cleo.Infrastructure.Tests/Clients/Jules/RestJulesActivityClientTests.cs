@@ -26,7 +26,7 @@ public class RestJulesActivityClientTests
         {
             BaseAddress = new Uri("https://jules.googleapis.com/")
         };
-        
+
         // Inject modern high-fidelity mappers 🔌🏺
         var mappers = new IJulesActivityMapper[]
         {
@@ -51,14 +51,14 @@ public class RestJulesActivityClientTests
     {
         // Arrange
         var now = DateTimeOffset.UtcNow.ToString("O");
-        
+
         // 1. Progress activity with Bash Evidence ⚔️
-        var progressDto = JulesDtoTestFactory.Create("prog", "1", null, now, "agent", 
+        var progressDto = JulesDtoTestFactory.Create("prog", "1", null, now, "agent",
             new List<JulesArtifactDto> { new JulesArtifactDto(null, null, new JulesBashOutputDto("ls", "files", 0)) },
             progressUpdated: new JulesProgressUpdatedPayloadDto("Working", "Running tests"));
-            
+
         // 2. Completion activity with Code Proposal 🎁
-        var completionDto = JulesDtoTestFactory.Create("done", "2", null, now, "system", 
+        var completionDto = JulesDtoTestFactory.Create("done", "2", null, now, "system",
             new List<JulesArtifactDto> { new JulesArtifactDto(new JulesChangeSetDto("src", new JulesGitPatchDto("patch", "base", null)), null, null) },
             sessionCompleted: new JulesSessionCompletedPayloadDto());
 
@@ -77,11 +77,11 @@ public class RestJulesActivityClientTests
 
         // Assert
         Assert.Equal(2, result.Count);
-        
+
         var progress = Assert.IsType<ProgressActivity>(result.First());
         Assert.Single(progress.Evidence);
         Assert.IsType<BashOutput>(progress.Evidence.First());
-        
+
         var completion = Assert.IsType<CompletionActivity>(result.Last());
         Assert.Single(completion.Evidence);
         Assert.IsType<ChangeSet>(completion.Evidence.First());

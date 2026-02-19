@@ -25,7 +25,7 @@ public sealed class RestSessionMessenger : ISessionMessenger
     {
         // VIP Lounge: Callers (CLI) must validate inputs.
         var request = new JulesSendMessageRequestDto(message);
-        
+
         try
         {
             var response = await _httpClient.PostAsJsonAsync($"v1alpha/{id.Value}:sendMessage", request, cancellationToken).ConfigureAwait(false);

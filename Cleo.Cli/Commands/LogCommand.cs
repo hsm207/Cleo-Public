@@ -72,9 +72,9 @@ internal sealed class LogCommand : ICommandGroup
         }
         catch (Exception ex)
         {
-            #pragma warning disable CA1848
+#pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch activities.");
-            #pragma warning restore CA1848
+#pragma warning restore CA1848
             _presenter.PresentError(ex.Message);
         }
     }

@@ -16,7 +16,7 @@ public class HighFidelityArchaeologyTests
     public HighFidelityArchaeologyTests()
     {
         var services = new ServiceCollection();
-        
+
         // Register High-Fidelity Persistence Plugins (South Boundary) 🔌💎
         services.AddSingleton<ArtifactMapperFactory>();
         services.AddSingleton<IArtifactPersistenceMapper, BashOutputMapper>();
@@ -31,7 +31,7 @@ public class HighFidelityArchaeologyTests
         services.AddSingleton<IActivityPersistenceMapper, CompletionActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, FailureActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, SessionAssignedActivityMapper>();
-        
+
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
         services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
 
@@ -97,7 +97,7 @@ public class HighFidelityArchaeologyTests
         var envelope = factory.ToEnvelope(activity);
 
         // Assert
-        envelope.Type.Should().Be("PLAN_GENERATED"); 
+        envelope.Type.Should().Be("PLAN_GENERATED");
     }
 
     [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
@@ -107,15 +107,15 @@ public class HighFidelityArchaeologyTests
         var sessionId = TestFactory.CreateSessionId("123");
         var task = (TaskDescription)"Fix bug";
         var source = TestFactory.CreateSourceContext("repo");
-        
+
         // A session that is physically IDLE (Completed) but has a Plan and NO PR
         var pulse = new SessionPulse(SessionStatus.Completed);
         var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
-        
+
         session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, TestFactory.CreatePlanId("plan-1"), new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
 
         // Act & Assert
-        session.Pulse.Status.Should().Be(SessionStatus.Completed); 
+        session.Pulse.Status.Should().Be(SessionStatus.Completed);
         session.State.Should().Be(SessionState.AwaitingPlanApproval); // Logical Override! 🧠🔥
     }
 

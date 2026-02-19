@@ -14,7 +14,7 @@ internal static class JulesDtoTestFactory
         JulesSessionFailedPayloadDto? sessionFailed = null)
     {
         var metadata = new JulesActivityMetadataDto(id, name, description, createTime, originator, artifacts?.ToList());
-        
+
         JulesActivityPayloadDto payload = (JulesActivityPayloadDto?)progressUpdated
             ?? (JulesActivityPayloadDto?)planGenerated
             ?? (JulesActivityPayloadDto?)planApproved

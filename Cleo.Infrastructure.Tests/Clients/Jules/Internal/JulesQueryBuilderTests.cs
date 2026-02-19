@@ -37,7 +37,7 @@ public class JulesQueryBuilderTests
         Assert.StartsWith($"v1alpha/{_id.Value}/activities?", uri);
         Assert.Contains("pageSize=100", uri);
         Assert.Contains("pageToken=token-456", uri);
-        
+
         // Verify Escaped Filter
         var expectedFilter = "create_time >= \"2024-01-01T12:00:00Z\" AND create_time <= \"2024-01-02T12:00:00Z\"";
         Assert.Contains($"filter={Uri.EscapeDataString(expectedFilter)}", uri);

@@ -18,11 +18,11 @@ internal sealed partial class JulesLoggingHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
-        
+
         LogRequest(request.Method, request.RequestUri);
-        
+
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        
+
         stopwatch.Stop();
 
         if (response.IsSuccessStatusCode)

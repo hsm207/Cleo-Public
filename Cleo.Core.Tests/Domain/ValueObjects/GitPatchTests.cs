@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class GitPatchTests
+internal class GitPatchTests
 {
     [Fact(DisplayName = "GitPatch should be created with valid arguments.")]
     public void ShouldCreateWithValidArgs()

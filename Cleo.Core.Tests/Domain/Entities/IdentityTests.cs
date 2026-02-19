@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
 
-public class IdentityTests
+internal class IdentityTests
 {
     private readonly ApiKey _testKey = new("my-key");
 
@@ -27,7 +27,7 @@ public class IdentityTests
     public void UpdateStatusShouldUpdateStatus()
     {
         var identity = new Identity(_testKey);
-        
+
         identity.UpdateStatus(IdentityStatus.Valid);
         Assert.Equal(IdentityStatus.Valid, identity.Status);
 

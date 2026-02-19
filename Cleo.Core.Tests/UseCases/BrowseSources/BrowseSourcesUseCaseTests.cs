@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.BrowseSources;
 
-public sealed class BrowseSourcesUseCaseTests
+internal sealed class BrowseSourcesUseCaseTests
 {
     private readonly FakeCatalog _catalog = new();
     private readonly BrowseSourcesUseCase _sut;
@@ -23,7 +23,7 @@ public sealed class BrowseSourcesUseCaseTests
         _catalog.Sources.Add(source);
 
         // Act
-        var result = await _sut.ExecuteAsync(new BrowseSourcesRequest(), TestContext.Current.CancellationToken);
+        var result = await _sut.ExecuteAsync(new BrowseSourcesRequest(), TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         Assert.Single(result.Sources);

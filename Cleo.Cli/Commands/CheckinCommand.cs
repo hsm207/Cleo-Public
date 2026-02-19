@@ -16,7 +16,7 @@ internal sealed class CheckinCommand
     private readonly ILogger<CheckinCommand> _logger;
 
     public CheckinCommand(
-        IRefreshPulseUseCase useCase, 
+        IRefreshPulseUseCase useCase,
         IStatusPresenter presenter,
         ILogger<CheckinCommand> logger)
     {
@@ -55,9 +55,9 @@ internal sealed class CheckinCommand
         }
         catch (Exception ex)
         {
-            #pragma warning disable CA1848
+#pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to fetch status.");
-            #pragma warning restore CA1848
+#pragma warning restore CA1848
             _presenter.PresentError(ex.Message);
         }
     }

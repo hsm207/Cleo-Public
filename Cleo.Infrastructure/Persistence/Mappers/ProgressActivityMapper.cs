@@ -37,9 +37,9 @@ internal sealed class ProgressActivityMapper : IActivityPersistenceMapper
         var dto = JsonSerializer.Deserialize<ProgressPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new ProgressActivity(
-            id, 
+            id,
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
-            timestamp, 
+            timestamp,
             originator,
             dto.Intent,
             dto.Reasoning,

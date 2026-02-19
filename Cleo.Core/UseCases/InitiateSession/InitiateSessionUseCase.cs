@@ -50,9 +50,9 @@ public class InitiateSessionUseCase : IInitiateSessionUseCase
         var sourceContext = new SourceContext(request.RepoContext, request.StartingBranch);
 
         var session = await _julesClient.CreateSessionAsync(
-            taskDescription, 
-            sourceContext, 
-            options, 
+            taskDescription,
+            sourceContext,
+            options,
             cancellationToken).ConfigureAwait(false);
 
         // 4. Persistence (Task Registry)

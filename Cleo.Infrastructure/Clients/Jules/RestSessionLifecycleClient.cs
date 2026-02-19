@@ -27,9 +27,9 @@ public sealed class RestSessionLifecycleClient : IJulesSessionClient
 
 #pragma warning disable CA1062 // Validate arguments of public methods (VIP Lounge Rules: We trust the caller)
     public async Task<Session> CreateSessionAsync(
-        TaskDescription task, 
-        SourceContext source, 
-        SessionCreationOptions options, 
+        TaskDescription task,
+        SourceContext source,
+        SessionCreationOptions options,
         CancellationToken cancellationToken = default)
     {
         var request = new JulesCreateSessionRequestDto(

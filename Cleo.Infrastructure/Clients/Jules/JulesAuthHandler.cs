@@ -19,7 +19,7 @@ internal sealed class JulesAuthHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var identity = await _vault.RetrieveAsync(cancellationToken).ConfigureAwait(false);
-        
+
         if (identity != null)
         {
             request.Headers.Add("x-goog-api-key", (string)identity.ApiKey);

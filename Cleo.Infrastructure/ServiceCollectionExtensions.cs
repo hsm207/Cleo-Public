@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IVault>(sp => new NativeVault(identityPath, sp.GetRequiredService<IEncryptionStrategy>()));
-        
+
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
         services.AddSingleton<IRegistryPathProvider, DefaultRegistryPathProvider>();
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
@@ -60,7 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.CompletionActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.FailureActivityMapper>();
         services.AddSingleton<IActivityPersistenceMapper, Persistence.Mappers.SessionAssignedActivityMapper>();
-        
+
         // Messaging
         services.AddSingleton<IDispatcher, MediatRDispatcher>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));

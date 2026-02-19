@@ -31,9 +31,9 @@ internal sealed class MessageActivityMapper : IActivityPersistenceMapper
         var dto = JsonSerializer.Deserialize<MessagePayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize payload.");
 
         return new MessageActivity(
-            id, 
+            id,
             dto.RemoteId ?? throw new InvalidOperationException("RemoteId is required."),
-            timestamp, 
+            timestamp,
             originator,
             dto.Text ?? string.Empty,
             (dto.Evidence ?? []).Select(_artifactFactory.FromEnvelope).ToList(),

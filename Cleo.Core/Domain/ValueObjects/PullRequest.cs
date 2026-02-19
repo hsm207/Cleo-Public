@@ -19,7 +19,7 @@ public record PullRequest
         string baseRef)
     {
         ArgumentNullException.ThrowIfNull(url);
-        
+
         if (string.IsNullOrWhiteSpace(title))
         {
             throw new ArgumentException("Pull request title cannot be empty.", nameof(title));

@@ -42,11 +42,11 @@ internal sealed class AesGcmEncryptionStrategy : IEncryptionStrategy
         try
         {
             byte[] key = DeriveKey();
-        var nonce = encryptedData.AsSpan(0, NonceSize);
-        var tag = encryptedData.AsSpan(NonceSize, TagSize);
-        var cipherText = encryptedData.AsSpan(NonceSize + TagSize);
+            var nonce = encryptedData.AsSpan(0, NonceSize);
+            var tag = encryptedData.AsSpan(NonceSize, TagSize);
+            var cipherText = encryptedData.AsSpan(NonceSize + TagSize);
 
-        var plainBytes = new byte[cipherText.Length];
+            var plainBytes = new byte[cipherText.Length];
 
             using (var aes = new AesGcm(key, TagSize))
             {

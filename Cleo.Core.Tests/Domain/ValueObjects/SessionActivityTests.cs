@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-public class SessionActivityTests
+internal class SessionActivityTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private const string RemoteId = "remote-id";
@@ -18,7 +18,7 @@ public class SessionActivityTests
         var thought = "Line 1\nLine 2";
         var output = new BashOutput("echo", "hi", 0);
         var snapshot = new MediaArtifact("img/png", "data");
-        
+
         var activity = new ProgressActivity("id", RemoteId, Now, ActivityOriginator.Agent, intent, thought, new Artifact[] { output, snapshot });
 
         var summary = activity.GetContentSummary();
@@ -44,7 +44,7 @@ public class SessionActivityTests
         var patch = new GitPatch("diff", "sha");
         var changeSet = new ChangeSet("repo", patch);
         var complex = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
-        
+
         // RFC 013 Fix: We no longer include artifacts in the summary because they are rendered as separate lines.
         Assert.Equal("Session Completed Successfully", complex.GetContentSummary());
     }
@@ -92,7 +92,7 @@ public class SessionActivityTests
         Assert.Equal(act1, act2); // Value Equality
         Assert.NotEqual(act1, act3);
         Assert.Equal(act1.GetHashCode(), act2.GetHashCode());
-        
+
         // Cover ToString() for the record hierarchy
         Assert.Contains("MessageActivity", act1.ToString(), StringComparison.Ordinal);
         Assert.Contains("Hi", act1.ToString(), StringComparison.Ordinal);

@@ -31,7 +31,7 @@ public class RestSessionLifecycleClientTests
         var task = new TaskDescription("Refactor the world");
         var source = new SourceContext("sources/cleo-repo", "main");
         var options = new SessionCreationOptions(AutomationMode.AutoCreatePr, "Refactor Session", true);
-        
+
         // The mock response
         var responseDto = new JulesSessionResponseDto(
             Name: "sessions/session-1",
@@ -47,7 +47,7 @@ public class RestSessionLifecycleClientTests
             Title: null,
             Outputs: null
         );
-        
+
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = JsonContent.Create(responseDto) });
@@ -63,8 +63,8 @@ public class RestSessionLifecycleClientTests
         _handlerMock.Protected().Verify(
             "SendAsync",
             Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Post && 
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Method == HttpMethod.Post &&
                 req.RequestUri!.ToString() == "https://jules.googleapis.com/v1alpha/sessions" &&
                 VerifyRequestBody(req, "Refactor the world", "AUTO_CREATE_PR") // Check specific JSON fields
             ),
@@ -116,7 +116,7 @@ public class RestSessionLifecycleClientTests
         var json = req.Content!.ReadAsStringAsync().Result;
         // This assertion proves we aren't using anonymous objects anymore. 
         // We expect specific serialized field names from 'JulesCreateSessionRequestDto'.
-        return json.Contains($"\"prompt\":\"{expectedPrompt}\"") && 
+        return json.Contains($"\"prompt\":\"{expectedPrompt}\"") &&
                json.Contains($"\"automationMode\":\"{expectedMode}\"");
     }
 }

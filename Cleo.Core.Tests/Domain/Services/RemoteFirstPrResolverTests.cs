@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Services;
 
-public class RemoteFirstPrResolverTests
+internal class RemoteFirstPrResolverTests
 {
     private readonly RemoteFirstPrResolver _resolver = new();
 

@@ -51,7 +51,7 @@ public sealed class NativeVault : IVault
         {
             var encrypted = await File.ReadAllBytesAsync(_storagePath, cancellationToken).ConfigureAwait(false);
             var decrypted = _strategy.Decrypt(encrypted);
-            
+
             var identity = new Identity((ApiKey)decrypted);
             return identity;
         }

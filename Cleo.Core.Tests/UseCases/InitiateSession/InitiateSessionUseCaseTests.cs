@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.InitiateSession;
 
-public class InitiateSessionUseCaseTests
+internal class InitiateSessionUseCaseTests
 {
     private readonly FakeJulesClient _julesClient = new();
     private readonly FakeSessionWriter _sessionWriter = new();
@@ -29,12 +29,12 @@ public class InitiateSessionUseCaseTests
         );
 
         // Act
-        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         Assert.True(result.IsPrAutomated);
         Assert.Equal(new Uri("https://fake.jules.com/123"), result.DashboardUri);
-        
+
         // Verify the actual state of the writer
         var savedSession = _sessionWriter.SavedSessions.Values.Single();
         Assert.Equal(result.Id, savedSession.Id);
@@ -54,7 +54,7 @@ public class InitiateSessionUseCaseTests
         );
 
         // Act
-        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         Assert.Equal("My Cute Title", _julesClient.LastOptions?.Title);
@@ -68,7 +68,7 @@ public class InitiateSessionUseCaseTests
         var request = new InitiateSessionRequest(longTask, "sources/repo", "branch");
 
         // Act
-        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert
         var title = _julesClient.LastOptions?.Title;
@@ -115,10 +115,10 @@ public class InitiateSessionUseCaseTests
             return Task.FromResult(session);
         }
 
-        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default) 
+        public Task<SessionPulse> GetSessionPulseAsync(SessionId id, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
-        public Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default) 
+        public Task SendMessageAsync(SessionId id, string feedback, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
     }
 }

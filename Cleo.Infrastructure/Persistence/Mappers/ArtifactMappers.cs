@@ -43,10 +43,10 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
     {
         var dto = JsonSerializer.Deserialize<ChangeSetPayloadDto>(json);
         return new ChangeSet(
-            dto?.Source ?? "unknown", 
+            dto?.Source ?? "unknown",
             new GitPatch(
-                dto?.UniDiff ?? "", 
-                dto?.BaseCommitId ?? "", 
+                dto?.UniDiff ?? "",
+                dto?.BaseCommitId ?? "",
                 dto?.SuggestedCommitMessage));
     }
 
@@ -55,7 +55,7 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
 
 internal sealed class MediaMapper : IArtifactPersistenceMapper
 {
-    public string TypeKey => "MEDIA"; 
+    public string TypeKey => "MEDIA";
     public bool CanHandle(Artifact artifact) => artifact is MediaArtifact;
 
     public string Serialize(Artifact artifact)

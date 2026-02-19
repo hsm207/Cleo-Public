@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.BrowseHistory;
 
-public sealed class BrowseHistoryUseCaseTests
+internal sealed class BrowseHistoryUseCaseTests
 {
     private readonly FakeArchivist _archivist = new();
     private readonly FakeSessionReader _sessionReader = new();
@@ -26,7 +26,7 @@ public sealed class BrowseHistoryUseCaseTests
         var sessionId = TestFactory.CreateSessionId("active-session");
         var activity = new ProgressActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Did a thing");
         _archivist.History[sessionId] = new List<SessionActivity> { activity };
-        
+
         var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "head", "base");
         _sessionReader.Sessions[sessionId] = new SessionBuilder().WithId(sessionId.Value).Build();
         _sessionReader.Sessions[sessionId].SetPullRequest(pr);
@@ -34,7 +34,7 @@ public sealed class BrowseHistoryUseCaseTests
         var request = new BrowseHistoryRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -59,7 +59,7 @@ public sealed class BrowseHistoryUseCaseTests
         var request = new BrowseHistoryRequest(sessionId, criteria);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Single(result.History);
@@ -101,7 +101,7 @@ public sealed class BrowseHistoryUseCaseTests
         {
             return Task.FromResult(Sessions.GetValueOrDefault(id));
         }
-        public Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default) 
+        public Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyCollection<Session>>(Sessions.Values.ToList().AsReadOnly());
     }
 }

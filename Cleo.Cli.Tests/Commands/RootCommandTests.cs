@@ -29,7 +29,8 @@ public class RootCommandTests
     public RootCommandTests()
     {
         _helpProviderMock = new Mock<IHelpProvider>();
-        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k switch {
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k switch
+        {
             "Log_Description" => "audit trail",
             "List_Description" => "Session Registry",
             "Forget_Description" => "Session Registry",
@@ -40,7 +41,7 @@ public class RootCommandTests
 
         _logCommand = new LogCommand(new Mock<IBrowseHistoryUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<LogCommand>>().Object);
         _statusCommand = new CheckinCommand(
-            new Mock<IRefreshPulseUseCase>().Object, 
+            new Mock<IRefreshPulseUseCase>().Object,
             new Mock<IStatusPresenter>().Object,
             new Mock<ILogger<CheckinCommand>>().Object);
         _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<ListCommand>>().Object);
