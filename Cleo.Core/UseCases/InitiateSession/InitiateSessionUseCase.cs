@@ -21,7 +21,7 @@ public record InitiateSessionResponse(
 /// The orchestrator for launching a new engineering session.
 /// Implements session initiation policies.
 /// </summary>
-public class InitiateSessionUseCase : IUseCase<InitiateSessionRequest, InitiateSessionResponse>
+public class InitiateSessionUseCase : IInitiateSessionUseCase
 {
     private readonly IJulesSessionClient _julesClient;
     private readonly ISessionWriter _sessionWriter;

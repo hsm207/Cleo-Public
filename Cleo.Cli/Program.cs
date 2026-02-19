@@ -49,9 +49,11 @@ internal static class Program
         });
 
         // Use Cases 🧠
+        services.AddScoped<Cleo.Core.UseCases.InitiateSession.IInitiateSessionUseCase, Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
         services.AddScoped<Cleo.Core.UseCases.ListSessions.IListSessionsUseCase, Cleo.Core.UseCases.ListSessions.ListSessionsUseCase>();
         services.AddScoped<Cleo.Core.UseCases.BrowseSources.IBrowseSourcesUseCase, Cleo.Core.UseCases.BrowseSources.BrowseSourcesUseCase>();
         services.AddScoped<Cleo.Core.UseCases.Correspond.ICorrespondUseCase, Cleo.Core.UseCases.Correspond.CorrespondUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.RefreshPulse.IRefreshPulseUseCase, Cleo.Core.UseCases.RefreshPulse.RefreshPulseUseCase>();
         services.AddScoped<Cleo.Core.UseCases.ForgetSession.IForgetSessionUseCase, Cleo.Core.UseCases.ForgetSession.ForgetSessionUseCase>();
         services.AddScoped<Cleo.Core.UseCases.BrowseHistory.IBrowseHistoryUseCase, Cleo.Core.UseCases.BrowseHistory.BrowseHistoryUseCase>();
         services.AddScoped<Cleo.Core.UseCases.ViewPlan.IViewPlanUseCase, Cleo.Core.UseCases.ViewPlan.ViewPlanUseCase>();
@@ -67,6 +69,8 @@ internal static class Program
         services.AddTransient<ForgetCommand>();
 
         // CLI Services 🛡️
+        services.AddSingleton<System.CommandLine.IConsole, System.CommandLine.IO.SystemConsole>();
+        services.AddSingleton<Cleo.Cli.Services.IHelpProvider, Cleo.Cli.Services.HelpProvider>();
         services.AddSingleton<Cleo.Cli.Presenters.IStatusPresenter, Cleo.Cli.Presenters.CliStatusPresenter>();
 
         // CLI Command Groups 🌳

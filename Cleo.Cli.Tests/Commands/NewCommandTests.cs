@@ -1,4 +1,6 @@
 using Cleo.Cli.Commands;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.Domain.Ports;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.InitiateSession;
@@ -17,31 +19,31 @@ public class NewCommandTests : IDisposable
     private readonly Mock<IJulesSessionClient> _julesClientMock;
     private readonly Mock<ISessionWriter> _sessionWriterMock;
     private readonly Mock<ILogger<NewCommand>> _loggerMock;
+    private readonly Mock<IStatusPresenter> _presenterMock;
+    private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly NewCommand _command;
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
 
     public NewCommandTests()
     {
         _julesClientMock = new Mock<IJulesSessionClient>();
         _sessionWriterMock = new Mock<ISessionWriter>();
+        _presenterMock = new Mock<IStatusPresenter>();
+        _helpProviderMock = new Mock<IHelpProvider>();
+
+        // Setup Help Provider to return key as value for simplicity
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>()))
+            .Returns<string>(key => key);
 
         // We test the command using the real use case logic, but with mocked infrastructure ports.
         // This is a "Sociable Unit Test" of the Command + Use Case layer.
         var useCase = new InitiateSessionUseCase(_julesClientMock.Object, _sessionWriterMock.Object);
         _loggerMock = new Mock<ILogger<NewCommand>>();
 
-        _command = new NewCommand(useCase, _loggerMock.Object);
-
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
+        _command = new NewCommand(useCase, _presenterMock.Object, _helpProviderMock.Object, _loggerMock.Object);
     }
 
     public void Dispose()
     {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -63,10 +65,10 @@ public class NewCommandTests : IDisposable
 
         // Assert
         exitCode.Should().Be(0);
-        var output = _stringWriter.ToString();
-        output.Should().Contain("✨ Session initiated successfully!");
-        output.Should().Contain("sessions/session-123");
-        output.Should().Contain("https://portal.jules.ai/123");
+
+        _presenterMock.Verify(x => x.PresentNewSession(
+            It.Is<string>(s => s == "sessions/session-123"),
+            It.Is<string>(u => u == "https://portal.jules.ai/123")), Times.Once);
 
         // Verify persistence was called
         _sessionWriterMock.Verify(x => x.RememberAsync(It.Is<Cleo.Core.Domain.Entities.Session>(s => s.Id == sessionId), It.IsAny<CancellationToken>()), Times.Once);
@@ -103,7 +105,7 @@ public class NewCommandTests : IDisposable
 
         // Assert
         exitCode.Should().Be(0); // Handled
-        _stringWriter.ToString().Should().Contain("💔 Error: API Error");
+        _presenterMock.Verify(x => x.PresentError("API Error"), Times.Once);
 
         _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }

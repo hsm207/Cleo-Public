@@ -109,9 +109,10 @@ public class ProgramTests : IDisposable
         services.AddTransient(_ => new Mock<IBrowseHistoryUseCase>().Object);
         services.AddTransient(_ => new Mock<IViewPlanUseCase>().Object);
         services.AddTransient(_ => new Mock<IStatusPresenter>().Object);
+        services.AddTransient(_ => new Mock<Cleo.Cli.Services.IHelpProvider>().Object);
 
         // Special handling for concrete use cases that are dependencies
-        services.AddTransient(_ => new InitiateSessionUseCase(new Mock<IJulesSessionClient>().Object, new Mock<ISessionWriter>().Object));
+        services.AddTransient<IInitiateSessionUseCase>(_ => new Mock<IInitiateSessionUseCase>().Object);
 
         var sp = services.BuildServiceProvider();
 

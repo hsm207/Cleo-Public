@@ -1,3 +1,4 @@
+using System.CommandLine;
 using Cleo.Cli.Models;
 
 namespace Cleo.Cli.Presenters;
@@ -8,5 +9,9 @@ namespace Cleo.Cli.Presenters;
 /// </summary>
 internal interface IStatusPresenter
 {
-    string Format(StatusViewModel model);
+    void PresentSuccess(string message);
+    void PresentNewSession(string sessionId, string? dashboardUri);
+    void PresentWarning(string message);
+    void PresentError(string message);
+    void PresentStatus(StatusViewModel model);
 }

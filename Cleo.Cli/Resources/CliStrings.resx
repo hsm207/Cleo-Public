@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Root_Description" xml:space="preserve">
+    <value>Cleo is a high-fidelity engineering orchestrator organized into functional domains. To operate autonomously, explore the hierarchical structure by running 'cleo &lt;command&gt; --help' for each group (session, log, plan, config). Each domain manages a specific phase of the collaboration session lifecycle.</value>
+  </data>
+  <data name="Session_Description" xml:space="preserve">
+    <value>Lifecycle Management. Use this to initiate, list, recover, or check in on an engineering collaboration. More specialized subcommands available. Use --help to explore further.</value>
+  </data>
+  <data name="New_Description" xml:space="preserve">
+    <value>Assign a specific task to the agent. This initiates the collaboration session.</value>
+  </data>
+  <data name="New_TaskArg_Description" xml:space="preserve">
+    <value>The high-level goal or task for Jules.</value>
+  </data>
+  <data name="New_RepoOption_Description" xml:space="preserve">
+    <value>The repository name (e.g., sources/github/user/repo)</value>
+  </data>
+  <data name="New_BranchOption_Description" xml:space="preserve">
+    <value>The starting branch</value>
+  </data>
+  <data name="New_TitleOption_Description" xml:space="preserve">
+    <value>A custom title for the session</value>
+  </data>
+  <data name="New_Success" xml:space="preserve">
+    <value>✨ Session initiated successfully! 🚀</value>
+  </data>
+  <data name="New_SessionId" xml:space="preserve">
+    <value>SessionId: {0}</value>
+  </data>
+  <data name="New_Portal" xml:space="preserve">
+    <value>Portal: {0}</value>
+  </data>
+  <data name="New_Error" xml:space="preserve">
+    <value>💔 Error: {0}</value>
+  </data>
+</root>

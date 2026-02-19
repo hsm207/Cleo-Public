@@ -1,9 +1,7 @@
-using Cleo.Core.Domain.Entities;
+using Cleo.Core.Domain.Ports;
 
 namespace Cleo.Core.UseCases.ListSessions;
 
-public record ListSessionsRequest();
-
-public record ListSessionsResponse(IReadOnlyCollection<Session> Sessions);
-
-public interface IListSessionsUseCase : IUseCase<ListSessionsRequest, ListSessionsResponse> { }
+public interface IListSessionsUseCase : IUseCase<ListSessionsRequest, ListSessionsResponse>
+{
+}

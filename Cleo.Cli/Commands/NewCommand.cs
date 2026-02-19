@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
-using Cleo.Core.Domain.ValueObjects;
+using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using Cleo.Core.UseCases.InitiateSession;
 using Microsoft.Extensions.Logging;
 
@@ -13,29 +14,33 @@ internal sealed class NewCommand
     private static readonly string[] BranchAliases = { "--branch", "-b" };
     private static readonly string[] TitleAliases = { "--title", "-t" };
 
-    private readonly InitiateSessionUseCase _useCase;
+    private readonly IInitiateSessionUseCase _useCase;
+    private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<NewCommand> _logger;
 
-    public NewCommand(InitiateSessionUseCase useCase, ILogger<NewCommand> logger)
+    public NewCommand(IInitiateSessionUseCase useCase, IStatusPresenter presenter, IHelpProvider helpProvider, ILogger<NewCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("new", "Assign a specific task to the agent. This initiates the collaboration session.");
+        var command = new Command("new", _helpProvider.GetCommandDescription("New_Description"));
 
-        var taskArgument = new Argument<string>("task", "The high-level goal or task for Jules.");
+        var taskArgument = new Argument<string>("task", _helpProvider.GetCommandDescription("New_TaskArg_Description"));
         command.AddArgument(taskArgument);
 
-        var repoOption = new Option<string>(RepoAliases, "The repository name (e.g., sources/github/user/repo)");
+        var repoOption = new Option<string>(RepoAliases, _helpProvider.GetCommandDescription("New_RepoOption_Description"));
         command.AddOption(repoOption);
 
-        var branchOption = new Option<string>(BranchAliases, () => "main", "The starting branch");
+        var branchOption = new Option<string>(BranchAliases, () => "main", _helpProvider.GetCommandDescription("New_BranchOption_Description"));
         command.AddOption(branchOption);
 
-        var titleOption = new Option<string>(TitleAliases, "A custom title for the session");
+        var titleOption = new Option<string>(TitleAliases, _helpProvider.GetCommandDescription("New_TitleOption_Description"));
         command.AddOption(titleOption);
 
         command.SetHandler(async (task, repo, branch, title) => await ExecuteAsync(task, repo, branch, title), taskArgument, repoOption, branchOption, titleOption);
@@ -50,19 +55,14 @@ internal sealed class NewCommand
             var request = new InitiateSessionRequest(task, repo, branch, title);
             var response = await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            Console.WriteLine("✨ Session initiated successfully! 🚀");
-            Console.WriteLine($"SessionId: {response.Id}");
-            if (response.DashboardUri != null)
-            {
-                Console.WriteLine($"Portal: {response.DashboardUri}");
-            }
+            _presenter.PresentNewSession(response.Id.ToString(), response.DashboardUri?.ToString());
         }
         catch (Exception ex)
         {
             #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to initiate session.");
             #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }

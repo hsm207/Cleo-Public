@@ -1,14 +1,26 @@
 using Cleo.Cli.Models;
 using Cleo.Cli.Aesthetics;
 using Cleo.Cli.Presenters;
+using Cleo.Cli.Services;
 using FluentAssertions;
 using Xunit;
+using Moq;
+using System.CommandLine;
+using System.CommandLine.IO;
 
 namespace Cleo.Cli.Tests.Presenters;
 
 public class StatusPresenterTests
 {
-    private readonly CliStatusPresenter _sut = new();
+    private readonly Mock<IConsole> _consoleMock = new();
+    private readonly Mock<IHelpProvider> _helpProviderMock = new();
+    private readonly CliStatusPresenter _sut;
+    private readonly TestConsole _testConsole = new();
+
+    public StatusPresenterTests()
+    {
+        _sut = new CliStatusPresenter(_testConsole, _helpProviderMock.Object);
+    }
 
     [Fact(DisplayName = "Presenter should format the 3 canonical lines correctly")]
     public void ShouldFormatCanonicalLines()
@@ -24,7 +36,8 @@ public class StatusPresenterTests
             Array.Empty<string>());
 
         // Act
-        var output = _sut.Format(model);
+        _sut.PresentStatus(model);
+        var output = _testConsole.Out.ToString()!;
 
         // Assert
         output.Should().Contain($"{CliAesthetic.SessionStateLabel}: [Working]");
@@ -47,7 +60,8 @@ public class StatusPresenterTests
             Array.Empty<string>());
 
         // Act
-        var output = _sut.Format(model);
+        _sut.PresentStatus(model);
+        var output = _testConsole.Out.ToString()!;
 
         // Assert
         output.Should().Contain($"\n{CliAesthetic.Indent}{CliAesthetic.ThoughtBubble} Line 1");
@@ -69,7 +83,8 @@ public class StatusPresenterTests
             artifacts);
 
         // Act
-        var output = _sut.Format(model);
+        _sut.PresentStatus(model);
+        var output = _testConsole.Out.ToString()!;
 
         // Assert
         output.Should().Contain($"{CliAesthetic.ArtifactBox} BashOutput: Executed 'ls' (Exit Code: 0)");
@@ -78,7 +93,7 @@ public class StatusPresenterTests
     [Fact(DisplayName = "Presenter should throw ArgumentNullException if model is null")]
     public void ShouldThrowIfModelIsNull()
     {
-        Action act = () => _sut.Format(null!);
+        Action act = () => _sut.PresentStatus(null!);
         act.Should().Throw<ArgumentNullException>();
     }
 }
