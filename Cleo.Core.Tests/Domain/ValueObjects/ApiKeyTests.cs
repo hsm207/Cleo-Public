@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class ApiKeyTests
+public sealed class ApiKeyTests
 {
     [Theory(DisplayName = "ApiKey should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]

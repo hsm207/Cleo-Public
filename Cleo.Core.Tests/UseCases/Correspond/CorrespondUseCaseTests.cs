@@ -7,7 +7,7 @@ using Cleo.Core.Tests.Builders;
 
 namespace Cleo.Core.Tests.UseCases.Correspond;
 
-internal sealed class CorrespondUseCaseTests
+public sealed class CorrespondUseCaseTests
 {
     private readonly FakeMessenger _messenger = new();
     private readonly FakeSessionReader _reader = new();
@@ -28,7 +28,7 @@ internal sealed class CorrespondUseCaseTests
         var request = new CorrespondRequest(sessionId, "Hello");
 
         // Act
-        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -43,7 +43,7 @@ internal sealed class CorrespondUseCaseTests
         var request = new CorrespondRequest(sessionId, "Hi");
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(request, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ExecuteAsync(request, TestContext.Current.CancellationToken));
     }
 
     private sealed class FakeMessenger : ISessionMessenger

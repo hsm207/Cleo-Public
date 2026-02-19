@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Exceptions;
 
-internal sealed class RemoteCollaboratorUnavailableExceptionTests
+public sealed class RemoteCollaboratorUnavailableExceptionTests
 {
     [Fact(DisplayName = "The exception should support standard initialization patterns to satisfy platform requirements.")]
     public void ShouldSupportStandardPatterns()

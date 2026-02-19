@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.BrowseHistory;
 
-internal sealed class BrowseHistoryUseCaseTests
+public sealed class BrowseHistoryUseCaseTests
 {
     private readonly FakeArchivist _archivist = new();
     private readonly FakeSessionReader _sessionReader = new();
@@ -34,7 +34,7 @@ internal sealed class BrowseHistoryUseCaseTests
         var request = new BrowseHistoryRequest(sessionId);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(sessionId, result.Id);
@@ -59,7 +59,7 @@ internal sealed class BrowseHistoryUseCaseTests
         var request = new BrowseHistoryRequest(sessionId, criteria);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Single(result.History);

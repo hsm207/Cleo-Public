@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.AuthenticateUser;
 
-internal sealed class AuthenticateUserUseCaseTests
+public sealed class AuthenticateUserUseCaseTests
 {
     private readonly FakeVault _vault = new();
     private readonly AuthenticateUserUseCase _sut;
@@ -23,7 +23,7 @@ internal sealed class AuthenticateUserUseCaseTests
         var request = new AuthenticateUserRequest(apiKey);
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
 
         // Assert
         Assert.True(result.Success);
@@ -38,7 +38,7 @@ internal sealed class AuthenticateUserUseCaseTests
         var request = new AuthenticateUserRequest("");
 
         // Act
-        var result = await _sut.ExecuteAsync(request, CancellationToken.None).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, CancellationToken.None);
 
         // Assert
         Assert.False(result.Success);

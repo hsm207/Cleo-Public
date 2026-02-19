@@ -72,3 +72,7 @@ dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 
 dotnet_naming_style.underscore_camel_case.capitalization = camel_case
 dotnet_naming_style.underscore_camel_case.required_prefix = _
+
+# Suppress CA1515 (Types that are not exported should be internal) for test classes as xUnit requires them to be public
+[**Tests.cs]
+dotnet_diagnostic.CA1515.severity = none

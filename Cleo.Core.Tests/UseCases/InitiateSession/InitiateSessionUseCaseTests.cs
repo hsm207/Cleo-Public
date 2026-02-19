@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.UseCases.InitiateSession;
 
-internal class InitiateSessionUseCaseTests
+public sealed class InitiateSessionUseCaseTests
 {
     private readonly FakeJulesClient _julesClient = new();
     private readonly FakeSessionWriter _sessionWriter = new();
@@ -29,7 +29,7 @@ internal class InitiateSessionUseCaseTests
         );
 
         // Act
-        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsPrAutomated);
@@ -54,7 +54,7 @@ internal class InitiateSessionUseCaseTests
         );
 
         // Act
-        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("My Cute Title", _julesClient.LastOptions?.Title);
@@ -68,7 +68,7 @@ internal class InitiateSessionUseCaseTests
         var request = new InitiateSessionRequest(longTask, "sources/repo", "branch");
 
         // Act
-        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _sut.ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         var title = _julesClient.LastOptions?.Title;

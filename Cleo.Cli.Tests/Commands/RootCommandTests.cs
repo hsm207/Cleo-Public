@@ -16,7 +16,7 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Commands;
 
-public class RootCommandTests
+public sealed class RootCommandTests
 {
     private readonly LogCommand _logCommand;
     private readonly CheckinCommand _statusCommand;

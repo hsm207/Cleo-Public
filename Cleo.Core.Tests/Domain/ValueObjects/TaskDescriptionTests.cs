@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class TaskDescriptionTests
+public sealed class TaskDescriptionTests
 {
     [Theory(DisplayName = "TaskDescription should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]

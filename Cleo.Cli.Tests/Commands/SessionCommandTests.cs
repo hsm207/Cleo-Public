@@ -13,7 +13,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class SessionCommandTests
+public sealed class SessionCommandTests
 {
     private readonly SessionCommand _command;
 

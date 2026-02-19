@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Services;
 
-public class SessionStatusEvaluatorTests
+public sealed class SessionStatusEvaluatorTests
 {
     [Fact(DisplayName = "Given Working State, Evaluator should return correct title and In Progress outcome")]
     public void ShouldEvaluateWorkingState()

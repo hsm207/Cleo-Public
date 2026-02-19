@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
 
-internal class SessionTests
+public sealed class SessionTests
 {
     private static readonly SessionId Id = new("sessions/123");
     private const string RemoteId = "remote-123";

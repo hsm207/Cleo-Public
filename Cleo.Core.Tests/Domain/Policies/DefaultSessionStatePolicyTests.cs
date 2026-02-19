@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Policies;
 
-internal class DefaultSessionStatePolicyTests
+public sealed class DefaultSessionStatePolicyTests
 {
     private readonly DefaultSessionStatePolicy _policy = new();
 

@@ -12,7 +12,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class AuthCommandTests
+public sealed class AuthCommandTests
 {
     private readonly Mock<IAuthenticateUserUseCase> _useCaseMock;
     private readonly Mock<IVault> _vaultMock;

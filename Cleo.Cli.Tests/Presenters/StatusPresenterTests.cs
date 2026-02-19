@@ -12,7 +12,7 @@ using System.CommandLine.IO;
 
 namespace Cleo.Cli.Tests.Presenters;
 
-public class StatusPresenterTests
+public sealed class StatusPresenterTests
 {
     private readonly Mock<IHelpProvider> _helpProviderMock = new();
     private readonly CliStatusPresenter _sut;

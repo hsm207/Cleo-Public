@@ -11,7 +11,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class TalkCommandTests : IDisposable
+public sealed class TalkCommandTests : IDisposable
 {
     private readonly Mock<ICorrespondUseCase> _useCaseMock;
     private readonly Mock<ILogger<TalkCommand>> _loggerMock;

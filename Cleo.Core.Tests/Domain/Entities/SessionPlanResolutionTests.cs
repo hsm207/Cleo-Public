@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
 
-internal class SessionPlanResolutionTests
+public sealed class SessionPlanResolutionTests
 {
     private static readonly SessionId Id = new("sessions/test-resolution");
     private const string RemoteId = "remote-123";

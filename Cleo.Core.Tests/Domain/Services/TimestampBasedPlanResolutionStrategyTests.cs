@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Services;
 
-internal class TimestampBasedPlanResolutionStrategyTests
+public sealed class TimestampBasedPlanResolutionStrategyTests
 {
     private readonly TimestampBasedPlanResolutionStrategy _strategy = new();
 

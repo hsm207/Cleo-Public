@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Cli.Tests.Services;
 
-public class HelpProviderTests
+public sealed class HelpProviderTests
 {
     private readonly HelpProvider _sut = new();
 
