@@ -4,16 +4,14 @@ namespace Cleo.Infrastructure.Clients.Jules.Internal;
 
 internal static class JulesQueryBuilder
 {
-    public static string BuildListActivitiesUri(SessionId id, RemoteActivityOptions options, string? currentPageToken = null)
+    public static string BuildListActivitiesUri(SessionId id, RemoteActivityOptions options)
     {
         var uri = $"v1alpha/{id.Value}/activities";
         var queryParams = new List<string>();
 
-        // Pagination: Current token takes precedence over initial option token if provided in loop
-        var token = currentPageToken ?? options.PageToken;
-        if (!string.IsNullOrEmpty(token))
+        if (!string.IsNullOrEmpty(options.PageToken))
         {
-            queryParams.Add($"pageToken={token}");
+            queryParams.Add($"pageToken={options.PageToken}");
         }
 
         if (options.PageSize.HasValue)
