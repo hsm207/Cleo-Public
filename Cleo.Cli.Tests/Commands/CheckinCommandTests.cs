@@ -16,7 +16,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class CheckinCommandTests : IDisposable
+public sealed class CheckinCommandTests : IDisposable
 {
     private readonly Mock<IRefreshPulseUseCase> _useCaseMock;
     private readonly CliStatusPresenter _presenter;

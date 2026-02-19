@@ -22,7 +22,7 @@ using Xunit;
 namespace Cleo.Cli.Tests;
 
 [Collection("ConsoleTests")]
-public class ProgramTests : IDisposable
+public sealed class ProgramTests : IDisposable
 {
     private readonly StringWriter _stringWriter;
     private readonly TextWriter _originalOutput;

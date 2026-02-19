@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
 
-internal class IdentityTests
+public sealed class IdentityTests
 {
     private readonly ApiKey _testKey = new("my-key");
 

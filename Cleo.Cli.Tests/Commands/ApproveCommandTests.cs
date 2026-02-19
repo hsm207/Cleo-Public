@@ -12,7 +12,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ApproveCommandTests
+public sealed class ApproveCommandTests
 {
     private readonly Mock<IApprovePlanUseCase> _useCaseMock;
     private readonly Mock<IStatusPresenter> _presenterMock;

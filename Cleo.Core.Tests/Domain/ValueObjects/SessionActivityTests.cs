@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class SessionActivityTests
+public sealed class SessionActivityTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
     private const string RemoteId = "remote-id";

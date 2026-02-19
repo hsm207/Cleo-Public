@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class SourceContextTests
+public sealed class SourceContextTests
 {
     [Fact(DisplayName = "A SourceContext should correctly capture both Repository and StartingBranch.")]
     public void ConstructorShouldSetValuesWhenValid()

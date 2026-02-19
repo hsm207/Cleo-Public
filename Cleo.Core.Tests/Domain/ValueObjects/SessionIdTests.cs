@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class SessionIdTests
+public sealed class SessionIdTests
 {
     [Theory(DisplayName = "SessionId should enforce validity invariants (cannot be null or empty).")]
     [InlineData("")]

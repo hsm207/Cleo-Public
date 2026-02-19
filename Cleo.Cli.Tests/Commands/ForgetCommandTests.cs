@@ -12,7 +12,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ForgetCommandTests
+public sealed class ForgetCommandTests
 {
     private readonly Mock<IForgetSessionUseCase> _useCaseMock;
     private readonly Mock<IStatusPresenter> _presenterMock;

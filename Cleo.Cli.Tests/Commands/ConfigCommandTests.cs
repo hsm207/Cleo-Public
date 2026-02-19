@@ -11,7 +11,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class ConfigCommandTests
+public sealed class ConfigCommandTests
 {
     private readonly ConfigCommand _command;
 

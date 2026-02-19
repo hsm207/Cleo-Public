@@ -14,7 +14,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class NewCommandTests : IDisposable
+public sealed class NewCommandTests : IDisposable
 {
     private readonly Mock<IJulesSessionClient> _julesClientMock;
     private readonly Mock<ISessionWriter> _sessionWriterMock;

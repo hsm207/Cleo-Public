@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class PullRequestTests
+public sealed class PullRequestTests
 {
     [Fact(DisplayName = "PullRequest should store valid values.")]
     public void ConstructorShouldStoreValues()

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cleo.Core.Tests.Domain.ValueObjects;
 
-internal class SessionCreationOptionsTests
+public sealed class SessionCreationOptionsTests
 {
     [Fact(DisplayName = "SessionCreationOptions should have expected defaults.")]
     public void ShouldHaveExpectedDefaults()

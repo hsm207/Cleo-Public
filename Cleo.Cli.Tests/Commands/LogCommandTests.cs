@@ -12,7 +12,7 @@ using Xunit;
 namespace Cleo.Cli.Tests.Commands;
 
 [Collection("ConsoleTests")]
-public class LogCommandTests
+public sealed class LogCommandTests
 {
     private readonly Mock<IBrowseHistoryUseCase> _useCaseMock;
     private readonly Mock<IStatusPresenter> _presenterMock;
