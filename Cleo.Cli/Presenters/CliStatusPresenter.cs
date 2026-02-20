@@ -256,20 +256,20 @@ internal sealed class CliStatusPresenter : IStatusPresenter
         }
     }
 
-    private static string Format(StatusViewModel model)
+    private string Format(StatusViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
         var sb = new System.Text.StringBuilder();
 
         // 1. Session State 🧘‍♀️
-        sb.AppendLine(CultureInfo.CurrentCulture, $"{CliAesthetic.SessionStateLabel}: [{model.StateTitle}]");
+        sb.AppendLine(CultureInfo.CurrentCulture, $"{_helpProvider.GetResource("Label_SessionState")}: [{model.StateTitle}]");
 
         // 2. Pull Request 🎁
-        sb.AppendLine(CultureInfo.CurrentCulture, $"{CliAesthetic.PullRequestLabel}: {model.PrOutcome}");
+        sb.AppendLine(CultureInfo.CurrentCulture, $"{_helpProvider.GetResource("Label_PullRequest")}: {model.PrOutcome}");
 
         // 3. Last Activity 📝
-        sb.Append(CultureInfo.CurrentCulture, $"{CliAesthetic.LastActivityLabel}: [{model.LastActivityTime}] {model.LastActivityHeadline}");
+        sb.Append(CultureInfo.CurrentCulture, $"{_helpProvider.GetResource("Label_LastActivity")}: [{model.LastActivityTime}] {model.LastActivityHeadline}");
 
         if (!string.IsNullOrWhiteSpace(model.LastActivitySubHeadline))
         {

@@ -235,4 +235,13 @@
   <data name="Repos_Item_Format" xml:space="preserve">
     <value>- {0}</value>
   </data>
+  <data name="Label_SessionState" xml:space="preserve">
+    <value>🧘‍♀️ Session State</value>
+  </data>
+  <data name="Label_PullRequest" xml:space="preserve">
+    <value>🎁 Pull Request</value>
+  </data>
+  <data name="Label_LastActivity" xml:space="preserve">
+    <value>📝 Last Activity</value>
+  </data>
 </root>

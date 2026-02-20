@@ -6,10 +6,6 @@ namespace Cleo.Cli.Aesthetics;
 /// </summary>
 internal static class CliAesthetic
 {
-    public const string SessionStateLabel = "🧘‍♀️ Session State";
-    public const string PullRequestLabel = "🎁 Pull Request";
-    public const string LastActivityLabel = "📝 Last Activity";
-
     public const string ThoughtBubble = "💭";
     public const string ArtifactBox = "📦";
 

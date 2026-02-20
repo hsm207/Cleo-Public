@@ -1,5 +1,4 @@
 using Cleo.Cli.Commands;
-using Cleo.Cli.Aesthetics;
 using Cleo.Cli.Models;
 using Cleo.Cli.Presenters;
 using Cleo.Cli.Services;
@@ -10,7 +9,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.CommandLine;
-using System.CommandLine.IO;
 using Xunit;
 
 namespace Cleo.Cli.Tests.Commands;
@@ -19,25 +17,23 @@ namespace Cleo.Cli.Tests.Commands;
 public sealed class CheckinCommandTests : IDisposable
 {
     private readonly Mock<IRefreshPulseUseCase> _useCaseMock;
-    private readonly CliStatusPresenter _presenter;
+    private readonly Mock<IStatusPresenter> _presenterMock;
     private readonly Mock<IHelpProvider> _helpProviderMock;
     private readonly Mock<ILogger<CheckinCommand>> _loggerMock;
     private readonly CheckinCommand _command;
-    private readonly TestConsole _testConsole;
 
     public CheckinCommandTests()
     {
         _useCaseMock = new Mock<IRefreshPulseUseCase>();
+        _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
-        _testConsole = new TestConsole();
-        _presenter = new CliStatusPresenter(_testConsole, _helpProviderMock.Object);
         _loggerMock = new Mock<ILogger<CheckinCommand>>();
 
         // Setup HelpProvider to return basic format strings for errors
         _helpProviderMock.Setup(x => x.GetResource("New_Error")).Returns("💔 Error: {0}");
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
-        _command = new CheckinCommand(_useCaseMock.Object, _presenter, _helpProviderMock.Object, _loggerMock.Object);
+        _command = new CheckinCommand(_useCaseMock.Object, _presenterMock.Object, _helpProviderMock.Object, _loggerMock.Object);
     }
 
     public void Dispose()
@@ -45,7 +41,7 @@ public sealed class CheckinCommandTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact(DisplayName = "Given a valid session ID, when running 'checkin', then it should display SessionState, PR status, and Last Activity.")]
+    [Fact(DisplayName = "Given a valid session ID, when running 'checkin', then it should display SessionState.")]
     public async Task Status_WithValidSession_DisplaysDetails()
     {
         // Arrange
@@ -53,7 +49,6 @@ public sealed class CheckinCommandTests : IDisposable
         var pulse = new SessionPulse(SessionStatus.InProgress);
         var state = SessionState.Working;
 
-        // ProgressActivity(Id, RemoteId, Timestamp, Originator, Intent, Reasoning, Evidence, ExecutiveSummary)
         var activity = new ProgressActivity(
             "act-1",
             "remote-1",
@@ -80,15 +75,13 @@ public sealed class CheckinCommandTests : IDisposable
 
         // Assert
         exitCode.Should().Be(0);
-        var output = _testConsole.Out.ToString()!;
 
-        output.Should().Contain(CliAesthetic.SessionStateLabel);
-        output.Should().Contain("[Working]");
-        output.Should().Contain(CliAesthetic.LastActivityLabel);
-        output.Should().Contain("Working hard");
+        _presenterMock.Verify(x => x.PresentStatus(It.Is<StatusViewModel>(vm =>
+            vm.StateTitle == "Working" &&
+            vm.LastActivityHeadline == "Working hard")), Times.Once);
     }
 
-    [Fact(DisplayName = "Given a session with a PR, when running 'checkin', then it should display the PR URL.")]
+    [Fact(DisplayName = "Given a session with a PR, when running 'checkin', then it should present PR info.")]
     public async Task Status_WithPR_DisplaysPRUrl()
     {
         // Arrange
@@ -113,7 +106,8 @@ public sealed class CheckinCommandTests : IDisposable
         await _command.Build().InvokeAsync($"checkin {sessionId}");
 
         // Assert
-        _testConsole.Out.ToString().Should().Contain("https://github.com/org/repo/pull/1");
+        _presenterMock.Verify(x => x.PresentStatus(It.Is<StatusViewModel>(vm =>
+            vm.PrOutcome.Contains("https://github.com/org/repo/pull/1"))), Times.Once);
     }
 
     [Fact(DisplayName = "Given a response with a warning, when running 'checkin', then it should display the warning.")]
@@ -137,29 +131,31 @@ public sealed class CheckinCommandTests : IDisposable
         await _command.Build().InvokeAsync($"checkin {sessionId}");
 
         // Assert
-        _testConsole.Out.ToString().Should().Contain("⚠️ Warning message");
+        _presenterMock.Verify(x => x.PresentWarning("⚠️ Warning message"), Times.Once);
+        _presenterMock.Verify(x => x.PresentStatus(It.IsAny<StatusViewModel>()), Times.Once);
     }
 
     [Fact(DisplayName = "Given an error fetching checkin, when running 'checkin', then it should log the error and display a friendly message.")]
     public async Task Status_UseCaseError_HandlesException()
     {
         // Arrange
+        var exception = new Exception("Network unavailable");
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Network unavailable"));
+            .ThrowsAsync(exception);
 
         // Act
         var exitCode = await _command.Build().InvokeAsync("checkin sessions/session-123");
 
         // Assert
         exitCode.Should().Be(0); // Handled exception
-        var output = _testConsole.Out.ToString()!;
-        output.Should().Contain("💔 Error: Network unavailable");
+
+        _presenterMock.Verify(x => x.PresentError("Network unavailable"), Times.Once);
 
         _loggerMock.Verify(x => x.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => true),
-            It.IsAny<Exception>(),
+            exception,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using Cleo.Cli.Commands;
 using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.UseCases.ViewPlan;
 using Cleo.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,7 @@ internal static class Program
 
         // 2. Setup CLI Commands ⌨️
         var rootCommand = BuildRootCommand(serviceProvider);
+        var presenter = serviceProvider.GetRequiredService<IStatusPresenter>();
 
         // 3. Execute 🚀
         try
@@ -32,7 +34,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"💥 Fatal Error: {ex.Message}");
+            presenter.PresentError($"💥 Fatal Error: {ex.Message}");
             return 1;
         }
     }
