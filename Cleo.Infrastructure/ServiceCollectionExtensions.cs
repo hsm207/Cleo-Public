@@ -40,9 +40,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVault>(sp => new NativeVault(identityPath, sp.GetRequiredService<IEncryptionStrategy>()));
 
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
-        services.AddSingleton<IRegistryPathProvider, DefaultRegistryPathProvider>();
+        services.AddSingleton<ISessionPathResolver, DefaultSessionPathResolver>();
+        services.AddSingleton<ISessionLayout, DirectorySessionLayout>();
+        services.AddSingleton<IMetadataStore, RegistryMetadataStore>();
+        services.AddSingleton<IHistoryStore, RegistryHistoryStore>();
+        services.AddSingleton<NdjsonActivitySerializer>();
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
-        services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
         services.AddSingleton<ISessionReader, RegistrySessionReader>();
         services.AddSingleton<ISessionWriter, RegistrySessionWriter>();
 

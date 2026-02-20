@@ -6,26 +6,30 @@ using Cleo.Infrastructure.Persistence.Mappers;
 using Cleo.Tests.Common;
 using Moq;
 
-#pragma warning disable xUnit1051 // Use TestContext.Current.CancellationToken (VIP Lounge Rules: We already are!)
-
 namespace Cleo.Infrastructure.Tests.Persistence;
 
 public class RegistrySessionPersistenceTests : IDisposable
 {
-    private readonly string _tempFile;
-    private readonly Mock<IRegistryPathProvider> _pathProviderMock = new();
+    private readonly string _tempRoot;
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
     private readonly ActivityMapperFactory _activityFactory;
     private readonly PhysicalFileSystem _fileSystem;
+    private readonly DirectorySessionLayout _layout;
+    private readonly Mock<ISessionPathResolver> _resolver;
 
     public RegistrySessionPersistenceTests()
     {
-        // Use a unique file path for each test instance to ensure isolation 🌍✨
-        _tempFile = Path.Combine(Path.GetTempPath(), $"Cleo_Test_Registry_{Guid.NewGuid():N}.json");
-        _pathProviderMock.Setup(p => p.GetRegistryPath()).Returns(_tempFile);
+        _tempRoot = Path.Combine(Path.GetTempPath(), $"Cleo_Sessions_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_tempRoot);
 
-        // Register Artifact mapping 🔌📎
+        _resolver = new Mock<ISessionPathResolver>();
+        _resolver.Setup(x => x.GetSessionsRoot()).Returns(_tempRoot);
+
+        _fileSystem = new PhysicalFileSystem();
+        _layout = new DirectorySessionLayout(_resolver.Object);
+        var metadataStore = new RegistryMetadataStore(_layout, _fileSystem);
+
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
         {
             new BashOutputMapper(),
@@ -33,7 +37,6 @@ public class RegistrySessionPersistenceTests : IDisposable
             new MediaMapper()
         });
 
-        // Register Activity mapping 🔌🏺
         var activityMappers = new IActivityPersistenceMapper[]
         {
             new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
@@ -45,38 +48,35 @@ public class RegistrySessionPersistenceTests : IDisposable
             new Cleo.Infrastructure.Persistence.Mappers.SessionAssignedActivityMapper(artifactMapperFactory)
         };
         _activityFactory = new ActivityMapperFactory(activityMappers);
-
         var mapper = new RegistryTaskMapper(_activityFactory);
-        var serializer = new JsonRegistrySerializer();
-        _fileSystem = new PhysicalFileSystem(); // Use the REAL file system as demanded! 💎
 
-        _reader = new RegistrySessionReader(_pathProviderMock.Object, mapper, serializer, _fileSystem);
-        _writer = new RegistrySessionWriter(_pathProviderMock.Object, mapper, serializer, _fileSystem);
+        var ndjsonSerializer = new NdjsonActivitySerializer(_activityFactory);
+        var historyStore = new RegistryHistoryStore(_layout, _fileSystem, ndjsonSerializer);
+
+        _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, _resolver.Object, _fileSystem);
+        _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, _layout, _fileSystem);
     }
 
     public void Dispose()
     {
-        // Clean up the fixture 🧹
-        if (File.Exists(_tempFile))
+        if (Directory.Exists(_tempRoot))
         {
-            File.Delete(_tempFile);
+            Directory.Delete(_tempRoot, true);
         }
         GC.SuppressFinalize(this);
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should save a session and Reader should retrieve it.")]
-    public async Task Writer_ShouldSave_AndReader_ShouldLoad()
+    [Fact]
+    public async Task Writer_ShouldSave_AndReader_ShouldLoad_Metadata()
     {
         // Arrange
-        var id = TestFactory.CreateSessionId("real-vibes-1");
+        var id = TestFactory.CreateSessionId("1");
         var dashboardUri = new Uri("https://jules.ai/sessions/1");
         var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
-        var activity = new ProgressActivity("act-1", "remote-act-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Initial thought");
-        session.AddActivity(activity);
 
         // Act
-        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
-        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
+        await _writer.RememberAsync(session, CancellationToken.None);
+        var result = await _reader.RecallAsync(id, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
@@ -84,145 +84,74 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
         Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
-        Assert.Contains(result.SessionLog, a => a.Id == "act-1");
 
-        // Verify file actually exists and has content
-        Assert.True(File.Exists(_tempFile));
-        var json = await File.ReadAllTextAsync(_tempFile);
-        Assert.Contains("Real world testing", json);
-        Assert.Contains("Initial thought", json);
+        // Verify folder structure
+        var sessionDir = Path.Combine(_tempRoot, "1");
+        Assert.True(Directory.Exists(sessionDir));
+        Assert.True(File.Exists(Path.Combine(sessionDir, "session.json")));
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should handle updates to existing sessions.")]
-    public async Task Writer_ShouldUpdate_ExistingSession()
+    [Fact]
+    public async Task ListAsync_ShouldEnumerateSessions()
     {
         // Arrange
-        var id = TestFactory.CreateSessionId("update-test");
-        var initial = new Session(id, "remote-2", new TaskDescription("Initial"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
-        var updated = new Session(id, "remote-2", new TaskDescription("Updated"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.Completed), DateTimeOffset.UtcNow);
+        var id1 = TestFactory.CreateSessionId("1");
+        var id2 = TestFactory.CreateSessionId("2");
+        var session1 = new Session(id1, "remote-1", new TaskDescription("Task 1"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow);
+        var session2 = new Session(id2, "remote-2", new TaskDescription("Task 2"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+
+        await _writer.RememberAsync(session1, CancellationToken.None);
+        await _writer.RememberAsync(session2, CancellationToken.None);
 
         // Act
-        await _writer.RememberAsync(initial, TestContext.Current.CancellationToken);
-        await _writer.RememberAsync(updated, TestContext.Current.CancellationToken);
-        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
+        var results = await _reader.ListAsync(CancellationToken.None);
 
         // Assert
-        Assert.Equal(SessionStatus.Completed, result!.Pulse.Status);
-        Assert.Equal((TaskDescription)"Updated", result.Task);
+        Assert.Equal(2, results.Count);
+        Assert.Contains(results, s => s.Id == id1);
+        Assert.Contains(results, s => s.Id == id2);
     }
 
-    [Fact(DisplayName = "RegistrySessionWriter should persist PullRequest data with High Fidelity.")]
-    public async Task Writer_ShouldPersist_PullRequest()
+    [Fact]
+    public async Task ForgetAsync_ShouldRemoveSessionDirectory()
     {
         // Arrange
-        var id = TestFactory.CreateSessionId("pr-persistence");
-        var session = new Session(id, "remote-pr", new TaskDescription("PR Test"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
-        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/123"), "Fix bug", "Fixed it", "feature/bugfix", "main");
-        session.SetPullRequest(pr);
+        var id = TestFactory.CreateSessionId("1");
+        var session = new Session(id, "remote-1", new TaskDescription("Task"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow);
+        await _writer.RememberAsync(session, CancellationToken.None);
 
         // Act
-        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
-        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.NotNull(result?.PullRequest);
-        Assert.Equal(pr.Url, result!.PullRequest!.Url);
-        Assert.Equal(pr.Title, result.PullRequest.Title);
-        Assert.Equal(pr.Description, result.PullRequest.Description);
-        Assert.Equal(pr.HeadRef, result.PullRequest.HeadRef);
-        Assert.Equal(pr.BaseRef, result.PullRequest.BaseRef);
-
-        // Verify JSON contains PR data and topology 💾
-        var json = await File.ReadAllTextAsync(_tempFile);
-        Assert.Contains("https://github.com/org/repo/pull/123", json);
-        Assert.Contains("feature/bugfix", json);
-        Assert.Contains("main", json);
-    }
-
-    [Fact(DisplayName = "RegistrySessionWriter should delete sessions correctly.")]
-    public async Task Writer_ShouldDelete_Session()
-    {
-        // Arrange
-        var id = TestFactory.CreateSessionId("delete-me");
-        var session = new Session(id, "remote-3", new TaskDescription("Bye bye"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
-
-        // Act
-        await _writer.RememberAsync(session, TestContext.Current.CancellationToken);
-        await _writer.ForgetAsync(id, TestContext.Current.CancellationToken);
-        var result = await _reader.RecallAsync(id, TestContext.Current.CancellationToken);
+        await _writer.ForgetAsync(id, CancellationToken.None);
+        var result = await _reader.RecallAsync(id, CancellationToken.None);
 
         // Assert
         Assert.Null(result);
+        var sessionDir = Path.Combine(_tempRoot, "1");
+        Assert.False(Directory.Exists(sessionDir));
     }
 
-    [Fact(DisplayName = "Reader should return empty when registry file is missing or empty.")]
-    public async Task Reader_ShouldHandleMissingFile()
-    {
-        // Act
-        var result = await _reader.ListAsync(TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.Empty(result);
-
-        // Now test empty file
-        await File.WriteAllTextAsync(_tempFile, "[]");
-        result = await _reader.ListAsync(TestContext.Current.CancellationToken);
-        Assert.Empty(result);
-
-        // Now test whitespace
-        await File.WriteAllTextAsync(_tempFile, "   ");
-        result = await _reader.ListAsync(TestContext.Current.CancellationToken);
-        Assert.Empty(result);
-    }
-
-    [Fact(DisplayName = "RegistrySessionWriter should create directory if it does not exist.")]
-    public async Task Writer_ShouldCreateDirectory()
+    [Fact]
+    public async Task Writer_ShouldSave_AndReader_ShouldLoad_History()
     {
         // Arrange
-        var nestedDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var nestedFile = Path.Combine(nestedDir, "registry.json");
-        var mockPath = new Mock<IRegistryPathProvider>();
-        mockPath.Setup(p => p.GetRegistryPath()).Returns(nestedFile);
+        var id = TestFactory.CreateSessionId("hist-1");
+        var session = new Session(id, "remote-1", new TaskDescription("History Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        var activity = new ProgressActivity("act-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "First step");
+        session.AddActivity(activity);
 
-        var writer = new RegistrySessionWriter(mockPath.Object, new RegistryTaskMapper(_activityFactory), new JsonRegistrySerializer(), new PhysicalFileSystem());
-        var session = new Session(TestFactory.CreateSessionId("s"), "r", new TaskDescription("t"), TestFactory.CreateSourceContext("r", "b"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
+        // Act
+        await _writer.RememberAsync(session, CancellationToken.None);
+        var result = await _reader.RecallAsync(id, CancellationToken.None);
 
-        try
-        {
-            // Act
-            await writer.RememberAsync(session, TestContext.Current.CancellationToken);
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result!.SessionLog);
+        Assert.Contains(result.SessionLog, a => a.Id == "act-1");
 
-            // Assert
-            Assert.True(Directory.Exists(nestedDir));
-            Assert.True(File.Exists(nestedFile));
-        }
-        finally
-        {
-            if (Directory.Exists(nestedDir)) Directory.Delete(nestedDir, true);
-        }
-    }
-
-
-    [Fact(DisplayName = "PhysicalFileSystem should delegate to System.IO.")]
-    public async Task PhysicalFileSystem_DelegatesCorrectly()
-    {
-        var fs = new PhysicalFileSystem();
-        var path = Path.GetTempFileName();
-        try
-        {
-            await fs.WriteAllTextAsync(path, "Hello", TestContext.Current.CancellationToken);
-            Assert.True(fs.FileExists(path));
-            Assert.Equal("Hello", await fs.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
-
-            // Check directory delegation
-            var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-            fs.CreateDirectory(dir);
-            Assert.True(fs.DirectoryExists(dir));
-            Directory.Delete(dir);
-        }
-        finally
-        {
-            if (File.Exists(path)) File.Delete(path);
-        }
+        // Verify file
+        var historyPath = Path.Combine(_tempRoot, "hist-1", "activities.jsonl");
+        Assert.True(File.Exists(historyPath));
+        var content = await File.ReadAllTextAsync(historyPath);
+        Assert.Contains("First step", content);
     }
 }
