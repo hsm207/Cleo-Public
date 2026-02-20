@@ -104,11 +104,12 @@ public sealed class CliStatusPresenterTests : IDisposable
     public void PresentPlan_Proposed_FormatsCorrectly()
     {
         var response = new ViewPlanResponse(
-            false,
+            true, // HasPlan
             new PlanId("p1"),
             DateTimeOffset.UtcNow,
             new[] { new PlanStepModel(1, "Step 1", null) },
-            true);
+            false // IsApproved
+        );
 
         _helpProviderMock.Setup(x => x.GetResource("Plan_Header")).Returns("Header: {0} {1}");
         _helpProviderMock.Setup(x => x.GetResource("Plan_Title_Proposed")).Returns("Proposed");

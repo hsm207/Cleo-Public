@@ -27,9 +27,18 @@ public sealed class NewCommandTests : IDisposable
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
-        // Setup Help Provider to return key as value for simplicity
-        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>()))
-            .Returns<string>(key => key);
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_New_Name" => "new",
+                "Arg_Task_Name" => "task",
+                "Opt_Repo_Aliases" => "--repo,-r",
+                "Opt_Branch_Aliases" => "--branch,-b",
+                "Opt_Title_Aliases" => "--title,-t",
+                "Opt_Branch_Default" => "main",
+                _ => key
+            });
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(key => key);
 
         _loggerMock = new Mock<ILogger<NewCommand>>();
 

@@ -29,7 +29,12 @@ public sealed class ListCommandTests
         _helpProviderMock = new Mock<IHelpProvider>();
         _evaluatorMock = new Mock<ISessionStatusEvaluator>();
 
-        _helpProviderMock.Setup(x => x.GetResource("Cmd_List_Name")).Returns("list");
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_List_Name" => "list",
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         _command = new ListCommand(

@@ -25,6 +25,12 @@ public sealed class ReposCommandTests
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Repos_Name" => "repos",
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         _command = new ReposCommand(
@@ -35,10 +41,11 @@ public sealed class ReposCommandTests
     }
 
     [Fact(DisplayName = "Repos should call UseCase and PresentRepositories.")]
-    public async Task Repos_Valid_PresentsRepos()
+    public async Task Repos_Valid_PresentsList()
     {
         // Arrange
-        var sources = new[] { new SessionSource("repo1", "owner", "repo1") };
+        // Correctly using SessionSource instead of SourceContext
+        var sources = new[] { new SessionSource("src/repo", "user", "repo") };
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new BrowseSourcesResponse(sources));
 
@@ -46,15 +53,15 @@ public sealed class ReposCommandTests
         await _command.Build().InvokeAsync("repos");
 
         // Assert
-        _presenterMock.Verify(x => x.PresentRepositories(It.Is<IEnumerable<string>>(l => l.Contains("repo1"))), Times.Once);
+        _presenterMock.Verify(x => x.PresentRepositories(It.Is<IEnumerable<string>>(l => l.Contains("src/repo"))), Times.Once);
     }
 
-    [Fact(DisplayName = "Repos should call PresentEmptyRepositories when none found.")]
+    [Fact(DisplayName = "Repos should call PresentEmptyRepositories when empty.")]
     public async Task Repos_Empty_PresentsEmpty()
     {
         // Arrange
         _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<BrowseSourcesRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BrowseSourcesResponse(Array.Empty<SessionSource>()));
+            .ReturnsAsync(new BrowseSourcesResponse(new List<SessionSource>()));
 
         // Act
         await _command.Build().InvokeAsync("repos");

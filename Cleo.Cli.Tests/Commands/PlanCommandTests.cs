@@ -25,6 +25,16 @@ public sealed class PlanCommandTests
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Plan_Name" => "plan",
+                "Cmd_View_Name" => "view",
+                "Arg_SessionId_Name" => "sessionId",
+                "Cmd_Approve_Name" => "approve", // Recursively used
+                "Arg_PlanId_Name" => "planId",
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         var approveCommand = new ApproveCommand(

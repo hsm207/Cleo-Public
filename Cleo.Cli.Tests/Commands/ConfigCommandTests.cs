@@ -18,6 +18,19 @@ public sealed class ConfigCommandTests
     public ConfigCommandTests()
     {
         var helpProviderMock = new Mock<IHelpProvider>();
+
+        helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Config_Name" => "config",
+                "Cmd_Auth_Name" => "auth",
+                "Cmd_Repos_Name" => "repos",
+                // Auth subcommands needed for recursive build if verified
+                "Cmd_Login_Name" => "login",
+                "Cmd_Logout_Name" => "logout",
+                "Arg_Key_Name" => "key",
+                _ => key
+            });
+
         helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         var authCommand = new AuthCommand(

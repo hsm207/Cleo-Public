@@ -31,8 +31,13 @@ public sealed class CheckinCommandTests : IDisposable
         _evaluatorMock = new Mock<ISessionStatusEvaluator>();
         _loggerMock = new Mock<ILogger<CheckinCommand>>();
 
-        _helpProviderMock.Setup(x => x.GetResource("Cmd_Checkin_Name")).Returns("checkin");
-        _helpProviderMock.Setup(x => x.GetResource("Arg_SessionId_Name")).Returns("sessionId");
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Checkin_Name" => "checkin",
+                "Arg_SessionId_Name" => "sessionId",
+                "New_Error" => "Error: {0}", // Format string
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         _command = new CheckinCommand(
@@ -111,7 +116,7 @@ public sealed class CheckinCommandTests : IDisposable
 
         // Assert
         _presenterMock.Verify(x => x.PresentWarning("⚠️ Warning message"), Times.Once);
-        _presenterMock.Verify(x => x.PresentStatus(It.IsAny<StatusViewModel>()), Times.Once); // Still calls status present
+        _presenterMock.Verify(x => x.PresentStatus(It.IsAny<StatusViewModel>()), Times.Once);
     }
 
     [Fact(DisplayName = "Given an error fetching checkin, when running 'checkin', then it should log the error and display a friendly message.")]

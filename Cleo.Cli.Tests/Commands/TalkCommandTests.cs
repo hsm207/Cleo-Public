@@ -28,8 +28,14 @@ public sealed class TalkCommandTests : IDisposable
         _helpProviderMock = new Mock<IHelpProvider>();
         _loggerMock = new Mock<ILogger<TalkCommand>>();
 
-        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns((string key) => key + "_Desc");
-        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns((string key) => key + "_Res");
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Talk_Name" => "talk",
+                "Arg_SessionId_Name" => "sessionId",
+                "Opt_Message_Aliases" => "--message,-m",
+                _ => key
+            });
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k + "_Desc");
 
         _command = new TalkCommand(_useCaseMock.Object, _presenterMock.Object, _helpProviderMock.Object, _loggerMock.Object);
     }

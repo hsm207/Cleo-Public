@@ -25,8 +25,15 @@ public sealed class ForgetCommandTests
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Forget_Name" => "forget",
+                "Arg_SessionId_Name" => "sessionId",
+                "Forget_Success" => "Forgotten {0}",
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
-        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => "{0}");
 
         _command = new ForgetCommand(
             _useCaseMock.Object,

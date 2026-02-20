@@ -28,7 +28,11 @@ public sealed class SessionCommandTests
 
         // Mock help provider for NewCommand and SessionCommand
         helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k == "Session_Description" ? "Lifecycle Management" : k);
-        helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => k.Replace("Cmd_", "").Replace("_Name", "").ToLower());
+        helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k =>
+            k.StartsWith("Cmd_") ? k.Replace("Cmd_", "").Replace("_Name", "").ToLower() :
+            k.StartsWith("Arg_") ? k.Replace("Arg_", "").Replace("_Name", "").ToLower() :
+            k.StartsWith("Opt_") ? (k.Contains("Aliases") ? $"--{k.Split('_')[1].ToLower()}" : "main") :
+            k);
 
         var newCommand = new NewCommand(initiateUseCase, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<NewCommand>>().Object);
 

@@ -41,7 +41,11 @@ public sealed class RootCommandTests
         });
 
         // Setup resource mocks for command names
-        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => k.Replace("Cmd_", "").Replace("_Name", "").ToLower());
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k =>
+            k.StartsWith("Cmd_") ? k.Replace("Cmd_", "").Replace("_Name", "").ToLower() :
+            k.StartsWith("Arg_") ? k.Replace("Arg_", "").Replace("_Name", "").ToLower() :
+            k.StartsWith("Opt_") ? (k.Contains("Aliases") ? $"--{k.Split('_')[1].ToLower()}" : "main") :
+            k);
 
         _logCommand = new LogCommand(new Mock<IBrowseHistoryUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<LogCommand>>().Object);
         _statusCommand = new CheckinCommand(

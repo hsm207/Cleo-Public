@@ -25,6 +25,16 @@ public sealed class LogCommandTests
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
+        // Fix mocks
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Log_Name" => "log",
+                "Cmd_View_Name" => "view",
+                "Arg_SessionId_Name" => "sessionId",
+                "Opt_All_Aliases" => "--all",
+                "Opt_Limit_Aliases" => "--limit",
+                _ => key
+            });
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
         _command = new LogCommand(

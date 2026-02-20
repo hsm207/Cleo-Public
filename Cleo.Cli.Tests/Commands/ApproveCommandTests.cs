@@ -25,8 +25,17 @@ public sealed class ApproveCommandTests
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
 
+        // Fix: Return valid identifiers for command/argument names
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(key =>
+            key switch {
+                "Cmd_Approve_Name" => "approve",
+                "Arg_SessionId_Name" => "sessionId",
+                "Arg_PlanId_Name" => "planId",
+                "Approve_Success" => "Success {0} {1} {2}", // Format string
+                _ => key
+            });
+
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
-        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => "{0} {1} {2}");
 
         _command = new ApproveCommand(
             _useCaseMock.Object,
