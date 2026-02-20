@@ -67,7 +67,6 @@ internal static class Program
         services.AddTransient<NewCommand>();
         services.AddTransient<CheckinCommand>();
         services.AddTransient<ReposCommand>();
-        services.AddTransient<TalkCommand>();
         services.AddTransient<ApproveCommand>();
         services.AddTransient<ForgetCommand>();
 
