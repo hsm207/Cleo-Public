@@ -29,7 +29,7 @@ internal sealed class ReposCommand
 
     public Command Build()
     {
-        var command = new Command("repos", _helpProvider.GetCommandDescription("Repos_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Repos_Name"), _helpProvider.GetCommandDescription("Repos_Description"));
 
         command.SetHandler(async () => await ExecuteAsync());
 
