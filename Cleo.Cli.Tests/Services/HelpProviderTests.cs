@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Globalization;
+using Cleo.Cli.Resources;
 using Cleo.Cli.Services;
 using FluentAssertions;
 using Xunit;
@@ -7,6 +10,23 @@ namespace Cleo.Cli.Tests.Services;
 public sealed class HelpProviderTests
 {
     private readonly HelpProvider _sut = new();
+
+    [Fact(DisplayName = "All resource keys must have a value.")]
+    public void AllKeys_AreValid()
+    {
+        var resourceSet = CliStrings.ResourceManager.GetResourceSet(CultureInfo.InvariantCulture, true, true);
+        resourceSet.Should().NotBeNull();
+
+        foreach (DictionaryEntry entry in resourceSet!)
+        {
+            var key = entry.Key.ToString();
+            key.Should().NotBeNullOrWhiteSpace();
+
+            var value = _sut.GetResource(key!);
+            value.Should().NotBeNullOrWhiteSpace($"Key '{key}' should have a value");
+            value.Should().NotStartWith("[Missing:", $"Key '{key}' was not found by HelpProvider");
+        }
+    }
 
     [Fact(DisplayName = "GetCommandDescription should return the string from resources.")]
     public void GetCommandDescription_ReturnsResource()
