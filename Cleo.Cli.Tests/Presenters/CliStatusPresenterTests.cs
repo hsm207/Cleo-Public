@@ -283,4 +283,70 @@ public sealed class CliStatusPresenterTests : IDisposable
         output.Should().Contain("Gap 1");
         output.Should().Contain("Sig2");
     }
+
+    [Fact(DisplayName = "RenderActivity should use default summary if headline is empty.")]
+    public void RenderActivity_UsesDefaultSummary()
+    {
+        var activities = new SessionActivity[] {
+            new ProgressActivity("1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.System, null, null)
+        };
+
+        _helpProviderMock.Setup(x => x.GetResource("Log_DefaultSummary")).Returns("Default Summary");
+        _presenter.PresentActivityLog("s1", activities, true, null, null);
+
+        _testConsole.Out.ToString().Should().Contain("Default Summary");
+    }
+
+    [Fact(DisplayName = "PresentStatus should handle missing subheadline and artifacts.")]
+    public void PresentStatus_MissingDetails_FormatsCorrectly()
+    {
+        var vm = new StatusViewModel(
+            "State", "PR", "Last", "Headline", null,
+            new List<string>().AsReadOnly(),
+            new List<string>().AsReadOnly());
+
+        _helpProviderMock.Setup(x => x.GetResource("Label_SessionState")).Returns("State");
+        _helpProviderMock.Setup(x => x.GetResource("Label_PullRequest")).Returns("PR");
+        _helpProviderMock.Setup(x => x.GetResource("Label_LastActivity")).Returns("Last");
+
+        _presenter.PresentStatus(vm);
+
+        var output = _testConsole.Out.ToString()!;
+        output.Should().Contain("State: [State]");
+        output.Should().Contain("PR: PR");
+        output.Should().Contain("Last: [Last] Headline");
+        output.Should().NotContain(CliAesthetic.Indent + CliAesthetic.ArtifactBox); // No artifacts
+        // Subheadline check is implicit by not crashing and output validation
+    }
+
+    [Fact(DisplayName = "PresentActivityLog should render artifacts.")]
+    public void PresentActivityLog_WithArtifacts()
+    {
+        var artifact = new TestArtifact("file.txt");
+        var activity = new ProgressActivity("1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.System, "Headline", "Reasoning", new[] { artifact });
+
+        _presenter.PresentActivityLog("s1", new[] { activity }, true, null, null);
+
+        var output = _testConsole.Out.ToString()!;
+        output.Should().Contain(CliAesthetic.ArtifactBox);
+        output.Should().Contain("file.txt");
+    }
+
+    [Fact(DisplayName = "PresentActivityLog should render subheadline.")]
+    public void PresentActivityLog_WithSubHeadline()
+    {
+        var activity = new ProgressActivity("1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.System,
+            "Intent", "Reasoning", null, "Executive");
+
+        _presenter.PresentActivityLog("s1", new[] { activity }, true, null, null);
+
+        var output = _testConsole.Out.ToString()!;
+        output.Should().Contain("Executive");
+        output.Should().Contain("Intent");
+    }
+
+    private sealed record TestArtifact(string Summary) : Artifact
+    {
+        public override string GetSummary() => Summary;
+    }
 }

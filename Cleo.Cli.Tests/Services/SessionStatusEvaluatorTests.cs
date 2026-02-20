@@ -125,6 +125,61 @@ public sealed class SessionStatusEvaluatorTests
         vm.PrOutcome.Should().Be("Iterating: feature | https://github.com/pr/1");
     }
 
+    [Fact(DisplayName = "Given AwaitingPlanApproval with PR, Evaluator should return Awaiting Approval outcome")]
+    public void ShouldEvaluateAwaitingPlanApprovalWithPR()
+    {
+        _helpProviderMock.Setup(x => x.GetResource("Status_PR_AwaitingPlanApprovalWithPR")).Returns("Approval: {0}");
+
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "feature", "main");
+        var response = CreateResponse(SessionState.AwaitingPlanApproval, pr);
+        var vm = _evaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("Approval: feature | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given Unknown State, FormatStateTitle should return default string.")]
+    public void ShouldEvaluateUnknownState()
+    {
+        // 999 is not a valid enum member usually, but we cast it to force default case
+        var response = CreateResponse((SessionState)999, null);
+        var vm = _evaluator.Evaluate(response);
+
+        vm.StateTitle.Should().Be("999");
+    }
+
+    [Fact(DisplayName = "Given Unknown State without PR, EvaluatePrOutcome should return InProgress.")]
+    public void ShouldEvaluateUnknownState_NoPR()
+    {
+        _helpProviderMock.Setup(x => x.GetResource("Status_PR_InProgress")).Returns("DefaultProgress");
+
+        var response = CreateResponse((SessionState)999, null);
+        var vm = _evaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("DefaultProgress");
+    }
+
+    [Fact(DisplayName = "Given Unknown State with PR, EvaluatePrOutcome should return raw PR info.")]
+    public void ShouldEvaluateUnknownState_WithPR()
+    {
+        var pr = new PullRequest(new Uri("https://github.com/pr/1"), "PR", "desc", "feature", "main");
+        var response = CreateResponse((SessionState)999, pr);
+        var vm = _evaluator.Evaluate(response);
+
+        // Expects default format "{0}" which just outputs the PR info
+        vm.PrOutcome.Should().Be("feature | https://github.com/pr/1");
+    }
+
+    [Fact(DisplayName = "Given AwaitingFeedback without PR, Evaluator should return Awaiting Response outcome")]
+    public void ShouldEvaluateAwaitingFeedbackWithoutPR()
+    {
+        _helpProviderMock.Setup(x => x.GetResource("Status_PR_AwaitingResponse")).Returns("WaitingNoPR");
+
+        var response = CreateResponse(SessionState.AwaitingFeedback, null);
+        var vm = _evaluator.Evaluate(response);
+
+        vm.PrOutcome.Should().Be("WaitingNoPR");
+    }
+
     private static RefreshPulseResponse CreateResponse(SessionState state, PullRequest? pr, bool hasUnsubmittedSolution = false)
     {
         var dummy = new ProgressActivity("a", "r", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
