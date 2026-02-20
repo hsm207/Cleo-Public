@@ -35,8 +35,7 @@ public sealed class RegistrySessionReader : ISessionReader
         var session = await RecallMetadataAsync(id, cancellationToken).ConfigureAwait(false);
         if (session == null) return null;
 
-        var history = await _historyStore.ReadAsync(id, null, cancellationToken).ConfigureAwait(false);
-        foreach (var activity in history)
+        await foreach (var activity in _historyStore.ReadAsync(id, null, cancellationToken).ConfigureAwait(false))
         {
             session.AddActivity(activity);
         }

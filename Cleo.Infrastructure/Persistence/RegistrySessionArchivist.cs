@@ -25,7 +25,12 @@ public sealed class RegistrySessionArchivist : ISessionArchivist
     public async Task<IReadOnlyList<SessionActivity>> GetHistoryAsync(SessionId id, HistoryCriteria? criteria = null, CancellationToken cancellationToken = default)
     {
         // Use HistoryStore directly for efficient retrieval without loading full session.
-        return await _historyStore.ReadAsync(id, criteria, cancellationToken).ConfigureAwait(false);
+        var history = new List<SessionActivity>();
+        await foreach (var activity in _historyStore.ReadAsync(id, criteria, cancellationToken).ConfigureAwait(false))
+        {
+            history.Add(activity);
+        }
+        return history.AsReadOnly();
     }
 
     public async Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)

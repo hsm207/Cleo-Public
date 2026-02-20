@@ -15,7 +15,8 @@ public sealed class RegistryMetadataStoreTests
     {
         _layout = new Mock<ISessionLayout>();
         _fileSystem = new Mock<IFileSystem>();
-        _store = new RegistryMetadataStore(_layout.Object, _fileSystem.Object);
+        var provisioner = new DirectorySessionProvisioner(_layout.Object, _fileSystem.Object);
+        _store = new RegistryMetadataStore(_layout.Object, _fileSystem.Object, provisioner);
     }
 
     [Fact]

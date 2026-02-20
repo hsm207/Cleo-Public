@@ -11,6 +11,7 @@ public interface IFileSystem
     void CreateDirectory(string path);
     void DeleteDirectory(string path, bool recursive);
     Task<string> ReadAllTextAsync(string path, CancellationToken ct);
+    IAsyncEnumerable<string> ReadLinesAsync(string path, CancellationToken ct);
     Task WriteAllTextAsync(string path, string content, CancellationToken ct);
     Task AppendAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken ct);
 }
@@ -23,6 +24,7 @@ internal sealed class PhysicalFileSystem : IFileSystem
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
     public void DeleteDirectory(string path, bool recursive) => Directory.Delete(path, recursive);
     public Task<string> ReadAllTextAsync(string path, CancellationToken ct) => File.ReadAllTextAsync(path, ct);
+    public IAsyncEnumerable<string> ReadLinesAsync(string path, CancellationToken ct) => File.ReadLinesAsync(path, ct);
     public Task WriteAllTextAsync(string path, string content, CancellationToken ct) => File.WriteAllTextAsync(path, content, ct);
     public Task AppendAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken ct) => File.AppendAllLinesAsync(path, contents, ct);
 }

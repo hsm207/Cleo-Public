@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFileSystem, PhysicalFileSystem>();
         services.AddSingleton<ISessionPathResolver, DefaultSessionPathResolver>();
         services.AddSingleton<ISessionLayout, DirectorySessionLayout>();
+        services.AddSingleton<DirectorySessionProvisioner>();
         services.AddSingleton<IMetadataStore, RegistryMetadataStore>();
         services.AddSingleton<IHistoryStore, RegistryHistoryStore>();
         services.AddSingleton<NdjsonActivitySerializer>();

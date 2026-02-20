@@ -5,60 +5,52 @@ namespace Cleo.Infrastructure.Persistence;
 
 internal sealed class RegistryHistoryStore : IHistoryStore
 {
-    private static readonly string[] NewLineSeparators = ["\r\n", "\r", "\n"];
-
     private readonly ISessionLayout _layout;
     private readonly IFileSystem _fileSystem;
+    private readonly DirectorySessionProvisioner _provisioner;
     private readonly NdjsonActivitySerializer _serializer;
 
     public RegistryHistoryStore(
         ISessionLayout layout,
         IFileSystem fileSystem,
+        DirectorySessionProvisioner provisioner,
         NdjsonActivitySerializer serializer)
     {
         _layout = layout;
         _fileSystem = fileSystem;
+        _provisioner = provisioner;
         _serializer = serializer;
     }
 
     public async Task AppendAsync(SessionId sessionId, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken)
     {
+        _provisioner.EnsureSessionDirectory(sessionId);
+
         var path = _layout.GetHistoryPath(sessionId);
-        var dir = Path.GetDirectoryName(path);
-
-        if (dir != null && !_fileSystem.DirectoryExists(dir))
-        {
-            _fileSystem.CreateDirectory(dir);
-        }
-
         var lines = activities.Select(a => _serializer.Serialize(a));
         await _fileSystem.AppendAllLinesAsync(path, lines, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<IReadOnlyList<SessionActivity>> ReadAsync(SessionId sessionId, HistoryCriteria? criteria, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<SessionActivity> ReadAsync(SessionId sessionId, HistoryCriteria? criteria, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var path = _layout.GetHistoryPath(sessionId);
         if (!_fileSystem.FileExists(path))
         {
-            return Array.Empty<SessionActivity>();
+            yield break;
         }
 
-        var content = await _fileSystem.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        var lines = content.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries);
-
-        var activities = new List<SessionActivity>();
-        foreach (var line in lines)
+        await foreach (var line in _fileSystem.ReadLinesAsync(path, cancellationToken).ConfigureAwait(false))
         {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
             var activity = _serializer.Deserialize(line);
             if (activity != null)
             {
                 if (criteria == null || criteria.IsSatisfiedBy(activity))
                 {
-                    activities.Add(activity);
+                    yield return activity;
                 }
             }
         }
-
-        return activities.AsReadOnly();
     }
 }

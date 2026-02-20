@@ -31,7 +31,7 @@ public class RegistrySessionArchivistTests
         var activities = new List<SessionActivity> { activity };
 
         _historyStoreMock.Setup(h => h.ReadAsync(_testId, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(activities);
+            .Returns(ToAsyncEnumerable(activities));
 
         // Act
         var result = await _sut.GetHistoryAsync(_testId, null, CancellationToken.None);
@@ -46,6 +46,8 @@ public class RegistrySessionArchivistTests
     {
         // Arrange
         var criteria = new HistoryCriteria(SearchText: "Thinking");
+        _historyStoreMock.Setup(h => h.ReadAsync(_testId, criteria, It.IsAny<CancellationToken>()))
+            .Returns(ToAsyncEnumerable(Array.Empty<SessionActivity>()));
 
         // Act
         await _sut.GetHistoryAsync(_testId, criteria, CancellationToken.None);
@@ -59,13 +61,22 @@ public class RegistrySessionArchivistTests
     {
         // Arrange
         _historyStoreMock.Setup(h => h.ReadAsync(_testId, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<SessionActivity>());
+            .Returns(ToAsyncEnumerable(Array.Empty<SessionActivity>()));
 
         // Act
         var result = await _sut.GetHistoryAsync(_testId, null, CancellationToken.None);
 
         // Assert
         Assert.Empty(result);
+    }
+
+    private static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(IEnumerable<T> items)
+    {
+        foreach (var item in items)
+        {
+            yield return item;
+        }
+        await Task.CompletedTask;
     }
 
     [Fact(DisplayName = "AppendAsync should append to history store.")]

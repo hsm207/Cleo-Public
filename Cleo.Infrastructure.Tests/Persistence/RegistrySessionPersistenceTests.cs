@@ -28,7 +28,8 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         _fileSystem = new PhysicalFileSystem();
         _layout = new DirectorySessionLayout(_resolver.Object);
-        var metadataStore = new RegistryMetadataStore(_layout, _fileSystem);
+        var provisioner = new DirectorySessionProvisioner(_layout, _fileSystem);
+        var metadataStore = new RegistryMetadataStore(_layout, _fileSystem, provisioner);
 
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
         {
@@ -51,7 +52,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var mapper = new RegistryTaskMapper(_activityFactory);
 
         var ndjsonSerializer = new NdjsonActivitySerializer(_activityFactory);
-        var historyStore = new RegistryHistoryStore(_layout, _fileSystem, ndjsonSerializer);
+        var historyStore = new RegistryHistoryStore(_layout, _fileSystem, provisioner, ndjsonSerializer);
 
         _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, _resolver.Object, _fileSystem);
         _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, _layout, _fileSystem);

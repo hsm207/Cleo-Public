@@ -8,12 +8,17 @@ internal sealed class RegistryMetadataStore : IMetadataStore
 {
     private readonly ISessionLayout _layout;
     private readonly IFileSystem _fileSystem;
+    private readonly DirectorySessionProvisioner _provisioner;
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
-    public RegistryMetadataStore(ISessionLayout layout, IFileSystem fileSystem)
+    public RegistryMetadataStore(
+        ISessionLayout layout,
+        IFileSystem fileSystem,
+        DirectorySessionProvisioner provisioner)
     {
         _layout = layout;
         _fileSystem = fileSystem;
+        _provisioner = provisioner;
     }
 
     public async Task<SessionMetadataDto?> LoadAsync(SessionId sessionId, CancellationToken cancellationToken)
@@ -54,14 +59,7 @@ internal sealed class RegistryMetadataStore : IMetadataStore
         }
 
         var path = _layout.GetMetadataPath(sessionId);
-
-        // Ensure directory exists - implicit responsibility of writer?
-        // But for safety:
-        var dir = Path.GetDirectoryName(path);
-        if (dir != null && !_fileSystem.DirectoryExists(dir))
-        {
-            _fileSystem.CreateDirectory(dir);
-        }
+        _provisioner.EnsureSessionDirectory(sessionId);
 
         var json = JsonSerializer.Serialize(metadata, Options);
         await _fileSystem.WriteAllTextAsync(path, json, cancellationToken).ConfigureAwait(false);
