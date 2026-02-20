@@ -26,12 +26,12 @@ internal sealed class ApproveCommand
 
     public Command Build()
     {
-        var command = new Command("approve", _helpProvider.GetCommandDescription("Approve_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Approve_Name"), _helpProvider.GetCommandDescription("Approve_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Approve_SessionId"));
+        var sessionIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_SessionId_Name"), _helpProvider.GetCommandDescription("Approve_SessionId"));
         command.AddArgument(sessionIdArgument);
 
-        var planIdArgument = new Argument<string>("planId", _helpProvider.GetCommandDescription("Approve_PlanId"));
+        var planIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_PlanId_Name"), _helpProvider.GetCommandDescription("Approve_PlanId"));
         command.AddArgument(planIdArgument);
 
         command.SetHandler(async (sessionId, planId) => await ExecuteAsync(sessionId, planId), sessionIdArgument, planIdArgument);

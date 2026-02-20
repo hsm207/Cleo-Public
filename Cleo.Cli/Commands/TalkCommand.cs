@@ -11,8 +11,6 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class TalkCommand : ICommandGroup
 {
-    private static readonly string[] MessageAliases = { "--message", "-m" };
-
     private readonly ICorrespondUseCase _useCase;
     private readonly IStatusPresenter _presenter;
     private readonly IHelpProvider _helpProvider;
@@ -32,12 +30,13 @@ internal sealed class TalkCommand : ICommandGroup
 
     public Command Build()
     {
-        var command = new Command("talk", _helpProvider.GetCommandDescription("Talk_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Talk_Name"), _helpProvider.GetCommandDescription("Talk_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Talk_SessionId"));
+        var sessionIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_SessionId_Name"), _helpProvider.GetCommandDescription("Talk_SessionId"));
         command.AddArgument(sessionIdArgument);
 
-        var messageOption = new Option<string>(MessageAliases, _helpProvider.GetCommandDescription("Talk_Message"))
+        var messageAliases = _helpProvider.GetResource("Opt_Message_Aliases").Split(',');
+        var messageOption = new Option<string>(messageAliases, _helpProvider.GetCommandDescription("Talk_Message"))
         {
             IsRequired = true
         };

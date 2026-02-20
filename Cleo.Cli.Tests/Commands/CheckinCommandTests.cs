@@ -19,6 +19,7 @@ public sealed class CheckinCommandTests : IDisposable
     private readonly Mock<IRefreshPulseUseCase> _useCaseMock;
     private readonly Mock<IStatusPresenter> _presenterMock;
     private readonly Mock<IHelpProvider> _helpProviderMock;
+    private readonly Mock<ISessionStatusEvaluator> _evaluatorMock;
     private readonly Mock<ILogger<CheckinCommand>> _loggerMock;
     private readonly CheckinCommand _command;
 
@@ -27,13 +28,19 @@ public sealed class CheckinCommandTests : IDisposable
         _useCaseMock = new Mock<IRefreshPulseUseCase>();
         _presenterMock = new Mock<IStatusPresenter>();
         _helpProviderMock = new Mock<IHelpProvider>();
+        _evaluatorMock = new Mock<ISessionStatusEvaluator>();
         _loggerMock = new Mock<ILogger<CheckinCommand>>();
 
-        // Setup HelpProvider to return basic format strings for errors
-        _helpProviderMock.Setup(x => x.GetResource("New_Error")).Returns("💔 Error: {0}");
+        _helpProviderMock.Setup(x => x.GetResource("Cmd_Checkin_Name")).Returns("checkin");
+        _helpProviderMock.Setup(x => x.GetResource("Arg_SessionId_Name")).Returns("sessionId");
         _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
-        _command = new CheckinCommand(_useCaseMock.Object, _presenterMock.Object, _helpProviderMock.Object, _loggerMock.Object);
+        _command = new CheckinCommand(
+            _useCaseMock.Object,
+            _presenterMock.Object,
+            _helpProviderMock.Object,
+            _evaluatorMock.Object,
+            _loggerMock.Object);
     }
 
     public void Dispose()
@@ -70,44 +77,16 @@ public sealed class CheckinCommandTests : IDisposable
         _useCaseMock.Setup(x => x.ExecuteAsync(It.Is<RefreshPulseRequest>(r => r.Id.Value == sessionId.Value), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
+        var expectedVm = new StatusViewModel("Working", "None", "10:00", "Working hard", null, new List<string>().AsReadOnly(), new List<string>().AsReadOnly());
+        _evaluatorMock.Setup(x => x.Evaluate(response)).Returns(expectedVm);
+
         // Act
         var exitCode = await _command.Build().InvokeAsync($"checkin {sessionId}");
 
         // Assert
         exitCode.Should().Be(0);
 
-        _presenterMock.Verify(x => x.PresentStatus(It.Is<StatusViewModel>(vm =>
-            vm.StateTitle == "Working" &&
-            vm.LastActivityHeadline == "Working hard")), Times.Once);
-    }
-
-    [Fact(DisplayName = "Given a session with a PR, when running 'checkin', then it should present PR info.")]
-    public async Task Status_WithPR_DisplaysPRUrl()
-    {
-        // Arrange
-        var sessionId = TestFactory.CreateSessionId("sessions/test-session");
-        var pulse = new SessionPulse(SessionStatus.AwaitingFeedback);
-        var pr = new PullRequest(new Uri("https://github.com/org/repo/pull/1"), "Title", "Open", "head", "base");
-        var activity = new ProgressActivity("act-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.System, "dummy");
-
-        var response = new RefreshPulseResponse(
-            sessionId,
-            pulse,
-            SessionState.AwaitingFeedback,
-            activity,
-            PullRequest: pr,
-            Warning: null,
-            HasUnsubmittedSolution: false);
-
-        _useCaseMock.Setup(x => x.ExecuteAsync(It.IsAny<RefreshPulseRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
-
-        // Act
-        await _command.Build().InvokeAsync($"checkin {sessionId}");
-
-        // Assert
-        _presenterMock.Verify(x => x.PresentStatus(It.Is<StatusViewModel>(vm =>
-            vm.PrOutcome.Contains("https://github.com/org/repo/pull/1"))), Times.Once);
+        _presenterMock.Verify(x => x.PresentStatus(expectedVm), Times.Once);
     }
 
     [Fact(DisplayName = "Given a response with a warning, when running 'checkin', then it should display the warning.")]
@@ -132,7 +111,7 @@ public sealed class CheckinCommandTests : IDisposable
 
         // Assert
         _presenterMock.Verify(x => x.PresentWarning("⚠️ Warning message"), Times.Once);
-        _presenterMock.Verify(x => x.PresentStatus(It.IsAny<StatusViewModel>()), Times.Once);
+        _presenterMock.Verify(x => x.PresentStatus(It.IsAny<StatusViewModel>()), Times.Once); // Still calls status present
     }
 
     [Fact(DisplayName = "Given an error fetching checkin, when running 'checkin', then it should log the error and display a friendly message.")]

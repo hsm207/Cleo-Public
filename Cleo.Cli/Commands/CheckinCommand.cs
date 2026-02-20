@@ -14,25 +14,28 @@ internal sealed class CheckinCommand
     private readonly IRefreshPulseUseCase _useCase;
     private readonly IStatusPresenter _presenter;
     private readonly IHelpProvider _helpProvider;
+    private readonly ISessionStatusEvaluator _statusEvaluator;
     private readonly ILogger<CheckinCommand> _logger;
 
     public CheckinCommand(
         IRefreshPulseUseCase useCase,
         IStatusPresenter presenter,
         IHelpProvider helpProvider,
+        ISessionStatusEvaluator statusEvaluator,
         ILogger<CheckinCommand> logger)
     {
         _useCase = useCase;
         _presenter = presenter;
         _helpProvider = helpProvider;
+        _statusEvaluator = statusEvaluator;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("checkin", _helpProvider.GetCommandDescription("Checkin_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Checkin_Name"), _helpProvider.GetCommandDescription("Checkin_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Checkin_SessionId"));
+        var sessionIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_SessionId_Name"), _helpProvider.GetCommandDescription("Checkin_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);
@@ -53,7 +56,7 @@ internal sealed class CheckinCommand
                 _presenter.PresentWarning(response.Warning);
             }
 
-            var viewModel = SessionStatusEvaluator.Evaluate(response);
+            var viewModel = _statusEvaluator.Evaluate(response);
             _presenter.PresentStatus(viewModel);
         }
         catch (Exception ex)

@@ -33,14 +33,14 @@ internal sealed class AuthCommand
 
     public Command Build()
     {
-        var authCommand = new Command("auth", _helpProvider.GetCommandDescription("Auth_Description"));
+        var authCommand = new Command(_helpProvider.GetResource("Cmd_Auth_Name"), _helpProvider.GetCommandDescription("Auth_Description"));
 
-        var loginCommand = new Command("login", _helpProvider.GetCommandDescription("Auth_Login_Description"));
-        var keyArgument = new Argument<string>("key", _helpProvider.GetCommandDescription("Auth_Key_Description"));
+        var loginCommand = new Command(_helpProvider.GetResource("Cmd_Login_Name"), _helpProvider.GetCommandDescription("Auth_Login_Description"));
+        var keyArgument = new Argument<string>(_helpProvider.GetResource("Arg_Key_Name"), _helpProvider.GetCommandDescription("Auth_Key_Description"));
         loginCommand.AddArgument(keyArgument);
         loginCommand.SetHandler(async (key) => await ExecuteLoginAsync(key), keyArgument);
 
-        var logoutCommand = new Command("logout", _helpProvider.GetCommandDescription("Auth_Logout_Description"));
+        var logoutCommand = new Command(_helpProvider.GetResource("Cmd_Logout_Name"), _helpProvider.GetCommandDescription("Auth_Logout_Description"));
         logoutCommand.SetHandler(async () => await ExecuteLogoutAsync());
 
         authCommand.AddCommand(loginCommand);

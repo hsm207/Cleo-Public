@@ -10,10 +10,6 @@ namespace Cleo.Cli.Commands;
 [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via DI")]
 internal sealed class NewCommand
 {
-    private static readonly string[] RepoAliases = { "--repo", "-r" };
-    private static readonly string[] BranchAliases = { "--branch", "-b" };
-    private static readonly string[] TitleAliases = { "--title", "-t" };
-
     private readonly IInitiateSessionUseCase _useCase;
     private readonly IStatusPresenter _presenter;
     private readonly IHelpProvider _helpProvider;
@@ -29,18 +25,21 @@ internal sealed class NewCommand
 
     public Command Build()
     {
-        var command = new Command("new", _helpProvider.GetCommandDescription("New_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_New_Name"), _helpProvider.GetCommandDescription("New_Description"));
 
-        var taskArgument = new Argument<string>("task", _helpProvider.GetCommandDescription("New_TaskArg_Description"));
+        var taskArgument = new Argument<string>(_helpProvider.GetResource("Arg_Task_Name"), _helpProvider.GetCommandDescription("New_TaskArg_Description"));
         command.AddArgument(taskArgument);
 
-        var repoOption = new Option<string>(RepoAliases, _helpProvider.GetCommandDescription("New_RepoOption_Description"));
+        var repoAliases = _helpProvider.GetResource("Opt_Repo_Aliases").Split(',');
+        var repoOption = new Option<string>(repoAliases, _helpProvider.GetCommandDescription("New_RepoOption_Description"));
         command.AddOption(repoOption);
 
-        var branchOption = new Option<string>(BranchAliases, () => "main", _helpProvider.GetCommandDescription("New_BranchOption_Description"));
+        var branchAliases = _helpProvider.GetResource("Opt_Branch_Aliases").Split(',');
+        var branchOption = new Option<string>(branchAliases, () => _helpProvider.GetResource("Opt_Branch_Default"), _helpProvider.GetCommandDescription("New_BranchOption_Description"));
         command.AddOption(branchOption);
 
-        var titleOption = new Option<string>(TitleAliases, _helpProvider.GetCommandDescription("New_TitleOption_Description"));
+        var titleAliases = _helpProvider.GetResource("Opt_Title_Aliases").Split(',');
+        var titleOption = new Option<string>(titleAliases, _helpProvider.GetCommandDescription("New_TitleOption_Description"));
         command.AddOption(titleOption);
 
         command.SetHandler(async (task, repo, branch, title) => await ExecuteAsync(task, repo, branch, title), taskArgument, repoOption, branchOption, titleOption);

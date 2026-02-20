@@ -15,19 +15,26 @@ internal sealed class ListCommand
     private readonly IListSessionsUseCase _useCase;
     private readonly IStatusPresenter _presenter;
     private readonly IHelpProvider _helpProvider;
+    private readonly ISessionStatusEvaluator _statusEvaluator;
     private readonly ILogger<ListCommand> _logger;
 
-    public ListCommand(IListSessionsUseCase useCase, IStatusPresenter presenter, IHelpProvider helpProvider, ILogger<ListCommand> logger)
+    public ListCommand(
+        IListSessionsUseCase useCase,
+        IStatusPresenter presenter,
+        IHelpProvider helpProvider,
+        ISessionStatusEvaluator statusEvaluator,
+        ILogger<ListCommand> logger)
     {
         _useCase = useCase;
         _presenter = presenter;
         _helpProvider = helpProvider;
+        _statusEvaluator = statusEvaluator;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("list", _helpProvider.GetCommandDescription("List_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_List_Name"), _helpProvider.GetCommandDescription("List_Description"));
 
         command.SetHandler(async () => await ExecuteAsync());
 
@@ -56,7 +63,7 @@ internal sealed class ListCommand
                     session.LastActivity,
                     session.PullRequest);
 
-                var vm = SessionStatusEvaluator.Evaluate(statusResponse);
+                var vm = _statusEvaluator.Evaluate(statusResponse);
                 sessionList.Add((session.Id.ToString(), session.Task.ToString(), vm.StateTitle));
             }
 

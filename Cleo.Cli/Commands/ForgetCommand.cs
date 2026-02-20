@@ -30,9 +30,9 @@ internal sealed class ForgetCommand
 
     public Command Build()
     {
-        var command = new Command("forget", _helpProvider.GetCommandDescription("Forget_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Forget_Name"), _helpProvider.GetCommandDescription("Forget_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Forget_SessionId"));
+        var sessionIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_SessionId_Name"), _helpProvider.GetCommandDescription("Forget_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);

@@ -74,6 +74,7 @@ internal static class Program
         // CLI Services 🛡️
         services.AddSingleton<System.CommandLine.IConsole, System.CommandLine.IO.SystemConsole>();
         services.AddSingleton<Cleo.Cli.Services.IHelpProvider, Cleo.Cli.Services.HelpProvider>();
+        services.AddTransient<Cleo.Cli.Services.ISessionStatusEvaluator, Cleo.Cli.Services.SessionStatusEvaluator>();
         services.AddSingleton<Cleo.Cli.Presenters.IStatusPresenter, Cleo.Cli.Presenters.CliStatusPresenter>();
 
         // CLI Command Groups 🌳

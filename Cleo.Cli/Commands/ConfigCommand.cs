@@ -22,7 +22,7 @@ internal sealed class ConfigCommand : ICommandGroup
 
     public Command Build()
     {
-        var command = new Command("config", _helpProvider.GetCommandDescription("Config_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Config_Name"), _helpProvider.GetCommandDescription("Config_Description"));
 
         command.AddCommand(_authCommand.Build());
         command.AddCommand(_reposCommand.Build());

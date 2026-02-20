@@ -29,7 +29,7 @@ internal sealed class SessionCommand : ICommandGroup
 
     public Command Build()
     {
-        var command = new Command("session", _helpProvider.GetCommandDescription("Session_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Session_Name"), _helpProvider.GetCommandDescription("Session_Description"));
 
         command.AddCommand(_newCommand.Build());
         command.AddCommand(_listCommand.Build());

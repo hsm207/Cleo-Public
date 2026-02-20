@@ -33,7 +33,7 @@ internal sealed class PlanCommand : ICommandGroup
 
     public Command Build()
     {
-        var command = new Command("plan", _helpProvider.GetCommandDescription("Plan_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_Plan_Name"), _helpProvider.GetCommandDescription("Plan_Description"));
 
         command.AddCommand(_approveCommand.Build());
         command.AddCommand(BuildViewCommand());
@@ -43,9 +43,9 @@ internal sealed class PlanCommand : ICommandGroup
 
     private Command BuildViewCommand()
     {
-        var command = new Command("view", _helpProvider.GetCommandDescription("Plan_View_Description"));
+        var command = new Command(_helpProvider.GetResource("Cmd_View_Name"), _helpProvider.GetCommandDescription("Plan_View_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Plan_SessionId"));
+        var sessionIdArgument = new Argument<string>(_helpProvider.GetResource("Arg_SessionId_Name"), _helpProvider.GetCommandDescription("Plan_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteViewAsync(sessionId), sessionIdArgument);

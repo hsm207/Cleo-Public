@@ -24,17 +24,20 @@ public sealed class SessionCommandTests
         var initiateUseCase = new InitiateSessionUseCase(julesClientMock.Object, sessionWriterMock.Object);
         var presenterMock = new Mock<IStatusPresenter>();
         var helpProviderMock = new Mock<IHelpProvider>();
+        var evaluatorMock = new Mock<ISessionStatusEvaluator>();
 
         // Mock help provider for NewCommand and SessionCommand
         helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k == "Session_Description" ? "Lifecycle Management" : k);
+        helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => k.Replace("Cmd_", "").Replace("_Name", "").ToLower());
 
         var newCommand = new NewCommand(initiateUseCase, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<NewCommand>>().Object);
 
-        var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ListCommand>>().Object);
+        var listCommand = new ListCommand(new Mock<Core.UseCases.ListSessions.IListSessionsUseCase>().Object, presenterMock.Object, helpProviderMock.Object, evaluatorMock.Object, new Mock<ILogger<ListCommand>>().Object);
         var statusCommand = new CheckinCommand(
             new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object,
             presenterMock.Object,
             helpProviderMock.Object,
+            evaluatorMock.Object,
             new Mock<ILogger<CheckinCommand>>().Object);
         var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ForgetCommand>>().Object);
 

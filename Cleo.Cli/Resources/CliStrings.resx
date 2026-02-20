@@ -244,4 +244,127 @@
   <data name="Label_LastActivity" xml:space="preserve">
     <value>📝 Last Activity</value>
   </data>
+  <data name="Status_State_Waiting" xml:space="preserve">
+    <value>Waiting for You</value>
+  </data>
+  <data name="Status_State_Finished" xml:space="preserve">
+    <value>Finished</value>
+  </data>
+  <data name="Status_State_Stalled" xml:space="preserve">
+    <value>Stalled</value>
+  </data>
+  <data name="Status_State_Working" xml:space="preserve">
+    <value>Working</value>
+  </data>
+  <data name="Status_PR_SolutionReady" xml:space="preserve">
+    <value>⚠️ Solution Ready (Unsubmitted) | Open a PR!</value>
+  </data>
+  <data name="Status_PR_InProgress" xml:space="preserve">
+    <value>⏳ In Progress</value>
+  </data>
+  <data name="Status_PR_AwaitingPlanApproval" xml:space="preserve">
+    <value>⏳ Awaiting Plan Approval</value>
+  </data>
+  <data name="Status_PR_AwaitingResponse" xml:space="preserve">
+    <value>⏳ Awaiting your response...</value>
+  </data>
+  <data name="Status_PR_FinishedNoPR" xml:space="preserve">
+    <value>WTF?! 🤪 (Finished with no PR)</value>
+  </data>
+  <data name="Status_PR_Stalled" xml:space="preserve">
+    <value>🛑 Stalled</value>
+  </data>
+  <data name="Status_PR_Iterating" xml:space="preserve">
+    <value>🔄 Iterating | {0}</value>
+  </data>
+  <data name="Status_PR_AwaitingPlanApprovalWithPR" xml:space="preserve">
+    <value>⏳ Awaiting Plan Approval | {0}</value>
+  </data>
+  <data name="Status_PR_AwaitingResponseWithPR" xml:space="preserve">
+    <value>⏳ Awaiting your response... | {0}</value>
+  </data>
+  <data name="Status_PR_SuccessWithPR" xml:space="preserve">
+    <value>✅ {0}</value>
+  </data>
+  <data name="Status_PR_StalledWithPR" xml:space="preserve">
+    <value>🛑 Stalled | {0}</value>
+  </data>
+  <data name="Cmd_New_Name" xml:space="preserve">
+    <value>new</value>
+  </data>
+  <data name="Arg_Task_Name" xml:space="preserve">
+    <value>task</value>
+  </data>
+  <data name="Opt_Repo_Aliases" xml:space="preserve">
+    <value>--repo,-r</value>
+  </data>
+  <data name="Opt_Branch_Aliases" xml:space="preserve">
+    <value>--branch,-b</value>
+  </data>
+  <data name="Opt_Title_Aliases" xml:space="preserve">
+    <value>--title,-t</value>
+  </data>
+  <data name="Opt_Branch_Default" xml:space="preserve">
+    <value>main</value>
+  </data>
+  <data name="Cmd_Talk_Name" xml:space="preserve">
+    <value>talk</value>
+  </data>
+  <data name="Arg_SessionId_Name" xml:space="preserve">
+    <value>sessionId</value>
+  </data>
+  <data name="Opt_Message_Aliases" xml:space="preserve">
+    <value>--message,-m</value>
+  </data>
+  <data name="Cmd_Log_Name" xml:space="preserve">
+    <value>log</value>
+  </data>
+  <data name="Cmd_View_Name" xml:space="preserve">
+    <value>view</value>
+  </data>
+  <data name="Opt_All_Aliases" xml:space="preserve">
+    <value>--all</value>
+  </data>
+  <data name="Opt_Limit_Aliases" xml:space="preserve">
+    <value>--limit</value>
+  </data>
+  <data name="Cmd_Plan_Name" xml:space="preserve">
+    <value>plan</value>
+  </data>
+  <data name="Cmd_Approve_Name" xml:space="preserve">
+    <value>approve</value>
+  </data>
+  <data name="Arg_PlanId_Name" xml:space="preserve">
+    <value>planId</value>
+  </data>
+  <data name="Cmd_Config_Name" xml:space="preserve">
+    <value>config</value>
+  </data>
+  <data name="Cmd_Auth_Name" xml:space="preserve">
+    <value>auth</value>
+  </data>
+  <data name="Cmd_Login_Name" xml:space="preserve">
+    <value>login</value>
+  </data>
+  <data name="Arg_Key_Name" xml:space="preserve">
+    <value>key</value>
+  </data>
+  <data name="Cmd_Logout_Name" xml:space="preserve">
+    <value>logout</value>
+  </data>
+  <data name="Cmd_Repos_Name" xml:space="preserve">
+    <value>repos</value>
+  </data>
+  <data name="Cmd_Checkin_Name" xml:space="preserve">
+    <value>checkin</value>
+  </data>
+  <data name="Cmd_Forget_Name" xml:space="preserve">
+    <value>forget</value>
+  </data>
+  <data name="Cmd_List_Name" xml:space="preserve">
+    <value>list</value>
+  </data>
+  <data name="Cmd_Session_Name" xml:space="preserve">
+    <value>session</value>
+  </data>
 </root>

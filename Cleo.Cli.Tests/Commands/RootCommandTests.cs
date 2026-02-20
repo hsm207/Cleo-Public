@@ -40,13 +40,17 @@ public sealed class RootCommandTests
             _ => k
         });
 
+        // Setup resource mocks for command names
+        _helpProviderMock.Setup(x => x.GetResource(It.IsAny<string>())).Returns<string>(k => k.Replace("Cmd_", "").Replace("_Name", "").ToLower());
+
         _logCommand = new LogCommand(new Mock<IBrowseHistoryUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<LogCommand>>().Object);
         _statusCommand = new CheckinCommand(
             new Mock<IRefreshPulseUseCase>().Object,
             new Mock<IStatusPresenter>().Object,
             _helpProviderMock.Object,
+            new Mock<ISessionStatusEvaluator>().Object,
             new Mock<ILogger<CheckinCommand>>().Object);
-        _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<ListCommand>>().Object);
+        _listCommand = new ListCommand(new Mock<IListSessionsUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ISessionStatusEvaluator>().Object, new Mock<ILogger<ListCommand>>().Object);
         _forgetCommand = new ForgetCommand(new Mock<IForgetSessionUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<ForgetCommand>>().Object);
         _authCommand = new AuthCommand(new Mock<IAuthenticateUserUseCase>().Object, new Mock<IVault>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<AuthCommand>>().Object);
         _reposCommand = new ReposCommand(new Mock<IBrowseSourcesUseCase>().Object, new Mock<IStatusPresenter>().Object, _helpProviderMock.Object, new Mock<ILogger<ReposCommand>>().Object);
@@ -56,8 +60,6 @@ public sealed class RootCommandTests
     public void Build_ShouldUseAuthoritativeGlossaryTerms()
     {
         // Act
-        // This test checks individual command descriptions as they would appear in the root command's help.
-
         var log = _logCommand.Build();
         var status = _statusCommand.Build();
         var list = _listCommand.Build();
