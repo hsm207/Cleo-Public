@@ -1,7 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
-using Cleo.Cli.Presenters;
 using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.RefreshPulse;
 using Microsoft.Extensions.Logging;
@@ -13,23 +13,26 @@ internal sealed class CheckinCommand
 {
     private readonly IRefreshPulseUseCase _useCase;
     private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<CheckinCommand> _logger;
 
     public CheckinCommand(
         IRefreshPulseUseCase useCase,
         IStatusPresenter presenter,
+        IHelpProvider helpProvider,
         ILogger<CheckinCommand> logger)
     {
         _useCase = useCase;
         _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("checkin", "Check in on the progress and state of a session 🧘‍♀️");
+        var command = new Command("checkin", _helpProvider.GetCommandDescription("Checkin_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Checkin_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);

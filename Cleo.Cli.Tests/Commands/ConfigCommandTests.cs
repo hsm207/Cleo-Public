@@ -17,20 +17,23 @@ public sealed class ConfigCommandTests
 
     public ConfigCommandTests()
     {
+        var helpProviderMock = new Mock<IHelpProvider>();
+        helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
+
         var authCommand = new AuthCommand(
             new Mock<Core.UseCases.AuthenticateUser.IAuthenticateUserUseCase>().Object,
             new Mock<Core.Domain.Ports.IVault>().Object,
             new Mock<IStatusPresenter>().Object,
-            new Mock<IHelpProvider>().Object,
+            helpProviderMock.Object,
             new Mock<ILogger<AuthCommand>>().Object);
 
         var reposCommand = new ReposCommand(
             new Mock<IBrowseSourcesUseCase>().Object,
             new Mock<IStatusPresenter>().Object,
-            new Mock<IHelpProvider>().Object,
+            helpProviderMock.Object,
             new Mock<ILogger<ReposCommand>>().Object);
 
-        _command = new ConfigCommand(authCommand, reposCommand);
+        _command = new ConfigCommand(authCommand, reposCommand, helpProviderMock.Object);
     }
 
     [Fact(DisplayName = "Config command should contain auth and repos subcommands.")]

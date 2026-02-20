@@ -28,6 +28,12 @@ internal sealed class CliStatusPresenter : IStatusPresenter
         _console.Out.Write(Environment.NewLine);
     }
 
+    public void PresentMessageSent()
+    {
+        _console.Out.Write(_helpProvider.GetResource("Talk_Success"));
+        _console.Out.Write(Environment.NewLine);
+    }
+
     public void PresentNewSession(string sessionId, string? dashboardUri)
     {
         _console.Out.Write(_helpProvider.GetResource("New_Success"));

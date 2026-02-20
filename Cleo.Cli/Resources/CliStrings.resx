@@ -91,4 +91,148 @@
   <data name="New_Error" xml:space="preserve">
     <value>💔 Error: {0}</value>
   </data>
+  <data name="Talk_Description" xml:space="preserve">
+    <value>Send a message to Jules 💬</value>
+  </data>
+  <data name="Talk_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="Talk_Message" xml:space="preserve">
+    <value>The message or guidance to send.</value>
+  </data>
+  <data name="Talk_Success" xml:space="preserve">
+    <value>✅ Message sent! Jules is thinking... 🤔</value>
+  </data>
+  <data name="Log_Description" xml:space="preserve">
+    <value>View the Session Log for a session 📜</value>
+  </data>
+  <data name="Log_View_Description" xml:space="preserve">
+    <value>View the Session Log for a session 📜</value>
+  </data>
+  <data name="Log_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="Log_All" xml:space="preserve">
+    <value>Display all activities, including technical heartbeats.</value>
+  </data>
+  <data name="Log_Limit" xml:space="preserve">
+    <value>Limit the number of activities displayed.</value>
+  </data>
+  <data name="Plan_Description" xml:space="preserve">
+    <value>Manage and view the plan for a session 🗺️</value>
+  </data>
+  <data name="Plan_View_Description" xml:space="preserve">
+    <value>View the current plan.</value>
+  </data>
+  <data name="Plan_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="Config_Description" xml:space="preserve">
+    <value>Infrastructure, identity, and context management 🛡️</value>
+  </data>
+  <data name="Auth_Description" xml:space="preserve">
+    <value>Authenticate with Jules.</value>
+  </data>
+  <data name="Auth_Login_Description" xml:space="preserve">
+    <value>Login with an API key.</value>
+  </data>
+  <data name="Auth_Logout_Description" xml:space="preserve">
+    <value>Logout and clear credentials.</value>
+  </data>
+  <data name="Auth_Key_Description" xml:space="preserve">
+    <value>The API key.</value>
+  </data>
+  <data name="Auth_Logout_Success" xml:space="preserve">
+    <value>🔓 Logged out successfully.</value>
+  </data>
+  <data name="Repos_Description" xml:space="preserve">
+    <value>List available repositories.</value>
+  </data>
+  <data name="Approve_Description" xml:space="preserve">
+    <value>Approve a proposed plan.</value>
+  </data>
+  <data name="Approve_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="Approve_PlanId" xml:space="preserve">
+    <value>The ID of the plan to approve (e.g., plans/456).</value>
+  </data>
+  <data name="Approve_Success" xml:space="preserve">
+    <value>✅ Plan {0} for session {1} approved at {2}.</value>
+  </data>
+  <data name="Forget_Description" xml:space="preserve">
+    <value>Forget a session (local cleanup).</value>
+  </data>
+  <data name="Forget_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="Forget_Success" xml:space="preserve">
+    <value>🗑️ Session {0} forgotten locally.</value>
+  </data>
+  <data name="Checkin_Description" xml:space="preserve">
+    <value>Check in on the progress and state of a session 🧘‍♀️</value>
+  </data>
+  <data name="Checkin_SessionId" xml:space="preserve">
+    <value>The session ID (e.g., sessions/123).</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>List all local sessions.</value>
+  </data>
+  <data name="List_Header" xml:space="preserve">
+    <value>Available Sessions:</value>
+  </data>
+  <data name="List_Item_Format" xml:space="preserve">
+    <value>- {0} | {1} | {2}</value>
+  </data>
+  <data name="List_Empty" xml:space="preserve">
+    <value>No local sessions found.</value>
+  </data>
+  <data name="Log_Empty" xml:space="preserve">
+    <value>No activities found in session log.</value>
+  </data>
+  <data name="Log_Header" xml:space="preserve">
+    <value>Activity Log for {0}:</value>
+  </data>
+  <data name="Log_PullRequest" xml:space="preserve">
+    <value>🎁 Pull Request: {0}</value>
+  </data>
+  <data name="Log_ShowingAll" xml:space="preserve">
+    <value>Showing all {0} activities.</value>
+  </data>
+  <data name="Log_HiddenEarlier" xml:space="preserve">
+    <value>... (hiding {0} earlier activities) ...</value>
+  </data>
+  <data name="Log_HiddenHeartbeats" xml:space="preserve">
+    <value>... (hiding {0} heartbeats) ...</value>
+  </data>
+  <data name="Log_ShowingSignificant" xml:space="preserve">
+    <value>Showing {0} significant activities (out of {1}). Hidden {2} heartbeats.</value>
+  </data>
+  <data name="Log_DefaultSummary" xml:space="preserve">
+    <value>Work in progress...</value>
+  </data>
+  <data name="Plan_Empty" xml:space="preserve">
+    <value>No plan available.</value>
+  </data>
+  <data name="Plan_Title_Approved" xml:space="preserve">
+    <value>Approved Plan</value>
+  </data>
+  <data name="Plan_Title_Proposed" xml:space="preserve">
+    <value>Proposed Plan</value>
+  </data>
+  <data name="Plan_Header" xml:space="preserve">
+    <value>=== {0} ({1}) ===</value>
+  </data>
+  <data name="Plan_Generated" xml:space="preserve">
+    <value>Generated: {0}</value>
+  </data>
+  <data name="Repos_Empty" xml:space="preserve">
+    <value>No repositories found.</value>
+  </data>
+  <data name="Repos_Header" xml:space="preserve">
+    <value>Available Repositories:</value>
+  </data>
+  <data name="Repos_Item_Format" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
 </root>

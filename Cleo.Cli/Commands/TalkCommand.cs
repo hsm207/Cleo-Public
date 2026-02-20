@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using Cleo.Cli.Services;
+using Cleo.Cli.Presenters;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Core.UseCases.Correspond;
 using Microsoft.Extensions.Logging;
@@ -13,22 +14,30 @@ internal sealed class TalkCommand : ICommandGroup
     private static readonly string[] MessageAliases = { "--message", "-m" };
 
     private readonly ICorrespondUseCase _useCase;
+    private readonly IStatusPresenter _presenter;
+    private readonly IHelpProvider _helpProvider;
     private readonly ILogger<TalkCommand> _logger;
 
-    public TalkCommand(ICorrespondUseCase useCase, ILogger<TalkCommand> logger)
+    public TalkCommand(
+        ICorrespondUseCase useCase,
+        IStatusPresenter presenter,
+        IHelpProvider helpProvider,
+        ILogger<TalkCommand> logger)
     {
         _useCase = useCase;
+        _presenter = presenter;
+        _helpProvider = helpProvider;
         _logger = logger;
     }
 
     public Command Build()
     {
-        var command = new Command("talk", "Send a message to Jules 💬");
+        var command = new Command("talk", _helpProvider.GetCommandDescription("Talk_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Talk_SessionId"));
         command.AddArgument(sessionIdArgument);
 
-        var messageOption = new Option<string>(MessageAliases, "The message or guidance to send.")
+        var messageOption = new Option<string>(MessageAliases, _helpProvider.GetCommandDescription("Talk_Message"))
         {
             IsRequired = true
         };
@@ -46,14 +55,14 @@ internal sealed class TalkCommand : ICommandGroup
             var request = new CorrespondRequest(new SessionId(sessionId), message);
             await _useCase.ExecuteAsync(request).ConfigureAwait(false);
 
-            Console.WriteLine($"✅ Message sent! Jules is thinking... 🤔");
+            _presenter.PresentMessageSent();
         }
         catch (Exception ex)
         {
 #pragma warning disable CA1848
             _logger.LogError(ex, "❌ Failed to send message.");
 #pragma warning restore CA1848
-            Console.WriteLine($"💔 Error: {ex.Message}");
+            _presenter.PresentError(ex.Message);
         }
     }
 }

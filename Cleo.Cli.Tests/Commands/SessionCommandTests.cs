@@ -34,6 +34,7 @@ public sealed class SessionCommandTests
         var statusCommand = new CheckinCommand(
             new Mock<Core.UseCases.RefreshPulse.IRefreshPulseUseCase>().Object,
             presenterMock.Object,
+            helpProviderMock.Object,
             new Mock<ILogger<CheckinCommand>>().Object);
         var forgetCommand = new ForgetCommand(new Mock<Core.UseCases.ForgetSession.IForgetSessionUseCase>().Object, presenterMock.Object, helpProviderMock.Object, new Mock<ILogger<ForgetCommand>>().Object);
 

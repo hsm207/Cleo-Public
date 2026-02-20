@@ -32,7 +32,7 @@ internal sealed class ForgetCommand
     {
         var command = new Command("forget", _helpProvider.GetCommandDescription("Forget_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Forget_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteAsync(sessionId), sessionIdArgument);

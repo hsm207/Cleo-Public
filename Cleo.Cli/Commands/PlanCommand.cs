@@ -45,7 +45,7 @@ internal sealed class PlanCommand : ICommandGroup
     {
         var command = new Command("view", _helpProvider.GetCommandDescription("Plan_View_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Plan_SessionId"));
         command.AddArgument(sessionIdArgument);
 
         command.SetHandler(async (sessionId) => await ExecuteViewAsync(sessionId), sessionIdArgument);

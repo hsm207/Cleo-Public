@@ -11,6 +11,7 @@ namespace Cleo.Cli.Presenters;
 internal interface IStatusPresenter
 {
     void PresentSuccess(string message);
+    void PresentMessageSent();
     void PresentNewSession(string sessionId, string? dashboardUri);
     void PresentWarning(string message);
     void PresentError(string message);

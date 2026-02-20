@@ -11,16 +11,18 @@ internal sealed class ConfigCommand : ICommandGroup
 {
     private readonly AuthCommand _authCommand;
     private readonly ReposCommand _reposCommand;
+    private readonly IHelpProvider _helpProvider;
 
-    public ConfigCommand(AuthCommand authCommand, ReposCommand reposCommand)
+    public ConfigCommand(AuthCommand authCommand, ReposCommand reposCommand, IHelpProvider helpProvider)
     {
         _authCommand = authCommand;
         _reposCommand = reposCommand;
+        _helpProvider = helpProvider;
     }
 
     public Command Build()
     {
-        var command = new Command("config", "Infrastructure, identity, and context management 🛡️");
+        var command = new Command("config", _helpProvider.GetCommandDescription("Config_Description"));
 
         command.AddCommand(_authCommand.Build());
         command.AddCommand(_reposCommand.Build());

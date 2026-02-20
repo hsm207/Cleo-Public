@@ -35,8 +35,9 @@ public sealed class CheckinCommandTests : IDisposable
 
         // Setup HelpProvider to return basic format strings for errors
         _helpProviderMock.Setup(x => x.GetResource("New_Error")).Returns("💔 Error: {0}");
+        _helpProviderMock.Setup(x => x.GetCommandDescription(It.IsAny<string>())).Returns<string>(k => k);
 
-        _command = new CheckinCommand(_useCaseMock.Object, _presenter, _loggerMock.Object);
+        _command = new CheckinCommand(_useCaseMock.Object, _presenter, _helpProviderMock.Object, _loggerMock.Object);
     }
 
     public void Dispose()

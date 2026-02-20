@@ -31,22 +31,20 @@ internal sealed class LogCommand : ICommandGroup
         // Subcommand: view (was activities)
         command.AddCommand(BuildViewCommand());
 
-        command.Description += " More specialized subcommands available. Use --help to explore further.";
-
         return command;
     }
 
     private Command BuildViewCommand()
     {
-        var command = new Command("view", "View the Session Log for a session 📜");
+        var command = new Command("view", _helpProvider.GetCommandDescription("Log_View_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Log_SessionId"));
         command.AddArgument(sessionIdArgument);
 
-        var allOption = new Option<bool>("--all", "Display all activities, including technical heartbeats.");
+        var allOption = new Option<bool>("--all", _helpProvider.GetCommandDescription("Log_All"));
         command.AddOption(allOption);
 
-        var limitOption = new Option<int?>("--limit", "Limit the number of activities displayed.");
+        var limitOption = new Option<int?>("--limit", _helpProvider.GetCommandDescription("Log_Limit"));
         command.AddOption(limitOption);
 
         command.SetHandler(async (sessionId, all, limit) => await ExecuteAsync(sessionId, all, limit), sessionIdArgument, allOption, limitOption);

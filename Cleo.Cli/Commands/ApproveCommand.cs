@@ -28,10 +28,10 @@ internal sealed class ApproveCommand
     {
         var command = new Command("approve", _helpProvider.GetCommandDescription("Approve_Description"));
 
-        var sessionIdArgument = new Argument<string>("sessionId", "The session ID (e.g., sessions/123).");
+        var sessionIdArgument = new Argument<string>("sessionId", _helpProvider.GetCommandDescription("Approve_SessionId"));
         command.AddArgument(sessionIdArgument);
 
-        var planIdArgument = new Argument<string>("planId", "The ID of the plan to approve (e.g., plans/456).");
+        var planIdArgument = new Argument<string>("planId", _helpProvider.GetCommandDescription("Approve_PlanId"));
         command.AddArgument(planIdArgument);
 
         command.SetHandler(async (sessionId, planId) => await ExecuteAsync(sessionId, planId), sessionIdArgument, planIdArgument);
