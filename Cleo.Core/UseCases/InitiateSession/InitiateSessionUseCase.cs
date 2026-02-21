@@ -25,11 +25,16 @@ public class InitiateSessionUseCase : IInitiateSessionUseCase
 {
     private readonly IJulesSessionClient _julesClient;
     private readonly ISessionWriter _sessionWriter;
+    private readonly IHistoryWriter _historyWriter;
 
-    public InitiateSessionUseCase(IJulesSessionClient julesClient, ISessionWriter sessionWriter)
+    public InitiateSessionUseCase(
+        IJulesSessionClient julesClient, 
+        ISessionWriter sessionWriter,
+        IHistoryWriter historyWriter)
     {
         _julesClient = julesClient ?? throw new ArgumentNullException(nameof(julesClient));
         _sessionWriter = sessionWriter ?? throw new ArgumentNullException(nameof(sessionWriter));
+        _historyWriter = historyWriter ?? throw new ArgumentNullException(nameof(historyWriter));
     }
 
     public async Task<InitiateSessionResponse> ExecuteAsync(InitiateSessionRequest request, CancellationToken cancellationToken = default)
@@ -55,7 +60,8 @@ public class InitiateSessionUseCase : IInitiateSessionUseCase
             options,
             cancellationToken).ConfigureAwait(false);
 
-        // 4. Persistence (Task Registry)
+        // 4. Persistence (Task Registry: State + History)
+        await _historyWriter.AppendAsync(session.Id, session.SessionLog, cancellationToken).ConfigureAwait(false);
         await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
 
         // 5. Return the Response Model

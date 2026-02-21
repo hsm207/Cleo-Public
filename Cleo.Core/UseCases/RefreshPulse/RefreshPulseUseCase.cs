@@ -11,6 +11,7 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
     private readonly IRemoteActivitySource _activitySource;
     private readonly ISessionReader _sessionReader;
     private readonly ISessionWriter _sessionWriter;
+    private readonly IHistoryWriter _historyWriter;
     private readonly ISessionSynchronizer _synchronizer;
 
     public RefreshPulseUseCase(
@@ -18,12 +19,14 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
         IRemoteActivitySource activitySource,
         ISessionReader sessionReader,
         ISessionWriter sessionWriter,
+        IHistoryWriter historyWriter,
         ISessionSynchronizer synchronizer)
     {
         _pulseMonitor = pulseMonitor;
         _activitySource = activitySource;
         _sessionReader = sessionReader;
         _sessionWriter = sessionWriter;
+        _historyWriter = historyWriter;
         _synchronizer = synchronizer;
     }
 
@@ -56,8 +59,13 @@ public class RefreshPulseUseCase : IRefreshPulseUseCase
             session ??= remoteSession;
 
             // Delegate synchronization logic to the Domain Service
-            _synchronizer.Synchronize(session, remoteSession, activities);
+            var addedActivities = _synchronizer.Synchronize(session, remoteSession, activities);
 
+            // 3. Persistence (History + State)
+            if (addedActivities.Count > 0)
+            {
+                await _historyWriter.AppendAsync(session.Id, addedActivities, cancellationToken).ConfigureAwait(false);
+            }
             await _sessionWriter.RememberAsync(session, cancellationToken).ConfigureAwait(false);
 
             return new RefreshPulseResponse(
