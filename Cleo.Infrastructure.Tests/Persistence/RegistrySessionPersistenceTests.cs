@@ -73,7 +73,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Arrange
         var id = TestFactory.CreateSessionId("1");
         var dashboardUri = new Uri("https://jules.ai/sessions/1");
-        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, dashboardUri: dashboardUri);
+        var updatedAt = DateTimeOffset.UtcNow.AddMinutes(5);
+        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, updatedAt: updatedAt, dashboardUri: dashboardUri);
 
         // Act
         await _writer.RememberAsync(session, CancellationToken.None);
@@ -84,6 +85,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
+        Assert.Equal(updatedAt, result.UpdatedAt);
         Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
 
         // Verify folder structure

@@ -31,6 +31,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             session.Source.StartingBranch,
             session.Pulse.Status,
             session.DashboardUri,
+            session.UpdatedAt,
             prDto);
     }
 
@@ -43,7 +44,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             new SourceContext(dto.Repository, dto.SourceBranch),
             new SessionPulse(dto.PulseStatus),
             DateTimeOffset.UtcNow,
-            null,
+            dto.UpdatedAt,
             null,
             null,
             AutomationMode.Unspecified,

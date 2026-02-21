@@ -11,4 +11,5 @@ public sealed record SessionMetadataDto(
     string SourceBranch,
     SessionStatus PulseStatus,
     Uri? DashboardUri,
+    DateTimeOffset? UpdatedAt = null,
     RegisteredPullRequestDto? PullRequest = null);
