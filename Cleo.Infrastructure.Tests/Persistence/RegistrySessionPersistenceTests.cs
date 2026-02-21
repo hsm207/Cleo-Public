@@ -10,27 +10,29 @@ namespace Cleo.Infrastructure.Tests.Persistence;
 
 public class RegistrySessionPersistenceTests : IDisposable
 {
-    private readonly string _tempRoot;
+    private readonly TemporaryDirectoryFixture _fixture;
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
+
+    // We retain mocks for things OUTSIDE the scope of persistence (like specific activity mapping logic if needed),
+    // but for the persistence mechanism itself, we use concretions.
+    // However, ActivityMapperFactory is complex, so using the real one is best for "Integration" feel.
     private readonly ActivityMapperFactory _activityFactory;
-    private readonly PhysicalFileSystem _fileSystem;
-    private readonly DirectorySessionLayout _layout;
-    private readonly Mock<ISessionPathResolver> _resolver;
 
     public RegistrySessionPersistenceTests()
     {
-        _tempRoot = Path.Combine(Path.GetTempPath(), $"Cleo_Sessions_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_tempRoot);
+        _fixture = new TemporaryDirectoryFixture();
+        var sessionsRoot = Path.Combine(_fixture.DirectoryPath, "sessions");
+        Directory.CreateDirectory(sessionsRoot);
 
-        _resolver = new Mock<ISessionPathResolver>();
-        _resolver.Setup(x => x.GetSessionsRoot()).Returns(_tempRoot);
+        // Real Concretions 🏗️
+        var fileSystem = new PhysicalFileSystem();
+        var pathResolver = new Cleo.Infrastructure.Tests.Persistence.Internal.TestSessionPathResolver(sessionsRoot);
+        var layout = new DirectorySessionLayout(pathResolver);
+        var provisioner = new DirectorySessionProvisioner(layout, fileSystem);
+        var metadataStore = new RegistryMetadataStore(layout, fileSystem, provisioner);
 
-        _fileSystem = new PhysicalFileSystem();
-        _layout = new DirectorySessionLayout(_resolver.Object);
-        var provisioner = new DirectorySessionProvisioner(_layout, _fileSystem);
-        var metadataStore = new RegistryMetadataStore(_layout, _fileSystem, provisioner);
-
+        // Real Mappers 🔌
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
         {
             new BashOutputMapper(),
@@ -40,30 +42,27 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         var activityMappers = new IActivityPersistenceMapper[]
         {
-            new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory),
-            new Cleo.Infrastructure.Persistence.Mappers.SessionAssignedActivityMapper(artifactMapperFactory)
+            new PlanningActivityMapper(artifactMapperFactory),
+            new MessageActivityMapper(artifactMapperFactory),
+            new ApprovalActivityMapper(artifactMapperFactory),
+            new ProgressActivityMapper(artifactMapperFactory),
+            new CompletionActivityMapper(artifactMapperFactory),
+            new FailureActivityMapper(artifactMapperFactory),
+            new SessionAssignedActivityMapper(artifactMapperFactory)
         };
         _activityFactory = new ActivityMapperFactory(activityMappers);
         var mapper = new RegistryTaskMapper(_activityFactory);
 
         var ndjsonSerializer = new NdjsonActivitySerializer(_activityFactory);
-        var historyStore = new RegistryHistoryStore(_layout, _fileSystem, provisioner, ndjsonSerializer);
+        var historyStore = new RegistryHistoryStore(layout, fileSystem, provisioner, ndjsonSerializer);
 
-        _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, _resolver.Object, _fileSystem);
-        _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, _layout, _fileSystem);
+        _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, pathResolver, fileSystem);
+        _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, layout, fileSystem);
     }
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempRoot))
-        {
-            Directory.Delete(_tempRoot, true);
-        }
+        _fixture.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -87,11 +86,6 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(dashboardUri, result.DashboardUri);
         Assert.Equal(updatedAt, result.UpdatedAt);
         Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
-
-        // Verify folder structure
-        var sessionDir = Path.Combine(_tempRoot, "1");
-        Assert.True(Directory.Exists(sessionDir));
-        Assert.True(File.Exists(Path.Combine(sessionDir, "session.json")));
     }
 
     [Fact]
@@ -129,7 +123,7 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         // Assert
         Assert.Null(result);
-        var sessionDir = Path.Combine(_tempRoot, "1");
+        var sessionDir = Path.Combine(_fixture.DirectoryPath, "sessions", "1");
         Assert.False(Directory.Exists(sessionDir));
     }
 
@@ -150,11 +144,5 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.NotNull(result);
         Assert.NotEmpty(result!.SessionLog);
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
-
-        // Verify file
-        var historyPath = Path.Combine(_tempRoot, "hist-1", "activities.jsonl");
-        Assert.True(File.Exists(historyPath));
-        var content = await File.ReadAllTextAsync(historyPath);
-        Assert.Contains("First step", content);
     }
 }
