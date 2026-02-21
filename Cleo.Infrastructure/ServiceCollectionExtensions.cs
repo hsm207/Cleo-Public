@@ -128,13 +128,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRemoteActivitySource>(sp => sp.GetRequiredService<RestJulesActivityClient>());
 
         services.AddSingleton<ISessionArchivist, RegistrySessionArchivist>();
+        services.AddSingleton<IHistoryReader>(sp => sp.GetRequiredService<ISessionArchivist>());
+        services.AddSingleton<IHistoryWriter>(sp => sp.GetRequiredService<ISessionArchivist>());
 
         // Domain Services
         services.AddSingleton<Cleo.Core.Domain.Services.IPrResolver, Cleo.Core.Domain.Services.RemoteFirstPrResolver>();
         services.AddSingleton<Cleo.Core.Domain.Services.ISessionSynchronizer, Cleo.Core.Domain.Services.SessionSynchronizer>();
 
         // Use Cases
-        services.AddScoped<Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
+        services.AddScoped<Cleo.Core.UseCases.InitiateSession.IInitiateSessionUseCase, Cleo.Core.UseCases.InitiateSession.InitiateSessionUseCase>();
         services.AddScoped<Cleo.Core.UseCases.RefreshPulse.IRefreshPulseUseCase, Cleo.Core.UseCases.RefreshPulse.RefreshPulseUseCase>();
         services.AddScoped<Cleo.Core.UseCases.BrowseHistory.IBrowseHistoryUseCase, Cleo.Core.UseCases.BrowseHistory.BrowseHistoryUseCase>();
         services.AddScoped<Cleo.Core.UseCases.ApprovePlan.IApprovePlanUseCase, Cleo.Core.UseCases.ApprovePlan.ApprovePlanUseCase>();
