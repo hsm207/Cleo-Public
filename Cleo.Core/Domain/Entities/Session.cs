@@ -24,7 +24,7 @@ public class Session : AggregateRoot
     public PullRequest? PullRequest { get; private set; }
     public Uri? DashboardUri { get; }
     public DateTimeOffset CreatedAt { get; }
-    public DateTimeOffset? UpdatedAt { get; }
+    public DateTimeOffset? UpdatedAt { get; private set; }
     public bool? RequiresPlanApproval { get; }
     public AutomationMode Mode { get; }
 
@@ -129,6 +129,14 @@ public class Session : AggregateRoot
     public void SetPullRequest(PullRequest? pullRequest)
     {
         PullRequest = pullRequest;
+    }
+
+    /// <summary>
+    /// Updates the session's modification timestamp from the remote authority.
+    /// </summary>
+    public void SetUpdatedAt(DateTimeOffset? updatedAt)
+    {
+        UpdatedAt = updatedAt;
     }
 
     /// <summary>
