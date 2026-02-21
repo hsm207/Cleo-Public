@@ -73,4 +73,39 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Single(files);
         Assert.Equal("newfile.txt", files[0]);
     }
+
+    [Fact(DisplayName = "GitPatch should calculate fingerprint when not provided.")]
+    public void ShouldCalculateFingerprintWhenNotProvided()
+    {
+        var patch = new GitPatch("diff content", "sha123");
+        Assert.NotNull(patch.Fingerprint);
+        Assert.NotEmpty(patch.Fingerprint);
+        Assert.Equal(32, patch.Fingerprint.Length); // XxHash128 is 128-bit hex (32 chars)
+    }
+
+    [Fact(DisplayName = "GitPatch should use provided fingerprint.")]
+    public void ShouldUseProvidedFingerprint()
+    {
+        var fingerprint = "deadbeef";
+        var patch = new GitPatch("diff content", "sha123", null, fingerprint);
+        Assert.Equal(fingerprint, patch.Fingerprint);
+    }
+
+    [Fact(DisplayName = "GitPatch should produce unique fingerprint for different content.")]
+    public void ShouldProduceUniqueFingerprint()
+    {
+        var patch1 = new GitPatch("diff A", "sha");
+        var patch2 = new GitPatch("diff B", "sha");
+
+        Assert.NotEqual(patch1.Fingerprint, patch2.Fingerprint);
+    }
+
+    [Fact(DisplayName = "GitPatch should produce stable fingerprint for same content.")]
+    public void ShouldProduceStableFingerprint()
+    {
+        var patch1 = new GitPatch("diff A", "sha");
+        var patch2 = new GitPatch("diff A", "sha");
+
+        Assert.Equal(patch1.Fingerprint, patch2.Fingerprint);
+    }
 }

@@ -1,3 +1,5 @@
+using System.IO.Hashing;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Cleo.Core.Domain.ValueObjects;
@@ -12,8 +14,9 @@ public record GitPatch
     public string UniDiff { get; init; }
     public string BaseCommitId { get; init; }
     public string? SuggestedCommitMessage { get; init; }
+    public string Fingerprint { get; init; }
 
-    public GitPatch(string uniDiff, string baseCommitId, string? suggestedCommitMessage = null)
+    public GitPatch(string uniDiff, string baseCommitId, string? suggestedCommitMessage = null, string? fingerprint = null)
     {
         ArgumentNullException.ThrowIfNull(uniDiff);
         ArgumentNullException.ThrowIfNull(baseCommitId);
@@ -29,6 +32,15 @@ public record GitPatch
         UniDiff = uniDiff;
         BaseCommitId = baseCommitId;
         SuggestedCommitMessage = suggestedCommitMessage;
+        Fingerprint = fingerprint ?? CalculateFingerprint(uniDiff);
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Fingerprints are displayed in lowercase hex.")]
+    private static string CalculateFingerprint(string content)
+    {
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var hash = XxHash128.Hash(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     /// <summary>

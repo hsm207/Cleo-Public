@@ -149,4 +149,36 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.NotEmpty(result!.SessionLog);
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
     }
+
+    [Fact]
+    public async Task Archivist_ShouldPersist_ChangeSet_With_Fingerprint()
+    {
+        // Arrange
+        var id = TestFactory.CreateSessionId("cs-fp");
+        var session = new Session(id, "remote-fp", new TaskDescription("Fingerprint Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+        await _writer.RememberAsync(session, CancellationToken.None);
+
+        var patch = new GitPatch("diff content", "sha123");
+        var changeSet = new ChangeSet("source", patch);
+        var activity = new ProgressActivity("act-fp", "rem-fp", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Made changes", null, new[] { changeSet });
+
+        // Act
+        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
+        var result = await _reader.RecallAsync(id, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+
+        // Note: Session constructor adds a default SessionAssignedActivity if history is empty (Zero-Hollow Invariant).
+        // So we must search for our specific activity.
+        var loadedActivity = result!.SessionLog.OfType<ProgressActivity>().FirstOrDefault(a => a.Id == "act-fp");
+        Assert.NotNull(loadedActivity);
+
+        var evidence = loadedActivity!.Evidence?.First();
+        Assert.NotNull(evidence);
+
+        Assert.IsType<ChangeSet>(evidence);
+        var loadedChangeSet = (ChangeSet)evidence!;
+        Assert.Equal(patch.Fingerprint, loadedChangeSet.Patch.Fingerprint);
+    }
 }

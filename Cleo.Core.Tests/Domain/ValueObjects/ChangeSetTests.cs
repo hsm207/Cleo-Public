@@ -30,7 +30,7 @@ public sealed class ChangeSetTests
         Assert.Throws<ArgumentNullException>(() => new ChangeSet("source", null!));
     }
 
-    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary with file details and short SHA.")]
+    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary with file details, short SHA, and fingerprint.")]
     public void ShouldProvideSummary()
     {
         var diff = @"--- a/file1.cs
@@ -38,8 +38,13 @@ public sealed class ChangeSetTests
 --- a/README.md
 +++ b/README.md
 ";
-        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c"));
-        Assert.Equal("ChangeSet [852ae21]: Updated [file1.cs, README.md]", changeSet.GetSummary());
+        var patch = new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c");
+        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", patch);
+
+        var expectedFingerprint = patch.Fingerprint[..7];
+        var expectedSha = "852ae21";
+
+        Assert.Equal($"ChangeSet [{expectedSha}:{expectedFingerprint}]: Updated [file1.cs, README.md]", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should summarize impact magnitude when files exceed narrative threshold.")]
@@ -52,12 +57,13 @@ public sealed class ChangeSetTests
             diff += $"+++ b/src/Common/{i}.cs\n";
         }
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
-        // Short sha is 7 chars. "sha1234" is 7 chars.
+        var patch = new GitPatch(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
         // Common path should be "src/Common"
         var summary = changeSet.GetSummary();
-        Assert.Equal("ChangeSet [sha1234]: 6 src/Common/* modified", summary);
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 src/Common/* modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle no common path when summarizing impact magnitude.")]
@@ -70,25 +76,23 @@ public sealed class ChangeSetTests
             diff += $"+++ b/{i}.cs\n";
         }
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = new GitPatch(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
         var summary = changeSet.GetSummary();
-        // Common path extract might be empty or "/" depending on implementation.
-        // Implementation logic:
-        // matchingChars starts as "0.cs" (from first file).
-        // Next file "1.cs". Common prefix is empty string.
-        // So commonPath is empty.
-        // If empty, returns "files".
-        Assert.Equal("ChangeSet [sha1234]: 6 files modified", summary);
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 files modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle empty file list.")]
     public void ShouldHandleEmptyFileList()
     {
         var diff = ""; // Empty diff -> 0 files
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = new GitPatch(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
-        Assert.Equal("ChangeSet [sha1234]: Produced patch", changeSet.GetSummary());
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: Produced patch", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should handle partial common path.")]
@@ -102,8 +106,10 @@ public sealed class ChangeSetTests
         for (int i = 0; i < 3; i++) diff += $"+++ b/src/A/{i}.cs\n";
         for (int i = 3; i < 6; i++) diff += $"+++ b/src/B/{i}.cs\n";
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = new GitPatch(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
-        Assert.Equal("ChangeSet [sha1234]: 6 src/* modified", changeSet.GetSummary());
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 src/* modified", changeSet.GetSummary());
     }
 }

@@ -36,7 +36,8 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
             changeSet.Source,
             changeSet.Patch.UniDiff,
             changeSet.Patch.BaseCommitId,
-            changeSet.Patch.SuggestedCommitMessage));
+            changeSet.Patch.SuggestedCommitMessage,
+            changeSet.Patch.Fingerprint));
     }
 
     public Artifact Deserialize(string json)
@@ -47,10 +48,11 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
             new GitPatch(
                 dto?.UniDiff ?? "",
                 dto?.BaseCommitId ?? "",
-                dto?.SuggestedCommitMessage));
+                dto?.SuggestedCommitMessage,
+                dto?.Fingerprint));
     }
 
-    private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage);
+    private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage, string? Fingerprint);
 }
 
 internal sealed class MediaMapper : IArtifactPersistenceMapper
