@@ -21,7 +21,7 @@ public sealed class SessionSynchronizer : ISessionSynchronizer
         return session.SessionLog.Max(a => a.Timestamp);
     }
 
-    public void Synchronize(Session session, Session remoteSession, IEnumerable<SessionActivity> newActivities)
+    public IReadOnlyList<SessionActivity> Synchronize(Session session, Session remoteSession, IEnumerable<SessionActivity> newActivities)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(remoteSession);
@@ -35,13 +35,17 @@ public sealed class SessionSynchronizer : ISessionSynchronizer
         session.SetPullRequest(resolvedPr);
 
         // 3. Append New Activities (Deduplication)
+        var addedActivities = new List<SessionActivity>();
         foreach (var activity in newActivities)
         {
             // Simple synchronization: Add only if not already present
             if (session.SessionLog.All(a => a.Id != activity.Id))
             {
                 session.AddActivity(activity);
+                addedActivities.Add(activity);
             }
         }
+
+        return addedActivities.AsReadOnly();
     }
 }
