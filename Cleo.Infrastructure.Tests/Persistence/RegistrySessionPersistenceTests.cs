@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
@@ -68,14 +69,26 @@ public class RegistrySessionPersistenceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
+    [Fact(DisplayName = "RegistrySession persistence should preserve absolute metadata fidelity (CreatedAt and UpdatedAt).")]
     public async Task Writer_ShouldSave_AndReader_ShouldLoad_Metadata()
     {
         // Arrange
-        var id = TestFactory.CreateSessionId("1");
-        var dashboardUri = new Uri("https://jules.ai/sessions/1");
-        var updatedAt = DateTimeOffset.UtcNow.AddMinutes(5);
-        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, updatedAt: updatedAt, dashboardUri: dashboardUri);
+        var id = TestFactory.CreateSessionId("fidelity-check");
+        var dashboardUri = new Uri("https://jules.ai/sessions/fidelity");
+        
+        // Use deterministic, non-current timestamps to prevent "UtcNow" false positives 🏛️💎
+        var createdAt = DateTimeOffset.Parse("2026-02-21T20:00:00Z", CultureInfo.InvariantCulture);
+        var updatedAt = createdAt.AddMinutes(45);
+        
+        var session = new Session(
+            id, 
+            "remote-fid-1", 
+            new TaskDescription("Fidelity Test"), 
+            TestFactory.CreateSourceContext("repo"), 
+            new SessionPulse(SessionStatus.Planning), 
+            createdAt, 
+            updatedAt: updatedAt, 
+            dashboardUri: dashboardUri);
 
         // Act
         await _writer.RememberAsync(session, CancellationToken.None);
@@ -86,7 +99,11 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
         Assert.Equal(dashboardUri, result.DashboardUri);
+        
+        // The "High-Fidelity" Assertions 🛡️✨
+        Assert.Equal(createdAt, result.CreatedAt); 
         Assert.Equal(updatedAt, result.UpdatedAt);
+        
         Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
     }
 
