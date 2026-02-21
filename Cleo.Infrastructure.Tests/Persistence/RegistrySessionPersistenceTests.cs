@@ -13,6 +13,7 @@ public class RegistrySessionPersistenceTests : IDisposable
     private readonly TemporaryDirectoryFixture _fixture;
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
+    private readonly RegistrySessionArchivist _archivist;
 
     // We retain mocks for things OUTSIDE the scope of persistence (like specific activity mapping logic if needed),
     // but for the persistence mechanism itself, we use concretions.
@@ -58,6 +59,7 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, pathResolver, fileSystem);
         _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, layout, fileSystem);
+        _archivist = new RegistrySessionArchivist(_reader, _writer, historyStore);
     }
 
     public void Dispose()
@@ -128,16 +130,18 @@ public class RegistrySessionPersistenceTests : IDisposable
     }
 
     [Fact]
-    public async Task Writer_ShouldSave_AndReader_ShouldLoad_History()
+    public async Task Archivist_ShouldAppend_AndReader_ShouldLoad_History()
     {
         // Arrange
         var id = TestFactory.CreateSessionId("hist-1");
         var session = new Session(id, "remote-1", new TaskDescription("History Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
         var activity = new ProgressActivity("act-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "First step");
-        session.AddActivity(activity);
+        
+        // Initial setup
+        await _writer.RememberAsync(session, CancellationToken.None);
 
         // Act
-        await _writer.RememberAsync(session, CancellationToken.None);
+        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
         var result = await _reader.RecallAsync(id, CancellationToken.None);
 
         // Assert

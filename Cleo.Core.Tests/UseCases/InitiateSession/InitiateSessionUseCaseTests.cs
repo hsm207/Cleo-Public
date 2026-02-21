@@ -11,11 +11,12 @@ public sealed class InitiateSessionUseCaseTests
 {
     private readonly FakeJulesClient _julesClient = new();
     private readonly FakeSessionWriter _sessionWriter = new();
+    private readonly FakeHistoryWriter _historyWriter = new();
     private readonly InitiateSessionUseCase _sut;
 
     public InitiateSessionUseCaseTests()
     {
-        _sut = new InitiateSessionUseCase(_julesClient, _sessionWriter);
+        _sut = new InitiateSessionUseCase(_julesClient, _sessionWriter, _historyWriter);
     }
 
     [Fact(DisplayName = "InitiateSessionUseCase should enforce the Auto-PR policy and save the session.")]
@@ -78,6 +79,22 @@ public sealed class InitiateSessionUseCaseTests
     }
 
     // --- Fakes ---
+
+    private sealed class FakeHistoryWriter : IHistoryWriter
+    {
+        public Dictionary<SessionId, List<SessionActivity>> AppendedActivities { get; } = new();
+
+        public Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)
+        {
+            if (!AppendedActivities.TryGetValue(id, out var list))
+            {
+                list = new List<SessionActivity>();
+                AppendedActivities[id] = list;
+            }
+            list.AddRange(activities);
+            return Task.CompletedTask;
+        }
+    }
 
     private sealed class FakeSessionWriter : ISessionWriter
     {
