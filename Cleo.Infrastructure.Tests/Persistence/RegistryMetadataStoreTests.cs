@@ -44,18 +44,23 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         Assert.Null(result);
     }
 
-    [Fact]
+    [Fact(DisplayName = "LoadAsync should return absolute metadata fidelity including timestamps.")]
     public async Task LoadAsync_ReturnsMetadata_WhenFileExists()
     {
         // Arrange
         var sessionId = TestFactory.CreateSessionId("123");
+        var createdAt = DateTimeOffset.Parse("2026-02-21T20:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        var updatedAt = createdAt.AddHours(1);
+        
         var metadata = new SessionMetadataDto(
             "sessions/123",
             "Test Task",
             "user/repo",
             "main",
             Core.Domain.ValueObjects.SessionStatus.StartingUp,
-            null);
+            new Uri("https://jules.ai"),
+            createdAt,
+            updatedAt);
 
         await _store.SaveAsync(metadata, CancellationToken.None);
 
@@ -66,6 +71,9 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         Assert.NotNull(result);
         Assert.Equal("sessions/123", result!.SessionId);
         Assert.Equal("Test Task", result.TaskDescription);
+        Assert.Equal(createdAt, result.CreatedAt);
+        Assert.Equal(updatedAt, result.UpdatedAt);
+        Assert.Equal(new Uri("https://jules.ai"), result.DashboardUri);
     }
 
     [Fact]
@@ -95,7 +103,8 @@ public sealed class RegistryMetadataStoreTests : IDisposable
             "user/repo",
             "main",
             Core.Domain.ValueObjects.SessionStatus.StartingUp,
-            null);
+            null,
+            DateTimeOffset.UtcNow);
 
         // Act
         await _store.SaveAsync(metadata, CancellationToken.None);
