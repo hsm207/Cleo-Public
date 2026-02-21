@@ -36,14 +36,6 @@ public sealed class RegistrySessionWriter : ISessionWriter
 
         var metadata = _mapper.MapToMetadataDto(session);
         await _metadataStore.SaveAsync(metadata, cancellationToken).ConfigureAwait(false);
-
-        // If history file does not exist, persist current history (e.g. for new sessions).
-        // We rely on ISessionArchivist for appending subsequent history.
-        var historyPath = _layout.GetHistoryPath(session.Id);
-        if (!_fileSystem.FileExists(historyPath) && session.SessionLog.Count > 0)
-        {
-            await _historyStore.AppendAsync(session.Id, session.SessionLog, cancellationToken).ConfigureAwait(false);
-        }
     }
 
     public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default)
