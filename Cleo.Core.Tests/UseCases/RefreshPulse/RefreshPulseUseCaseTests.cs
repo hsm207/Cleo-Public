@@ -14,6 +14,7 @@ public sealed class RefreshPulseUseCaseTests
 {
     private readonly FakeSessionReader _reader = new();
     private readonly FakeSessionWriter _writer = new();
+    private readonly FakeHistoryWriter _historyWriter = new();
     private readonly FakePulseMonitor _monitor = new();
     private readonly FakeActivitySource _activitySource = new();
     private readonly RemoteFirstPrResolver _prResolver = new();
@@ -23,7 +24,7 @@ public sealed class RefreshPulseUseCaseTests
     public RefreshPulseUseCaseTests()
     {
         _synchronizer = new SessionSynchronizer(_prResolver);
-        _sut = new RefreshPulseUseCase(_monitor, _activitySource, _reader, _writer, _synchronizer);
+        _sut = new RefreshPulseUseCase(_monitor, _activitySource, _reader, _writer, _historyWriter, _synchronizer);
     }
 
     [Fact(DisplayName = "Given a null request, when executing, then it should throw ArgumentNullException.")]
@@ -59,6 +60,29 @@ public sealed class RefreshPulseUseCaseTests
         // Verify Persistence
         Assert.NotNull(_writer.LastSavedSession);
         Assert.Equal(latestPulse, _writer.LastSavedSession.Pulse);
+    }
+
+    [Fact(DisplayName = "Given new activities from remote, when refreshing, then it should append THEM to history writer.")]
+    public async Task ShouldAppendNewActivitiesToHistory()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("sync-session");
+        var session = new SessionBuilder().WithId(sessionId.Value).Build();
+        _reader.Sessions[sessionId] = session;
+
+        _monitor.RemoteSession = new SessionBuilder().WithId(sessionId.Value).Build();
+
+        var newActivity = new ProgressActivity("new-1", "rem-1", DateTimeOffset.UtcNow.AddMinutes(10), ActivityOriginator.Agent, "New Step");
+        _activitySource.ActivitiesToReturn = new List<SessionActivity> { newActivity };
+
+        var request = new RefreshPulseRequest(sessionId);
+
+        // Act
+        await _sut.ExecuteAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.True(_historyWriter.AppendedActivities.ContainsKey(sessionId));
+        Assert.Contains(_historyWriter.AppendedActivities[sessionId], a => a.Id == "new-1");
     }
 
     [Fact(DisplayName = "Given the remote collaborator is unreachable, when the Use Case refreshes the Pulse, then it should retrieve the cached State from the local Registry and return it with a connectivity warning.")]
@@ -274,6 +298,22 @@ public sealed class RefreshPulseUseCaseTests
             return Task.CompletedTask;
         }
         public Task ForgetAsync(SessionId id, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class FakeHistoryWriter : IHistoryWriter
+    {
+        public Dictionary<SessionId, List<SessionActivity>> AppendedActivities { get; } = new();
+
+        public Task AppendAsync(SessionId id, IEnumerable<SessionActivity> activities, CancellationToken cancellationToken = default)
+        {
+            if (!AppendedActivities.TryGetValue(id, out var list))
+            {
+                list = new List<SessionActivity>();
+                AppendedActivities[id] = list;
+            }
+            list.AddRange(activities);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakePulseMonitor : IPulseMonitor

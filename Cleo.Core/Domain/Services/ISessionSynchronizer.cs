@@ -16,7 +16,7 @@ public interface ISessionSynchronizer
 
     /// <summary>
     /// Synchronizes the local session with the remote session and new activities.
-    /// Updates Pulse, Pull Request, and appends new activities.
+    /// Updates Pulse, Pull Request, and returns activities that were newly added to the local history.
     /// </summary>
-    void Synchronize(Session session, Session remoteSession, IEnumerable<SessionActivity> newActivities);
+    IReadOnlyList<SessionActivity> Synchronize(Session session, Session remoteSession, IEnumerable<SessionActivity> newActivities);
 }

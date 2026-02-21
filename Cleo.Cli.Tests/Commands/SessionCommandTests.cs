@@ -21,7 +21,8 @@ public sealed class SessionCommandTests
     {
         var julesClientMock = new Mock<IJulesSessionClient>();
         var sessionWriterMock = new Mock<ISessionWriter>();
-        var initiateUseCase = new InitiateSessionUseCase(julesClientMock.Object, sessionWriterMock.Object);
+        var historyWriterMock = new Mock<IHistoryWriter>();
+        var initiateUseCase = new InitiateSessionUseCase(julesClientMock.Object, sessionWriterMock.Object, historyWriterMock.Object);
         var presenterMock = new Mock<IStatusPresenter>();
         var helpProviderMock = new Mock<IHelpProvider>();
         var evaluatorMock = new Mock<ISessionStatusEvaluator>();

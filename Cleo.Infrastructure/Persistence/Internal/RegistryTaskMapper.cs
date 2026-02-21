@@ -13,7 +13,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         _activityFactory = activityFactory;
     }
 
-    public RegisteredSessionDto MapToDto(Session session)
+    public SessionMetadataDto MapToMetadataDto(Session session)
     {
         var prDto = session.PullRequest != null
             ? new RegisteredPullRequestDto(
@@ -24,23 +24,19 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
                 session.PullRequest.BaseRef)
             : null;
 
-        return new(
+        return new SessionMetadataDto(
             session.Id.Value,
             (string)session.Task,
             session.Source.Repository,
             session.Source.StartingBranch,
             session.Pulse.Status,
             session.DashboardUri,
-            session.SessionLog.Select(_activityFactory.ToEnvelope).ToList().AsReadOnly(),
+            session.UpdatedAt,
             prDto);
     }
 
-    public Session MapToDomain(RegisteredSessionDto dto)
+    public Session MapFromMetadataDto(SessionMetadataDto dto)
     {
-        var history = dto.History?
-            .Select(_activityFactory.FromEnvelope)
-            .ToList();
-
         var session = new Session(
             new SessionId(dto.SessionId),
             dto.SessionId,
@@ -48,12 +44,12 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
             new SourceContext(dto.Repository, dto.SourceBranch),
             new SessionPulse(dto.PulseStatus),
             DateTimeOffset.UtcNow,
-            null,
+            dto.UpdatedAt,
             null,
             null,
             AutomationMode.Unspecified,
             dto.DashboardUri,
-            history);
+            new List<SessionActivity>()); // Empty history
 
         if (dto.PullRequest != null)
         {

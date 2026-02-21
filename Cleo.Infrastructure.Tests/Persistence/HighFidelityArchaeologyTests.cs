@@ -33,7 +33,6 @@ public class HighFidelityArchaeologyTests
         services.AddSingleton<IActivityPersistenceMapper, SessionAssignedActivityMapper>();
 
         services.AddSingleton<IRegistryTaskMapper, RegistryTaskMapper>();
-        services.AddSingleton<IRegistrySerializer, JsonRegistrySerializer>();
 
         _serviceProvider = services.BuildServiceProvider();
     }
@@ -202,8 +201,8 @@ public class HighFidelityArchaeologyTests
         hydrated!.Task.Should().Be((TaskDescription)"Start Mission");
     }
 
-    [Fact(DisplayName = "Round-Trip: Session status is preserved in the registry 🏺💓")]
-    public void SessionStatus_IsPreserved_DuringRoundTrip()
+    [Fact(DisplayName = "Round-Trip: Session status is preserved in the registry metadata 🏺💓")]
+    public void SessionStatus_IsPreserved_InMetadata_DuringRoundTrip()
     {
         // Arrange
         var mapper = _serviceProvider.GetRequiredService<IRegistryTaskMapper>();
@@ -216,8 +215,8 @@ public class HighFidelityArchaeologyTests
             DateTimeOffset.UtcNow);
 
         // Act
-        var dto = mapper.MapToDto(original);
-        var hydrated = mapper.MapToDomain(dto);
+        var dto = mapper.MapToMetadataDto(original);
+        var hydrated = mapper.MapFromMetadataDto(dto);
 
         // Assert
         hydrated.Pulse.Status.Should().Be(SessionStatus.Completed);
