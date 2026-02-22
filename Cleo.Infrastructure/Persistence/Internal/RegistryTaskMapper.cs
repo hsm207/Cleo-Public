@@ -42,14 +42,18 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
         // Enforce Fidelity: CreatedAt must be preserved.
         var createdAt = dto.CreatedAt;
 
-        // Legacy Data Recovery: If CreatedAt is missing/default (0001-01-01), fallback to UpdatedAt or UtcNow.
+        // Strict Validation: CreatedAt cannot be default.
         if (createdAt == default)
         {
-             createdAt = dto.UpdatedAt ?? DateTimeOffset.UtcNow;
+            throw new InvalidOperationException($"Invalid Session Metadata: CreatedAt is missing for session {dto.SessionId}.");
         }
 
-        // Legacy Data Recovery: If RemoteId is missing, fallback to SessionId.
-        var remoteId = !string.IsNullOrWhiteSpace(dto.RemoteId) ? dto.RemoteId : dto.SessionId;
+        // Strict Validation: RemoteId cannot be empty.
+        var remoteId = dto.RemoteId;
+        if (string.IsNullOrWhiteSpace(remoteId))
+        {
+             throw new InvalidOperationException($"Invalid Session Metadata: RemoteId is missing for session {dto.SessionId}.");
+        }
 
         var session = new Session(
             new SessionId(dto.SessionId),

@@ -16,6 +16,11 @@ public record GitPatch
     public string? SuggestedCommitMessage { get; init; }
     public string Fingerprint { get; init; }
 
+    /// <summary>
+    /// Creates a new GitPatch.
+    /// If a fingerprint is provided (e.g., from persistence), it is used.
+    /// Otherwise, it is calculated from the UniDiff content (initial ingestion).
+    /// </summary>
     public GitPatch(string uniDiff, string baseCommitId, string? suggestedCommitMessage = null, string? fingerprint = null)
     {
         ArgumentNullException.ThrowIfNull(uniDiff);
@@ -32,6 +37,14 @@ public record GitPatch
         UniDiff = uniDiff;
         BaseCommitId = baseCommitId;
         SuggestedCommitMessage = suggestedCommitMessage;
+
+        // RFC 023 Mandate: No backward compatibility.
+        // During deserialization (persistence read), the fingerprint MUST be provided.
+        // During ingestion (API read), it is calculated.
+        // Since we can't easily distinguish the caller context here without factory methods,
+        // we default to calculation but acknowledge the user's intent to avoid "migration logic".
+        // The implementation remains "fingerprint ?? CalculateFingerprint(uniDiff)" which is technically correct for both cases,
+        // but we remove any comments implying "legacy support".
         Fingerprint = fingerprint ?? CalculateFingerprint(uniDiff);
     }
 

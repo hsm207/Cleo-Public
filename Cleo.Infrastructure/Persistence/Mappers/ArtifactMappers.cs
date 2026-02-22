@@ -42,14 +42,21 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
 
     public Artifact Deserialize(string json)
     {
-        var dto = JsonSerializer.Deserialize<ChangeSetPayloadDto>(json);
+        var dto = JsonSerializer.Deserialize<ChangeSetPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize ChangeSet payload.");
+
+        // Strict Mode: Fingerprint MUST be present in persisted data.
+        if (string.IsNullOrWhiteSpace(dto.Fingerprint))
+        {
+             throw new InvalidOperationException("Invalid ChangeSet Artifact: Fingerprint is missing.");
+        }
+
         return new ChangeSet(
-            dto?.Source ?? "unknown",
+            dto.Source, // Let ChangeSet validation handle null/empty if dto.Source is null (which shouldn't happen with valid JSON)
             new GitPatch(
-                dto?.UniDiff ?? "",
-                dto?.BaseCommitId ?? "",
-                dto?.SuggestedCommitMessage,
-                dto?.Fingerprint));
+                dto.UniDiff,
+                dto.BaseCommitId,
+                dto.SuggestedCommitMessage,
+                dto.Fingerprint));
     }
 
     private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage, string? Fingerprint);
