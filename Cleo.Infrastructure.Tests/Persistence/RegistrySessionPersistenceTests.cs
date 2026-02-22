@@ -151,16 +151,20 @@ public class RegistrySessionPersistenceTests : IDisposable
     }
 
     [Fact]
-    public async Task Archivist_ShouldPersist_ChangeSet_With_Fingerprint()
+    public async Task Archivist_ShouldPersist_ChangeSet_With_Fingerprint_And_Timestamp_Fidelity()
     {
         // Arrange
+        // Inoculation Protocol: Use Deterministic, Non-Current Timestamps.
+        var birthDate = DateTimeOffset.Parse("2024-01-01T12:00:00Z");
+        var activityDate = DateTimeOffset.Parse("2024-01-01T12:30:00Z");
+
         var id = TestFactory.CreateSessionId("cs-fp");
-        var session = new Session(id, "remote-fp", new TaskDescription("Fingerprint Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+        var session = new Session(id, "remote-fp", new TaskDescription("Fingerprint Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), birthDate);
         await _writer.RememberAsync(session, CancellationToken.None);
 
         var patch = new GitPatch("diff content", "sha123");
         var changeSet = new ChangeSet("source", patch);
-        var activity = new ProgressActivity("act-fp", "rem-fp", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Made changes", null, new[] { changeSet });
+        var activity = new ProgressActivity("act-fp", "rem-fp", activityDate, ActivityOriginator.Agent, "Made changes", null, new[] { changeSet });
 
         // Act
         await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
@@ -169,12 +173,16 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Assert
         Assert.NotNull(result);
 
-        // Note: Session constructor adds a default SessionAssignedActivity if history is empty (Zero-Hollow Invariant).
-        // So we must search for our specific activity.
-        var loadedActivity = result!.SessionLog.OfType<ProgressActivity>().FirstOrDefault(a => a.Id == "act-fp");
-        Assert.NotNull(loadedActivity);
+        // Assert Metadata Fidelity
+        Assert.Equal(birthDate, result!.CreatedAt);
+        Assert.Equal("remote-fp", result.RemoteId);
 
-        var evidence = loadedActivity!.Evidence?.First();
+        // Assert Activity & Fingerprint Fidelity
+        var loadedActivity = result.SessionLog.OfType<ProgressActivity>().FirstOrDefault(a => a.Id == "act-fp");
+        Assert.NotNull(loadedActivity);
+        Assert.Equal(activityDate, loadedActivity!.Timestamp);
+
+        var evidence = loadedActivity.Evidence?.First();
         Assert.NotNull(evidence);
 
         Assert.IsType<ChangeSet>(evidence);

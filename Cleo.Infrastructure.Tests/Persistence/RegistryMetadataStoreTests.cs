@@ -51,11 +51,13 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         var sessionId = TestFactory.CreateSessionId("123");
         var metadata = new SessionMetadataDto(
             "sessions/123",
+            "remote-123",
             "Test Task",
             "user/repo",
             "main",
             Core.Domain.ValueObjects.SessionStatus.StartingUp,
-            null);
+            null,
+            DateTimeOffset.UtcNow);
 
         await _store.SaveAsync(metadata, CancellationToken.None);
 
@@ -91,11 +93,13 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         var sessionId = TestFactory.CreateSessionId("123");
         var metadata = new SessionMetadataDto(
             "sessions/123",
+            "remote-123",
             "Test Task",
             "user/repo",
             "main",
             Core.Domain.ValueObjects.SessionStatus.StartingUp,
-            null);
+            null,
+            DateTimeOffset.UtcNow);
 
         // Act
         await _store.SaveAsync(metadata, CancellationToken.None);

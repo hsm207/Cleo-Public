@@ -6,10 +6,12 @@ namespace Cleo.Infrastructure.Persistence.Internal;
 
 public sealed record SessionMetadataDto(
     string SessionId,
+    string RemoteId,
     string TaskDescription,
     string Repository,
     string SourceBranch,
     SessionStatus PulseStatus,
     Uri? DashboardUri,
+    DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt = null,
     RegisteredPullRequestDto? PullRequest = null);
