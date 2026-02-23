@@ -68,7 +68,7 @@ public class HighFidelityArchaeologyTests
         var evidence = new List<Artifact>
         {
             new BashOutput("ls -la", "total 0", 0),
-            new ChangeSet("repo", new GitPatch("diff", "base", "msg")),
+            new ChangeSet("repo", GitPatch.FromApi("diff", "base", "msg")),
             new MediaArtifact("image/png", "base64-data")
         };
         var original = new ProgressActivity("act-1", "remote-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Testing with evidence", null, evidence);

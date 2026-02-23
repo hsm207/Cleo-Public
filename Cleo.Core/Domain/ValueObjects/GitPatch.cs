@@ -16,15 +16,12 @@ public record GitPatch
     public string? SuggestedCommitMessage { get; init; }
     public string Fingerprint { get; init; }
 
-    /// <summary>
-    /// Creates a new GitPatch.
-    /// If a fingerprint is provided (e.g., from persistence), it is used.
-    /// Otherwise, it is calculated from the UniDiff content (initial ingestion).
-    /// </summary>
-    public GitPatch(string uniDiff, string baseCommitId, string? suggestedCommitMessage = null, string? fingerprint = null)
+    // Enforce Static Factory Pattern
+    private GitPatch(string uniDiff, string baseCommitId, string fingerprint, string? suggestedCommitMessage = null)
     {
         ArgumentNullException.ThrowIfNull(uniDiff);
         ArgumentNullException.ThrowIfNull(baseCommitId);
+        ArgumentNullException.ThrowIfNull(fingerprint);
 
         // Note: We allow an empty UniDiff to support agent "startup" heartbeats. 
         // In these cases, the agent may report an attached ChangeSet before any physical
@@ -34,18 +31,39 @@ public record GitPatch
             throw new ArgumentException("Base commit identifier cannot be empty.", nameof(baseCommitId));
         }
 
+        if (string.IsNullOrWhiteSpace(fingerprint))
+        {
+            throw new ArgumentException("Fingerprint cannot be empty.", nameof(fingerprint));
+        }
+
         UniDiff = uniDiff;
         BaseCommitId = baseCommitId;
         SuggestedCommitMessage = suggestedCommitMessage;
+        Fingerprint = fingerprint;
+    }
 
-        // RFC 023 Mandate: No backward compatibility.
-        // During deserialization (persistence read), the fingerprint MUST be provided.
-        // During ingestion (API read), it is calculated.
-        // Since we can't easily distinguish the caller context here without factory methods,
-        // we default to calculation but acknowledge the user's intent to avoid "migration logic".
-        // The implementation remains "fingerprint ?? CalculateFingerprint(uniDiff)" which is technically correct for both cases,
-        // but we remove any comments implying "legacy support".
-        Fingerprint = fingerprint ?? CalculateFingerprint(uniDiff);
+    /// <summary>
+    /// Creates a new GitPatch from a raw API source (e.g., Diff).
+    /// Always calculates the fingerprint.
+    /// </summary>
+    public static GitPatch FromApi(string uniDiff, string baseCommitId, string? suggestedCommitMessage = null)
+    {
+        // Safe check for uniDiff before passing to CalculateFingerprint is handled by 'uniDiff ?? string.Empty'
+        // But for the constructor, we must ensure uniDiff is not null if the constructor throws ArgumentNullException.
+        // However, 'uniDiff ?? string.Empty' in CalculateFingerprint handles the hash.
+        // The constructor call needs a non-null string.
+        var safeDiff = uniDiff ?? string.Empty;
+        var fingerprint = CalculateFingerprint(safeDiff);
+        return new GitPatch(safeDiff, baseCommitId, fingerprint, suggestedCommitMessage);
+    }
+
+    /// <summary>
+    /// Restores a GitPatch from persistence or a trusted source.
+    /// Strictly expects a valid fingerprint.
+    /// </summary>
+    public static GitPatch Restore(string uniDiff, string baseCommitId, string fingerprint, string? suggestedCommitMessage = null)
+    {
+        return new GitPatch(uniDiff, baseCommitId, fingerprint, suggestedCommitMessage);
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Fingerprints are displayed in lowercase hex.")]

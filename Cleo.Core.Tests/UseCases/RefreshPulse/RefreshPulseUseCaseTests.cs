@@ -220,7 +220,7 @@ public sealed class RefreshPulseUseCaseTests
         var sessionId = TestFactory.CreateSessionId("ghost-session");
         var remoteSession = new SessionBuilder().WithId(sessionId.Value).Build();
         // Add a "Solution" via a GitPatch output (CompletionActivity)
-        var patch = new GitPatch("diff", "sha");
+        var patch = GitPatch.FromApi("diff", "sha");
         var changeSet = new ChangeSet("repo", patch);
         var completion = new CompletionActivity("out-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.System, new[] { changeSet });
 

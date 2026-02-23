@@ -162,7 +162,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         var session = new Session(id, "remote-fp", new TaskDescription("Fingerprint Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), birthDate);
         await _writer.RememberAsync(session, CancellationToken.None);
 
-        var patch = new GitPatch("diff content", "sha123");
+        var patch = GitPatch.FromApi("diff content", "sha123");
         var changeSet = new ChangeSet("source", patch);
         var activity = new ProgressActivity("act-fp", "rem-fp", activityDate, ActivityOriginator.Agent, "Made changes", null, new[] { changeSet });
 

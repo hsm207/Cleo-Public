@@ -41,7 +41,7 @@ public sealed class SessionActivityTests
         var simple = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System);
         Assert.Equal("Session Completed Successfully", simple.GetContentSummary());
 
-        var patch = new GitPatch("diff", "sha");
+        var patch = GitPatch.FromApi("diff", "sha");
         var changeSet = new ChangeSet("repo", patch);
         var complex = new CompletionActivity("id", RemoteId, Now, ActivityOriginator.System, new[] { changeSet });
 

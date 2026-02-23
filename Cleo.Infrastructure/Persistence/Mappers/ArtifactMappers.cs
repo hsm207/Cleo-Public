@@ -51,12 +51,12 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
         }
 
         return new ChangeSet(
-            dto.Source, // Let ChangeSet validation handle null/empty if dto.Source is null (which shouldn't happen with valid JSON)
-            new GitPatch(
+            dto.Source,
+            GitPatch.Restore(
                 dto.UniDiff,
                 dto.BaseCommitId,
-                dto.SuggestedCommitMessage,
-                dto.Fingerprint));
+                dto.Fingerprint,
+                dto.SuggestedCommitMessage));
     }
 
     private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage, string? Fingerprint);

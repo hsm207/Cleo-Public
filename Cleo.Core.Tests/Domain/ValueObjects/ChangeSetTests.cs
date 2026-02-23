@@ -5,7 +5,7 @@ namespace Cleo.Core.Tests.Domain.ValueObjects;
 
 public sealed class ChangeSetTests
 {
-    private static readonly GitPatch Patch = new("diff", "sha");
+    private static readonly GitPatch Patch = GitPatch.FromApi("diff", "sha");
 
     [Fact(DisplayName = "ChangeSet should be created with valid arguments.")]
     public void ShouldCreateWithValidArgs()
@@ -38,7 +38,7 @@ public sealed class ChangeSetTests
 --- a/README.md
 +++ b/README.md
 ";
-        var patch = new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c");
+        var patch = GitPatch.FromApi(diff, "852ae2160ccaefa8112af65941560654ad32261c");
         var changeSet = new ChangeSet("sources/github/hsm207/Cleo", patch);
 
         var expectedFingerprint = patch.Fingerprint[..7];
@@ -57,7 +57,7 @@ public sealed class ChangeSetTests
             diff += $"+++ b/src/Common/{i}.cs\n";
         }
 
-        var patch = new GitPatch(diff, "sha1234");
+        var patch = GitPatch.FromApi(diff, "sha1234");
         var changeSet = new ChangeSet("source", patch);
         var fp = patch.Fingerprint[..7];
 
@@ -76,7 +76,7 @@ public sealed class ChangeSetTests
             diff += $"+++ b/{i}.cs\n";
         }
 
-        var patch = new GitPatch(diff, "sha1234");
+        var patch = GitPatch.FromApi(diff, "sha1234");
         var changeSet = new ChangeSet("source", patch);
         var fp = patch.Fingerprint[..7];
 
@@ -88,7 +88,7 @@ public sealed class ChangeSetTests
     public void ShouldHandleEmptyFileList()
     {
         var diff = ""; // Empty diff -> 0 files
-        var patch = new GitPatch(diff, "sha1234");
+        var patch = GitPatch.FromApi(diff, "sha1234");
         var changeSet = new ChangeSet("source", patch);
         var fp = patch.Fingerprint[..7];
 
@@ -106,7 +106,7 @@ public sealed class ChangeSetTests
         for (int i = 0; i < 3; i++) diff += $"+++ b/src/A/{i}.cs\n";
         for (int i = 3; i < 6; i++) diff += $"+++ b/src/B/{i}.cs\n";
 
-        var patch = new GitPatch(diff, "sha1234");
+        var patch = GitPatch.FromApi(diff, "sha1234");
         var changeSet = new ChangeSet("source", patch);
         var fp = patch.Fingerprint[..7];
 
