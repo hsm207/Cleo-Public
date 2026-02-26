@@ -150,8 +150,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Contains(result.SessionLog, a => a.Id == "act-1");
     }
 
-    [Fact]
-    public async Task Archivist_ShouldPersist_ChangeSet_With_Fingerprint_And_Timestamp_Fidelity()
+    [Fact(DisplayName = "The Session Registry should preserve the content-based fingerprint and precise timing of all recorded activities.")]
+    public async Task ShouldPreserveFingerprintAndTimestampFidelityWhenRecordingChangeSetActivities()
     {
         // Arrange
         var birthDate = DateTimeOffset.Parse("2024-01-01T12:00:00Z");
