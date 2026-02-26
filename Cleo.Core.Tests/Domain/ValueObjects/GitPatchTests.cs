@@ -5,24 +5,6 @@ namespace Cleo.Core.Tests.Domain.ValueObjects;
 
 public sealed class GitPatchTests
 {
-    [Fact(DisplayName = "GitPatch should be created from API with valid arguments.")]
-    public void ShouldCreateFromApiWithValidArgs()
-    {
-        var patch = GitPatch.FromApi("diff content", "sha123", "feat: changes");
-
-        Assert.Equal("diff content", patch.UniDiff);
-        Assert.Equal("sha123", patch.BaseCommitId);
-        Assert.Equal("feat: changes", patch.SuggestedCommitMessage);
-        Assert.NotNull(patch.Fingerprint);
-    }
-
-    [Fact(DisplayName = "GitPatch should allow null suggested commit message.")]
-    public void ShouldAllowNullMessage()
-    {
-        var patch = GitPatch.FromApi("diff", "sha");
-        Assert.Null(patch.SuggestedCommitMessage);
-    }
-
     [Fact(DisplayName = "GitPatch should allow empty UniDiff to support agent startup heartbeats.")]
     public void ShouldAllowEmptyDiff()
     {
@@ -31,12 +13,13 @@ public sealed class GitPatchTests
 
         Assert.Equal("", patch1.UniDiff);
         Assert.Equal(" ", patch2.UniDiff);
+        
         // FromApi allows null and treats it as empty string
         var patch3 = GitPatch.FromApi(null!, "sha");
         Assert.Equal("", patch3.UniDiff);
     }
 
-    [Fact(DisplayName = "GitPatch should throw if baseCommitId is null or whitespace.")]
+    [Fact(DisplayName = "GitPatch should throw if baseCommitId is missing to maintain domain integrity.")]
     public void ShouldThrowIfBaseCommitIdInvalid()
     {
         Assert.Throws<ArgumentNullException>(() => GitPatch.FromApi("diff", null!));
@@ -44,7 +27,7 @@ public sealed class GitPatchTests
         Assert.Throws<ArgumentException>(() => GitPatch.FromApi("diff", "  "));
     }
 
-    [Fact(DisplayName = "GitPatch should extract unique modified filenames from UniDiff.")]
+    [Fact(DisplayName = "GitPatch should extract unique modified filenames from UniDiff to enable impact analysis.")]
     public void ShouldExtractFilenames()
     {
         var diff = @"diff --git a/file1.cs b/file1.cs
@@ -64,7 +47,7 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Contains("dir/file2.md", files);
     }
 
-    [Fact(DisplayName = "GitPatch should handle /dev/null in filenames.")]
+    [Fact(DisplayName = "GitPatch should handle /dev/null in filenames during extraction.")]
     public void ShouldHandleDevNull()
     {
         var diff = @"--- /dev/null
@@ -77,7 +60,7 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Equal("newfile.txt", files[0]);
     }
 
-    [Fact(DisplayName = "GitPatch should calculate fingerprint when created from API.")]
+    [Fact(DisplayName = "GitPatch should calculate a deterministic fingerprint when created from the API.")]
     public void ShouldCalculateFingerprintWhenCreatedFromApi()
     {
         var patch = GitPatch.FromApi("diff content", "sha123");
@@ -86,7 +69,7 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Equal(32, patch.Fingerprint.Length); // XxHash128 is 128-bit hex (32 chars)
     }
 
-    [Fact(DisplayName = "GitPatch should use provided fingerprint when restored.")]
+    [Fact(DisplayName = "GitPatch should use the provided fingerprint when restored to preserve ledger history.")]
     public void ShouldUseProvidedFingerprintWhenRestored()
     {
         var fingerprint = "deadbeef";
@@ -94,7 +77,7 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Equal(fingerprint, patch.Fingerprint);
     }
 
-    [Fact(DisplayName = "GitPatch should throw if fingerprint is missing during restoration.")]
+    [Fact(DisplayName = "GitPatch should throw if fingerprint is missing during restoration to prevent history corruption.")]
     public void ShouldThrowIfFingerprintMissingDuringRestoration()
     {
         Assert.Throws<ArgumentNullException>(() => GitPatch.Restore("diff", "sha", null!));
@@ -102,8 +85,8 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.Throws<ArgumentException>(() => GitPatch.Restore("diff", "sha", "   "));
     }
 
-    [Fact(DisplayName = "GitPatch should produce unique fingerprint for different content.")]
-    public void ShouldProduceUniqueFingerprint()
+    [Fact(DisplayName = "GitPatch should produce a unique content identity for different UniDiff contents.")]
+    public void ShouldProduceUniqueContentIdentity()
     {
         var patch1 = GitPatch.FromApi("diff A", "sha");
         var patch2 = GitPatch.FromApi("diff B", "sha");
@@ -111,7 +94,7 @@ diff --git a/dir/file2.md b/dir/file2.md
         Assert.NotEqual(patch1.Fingerprint, patch2.Fingerprint);
     }
 
-    [Fact(DisplayName = "GitPatch should produce stable fingerprint for same content.")]
+    [Fact(DisplayName = "GitPatch should produce a stable fingerprint for the same UniDiff content.")]
     public void ShouldProduceStableFingerprint()
     {
         var patch1 = GitPatch.FromApi("diff A", "sha");

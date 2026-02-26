@@ -154,7 +154,6 @@ public class RegistrySessionPersistenceTests : IDisposable
     public async Task Archivist_ShouldPersist_ChangeSet_With_Fingerprint_And_Timestamp_Fidelity()
     {
         // Arrange
-        // Inoculation Protocol: Use Deterministic, Non-Current Timestamps.
         var birthDate = DateTimeOffset.Parse("2024-01-01T12:00:00Z");
         var activityDate = DateTimeOffset.Parse("2024-01-01T12:30:00Z");
 
