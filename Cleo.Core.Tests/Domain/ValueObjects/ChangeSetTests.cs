@@ -112,4 +112,22 @@ public sealed class ChangeSetTests
 
         Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 src/* modified", changeSet.GetSummary());
     }
+
+    [Fact(DisplayName = "ChangeSet should provide different summaries for different content even with the same base SHA.")]
+    public void ShouldProduceDifferentSummariesForDifferentContentWithSameBaseSha()
+    {
+        var commonSha = "76d9c23d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t";
+        var patch1 = GitPatch.FromApi("diff content v1", commonSha);
+        var patch2 = GitPatch.FromApi("diff content v2", commonSha);
+
+        var changeSet1 = new ChangeSet("source", patch1);
+        var changeSet2 = new ChangeSet("source", patch2);
+
+        var summary1 = changeSet1.GetSummary();
+        var summary2 = changeSet2.GetSummary();
+
+        Assert.NotEqual(summary1, summary2);
+        Assert.Contains(patch1.Fingerprint[..7], summary1, StringComparison.Ordinal);
+        Assert.Contains(patch2.Fingerprint[..7], summary2, StringComparison.Ordinal);
+    }
 }
