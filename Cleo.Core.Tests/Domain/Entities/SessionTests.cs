@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Events;
 using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
@@ -471,7 +472,7 @@ public sealed class SessionTests
     }
 
     [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
-    public void Session_EvaluatesSessionStateLogically_WhenIdleButBlockedOnPlan()
+    public void SessionEvaluatesSessionStateLogicallyWhenIdleButBlockedOnPlan()
     {
         // Arrange
         var sessionId = TestFactory.CreateSessionId("123");
