@@ -17,12 +17,13 @@
 ## 🚀 Quick Start
 
 ### Installation
-Clone the public mirror and build using the .NET 10 SDK:
+Clone the public mirror and install as a global .NET tool:
 
 ```bash
 git clone https://github.com/hsm207/Cleo-Public.git
 cd Cleo-Public
-dotnet build
+dotnet pack Cleo.Cli/Cleo.Cli.csproj -c Release -o ./dist
+dotnet tool install --global --add-source ./dist Cleo.Cli --version 0.1.0-alpha
 ```
 
 ### Basic Workflow
