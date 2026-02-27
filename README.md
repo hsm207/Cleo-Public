@@ -27,11 +27,18 @@ dotnet tool install --global --add-source ./dist Cleo.Cli --version 0.1.0-alpha
 ```
 
 ### Basic Workflow
-1.  **Authenticate**: `cleo auth login <api-key>`
-2.  **Start Task**: `cleo session new "Fix the login bug"`
-3.  **Review Plan**: `cleo plan view <id>`
-4.  **Authorize**: `cleo plan approve <id>`
-5.  **Talk to Jules**: `cleo talk <id> --message "Focus on the UI first"`
+1. **Authentication**: Save your Jules API key to the local vault.
+   `cleo auth login <api-key>`
+2. **Repo Discovery**: Verify that Jules has access to your target repository.
+   `cleo config repos`
+3. **New Session**: Create a task for Jules in a specific repository.
+   `cleo session new "Build a Binance listing sniper bot" --repo "org/trader"`
+4. **View Plan**: Review what the agent intends to do before it starts.
+   `cleo plan view <id>`
+5. **Approve**: Authorize the agent to begin working on the plan.
+   `cleo plan approve <id>`
+6. **Provide Feedback**: Send guidance or context to the active session.
+   `cleo talk <id> --message "Don't lose money."`
 
 ---
 *Built with Clean Architecture and DDD in .NET 10.*
