@@ -46,10 +46,7 @@ public sealed class RegistrySessionReader : ISessionReader
     public async Task<IReadOnlyCollection<Session>> ListAsync(CancellationToken cancellationToken = default)
     {
         var root = _pathResolver.GetSessionsRoot();
-        if (!_fileSystem.DirectoryExists(root))
-        {
-            return Array.Empty<Session>();
-        }
+        if (!_fileSystem.DirectoryExists(root)) return Array.Empty<Session>();
 
         var sessions = new List<Session>();
         var directories = _fileSystem.EnumerateDirectories(root);
@@ -57,24 +54,13 @@ public sealed class RegistrySessionReader : ISessionReader
         foreach (var dir in directories)
         {
             var folderName = Path.GetFileName(dir);
-
-            SessionId sessionId;
-            try
-            {
-                sessionId = new SessionId($"sessions/{folderName}");
-            }
-            catch (ArgumentException)
-            {
-                // Ignore invalid folder names
-                continue;
-            }
+            var sessionId = new SessionId($"sessions/{folderName}");
 
             // O(1) Discovery: Only load metadata, skip history.
-            var session = await RecallMetadataAsync(sessionId, cancellationToken).ConfigureAwait(false);
-            if (session != null)
-            {
-                sessions.Add(session);
-            }
+            var session = await RecallMetadataAsync(sessionId, cancellationToken).ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Registry integrity violation: Metadata missing for discovered session '{sessionId}'.");
+            
+            sessions.Add(session);
         }
 
         return sessions.AsReadOnly();
