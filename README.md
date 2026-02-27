@@ -6,3 +6,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **Local-First Session Management and Observability for Autonomous Coding Sessions with Google Jules**
+
+## 🌟 Key Capabilities
+
+*   **Formal Approval Loop**: Review and authorize the agent's proposed plan before execution begins.
+*   **Interactive Correspondence**: Provide real-time guidance and context to active sessions using the `talk` interface.
+*   **Result-Oriented**: Every session is designed to deliver a Pull Request as the primary deliverable.
+*   **Agent Orchestration**: Optimized for AI-to-AI collaboration with a structured command surface and stateful local Registry.
+
+## 🚀 Installation
