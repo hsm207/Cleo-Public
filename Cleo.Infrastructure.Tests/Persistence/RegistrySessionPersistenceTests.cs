@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
@@ -131,7 +132,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         foreach (var original in activities)
         {
             var loaded = result.SessionLog.Single(a => a.RemoteId == original.RemoteId);
-            Assert.Equal(original.Id, loaded.Id);     
+            Assert.Equal(original.Id, loaded.Id);
+            
             Assert.Equal(original.Originator, loaded.Originator);
             Assert.Equal(original.Timestamp, loaded.Timestamp);
             Assert.Equal(original.ExecutiveSummary, loaded.ExecutiveSummary);

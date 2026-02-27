@@ -29,6 +29,7 @@ public sealed class SessionSynchronizer : ISessionSynchronizer
 
         // 1. Sync Pulse (Heartbeat)
         session.UpdatePulse(remoteSession.Pulse);
+        session.SetUpdatedAt(remoteSession.UpdatedAt);
 
         // 2. Resolve Pull Request (Remote First)
         var resolvedPr = _prResolver.Resolve(session.PullRequest, remoteSession.PullRequest);
