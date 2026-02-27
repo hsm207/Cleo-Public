@@ -84,10 +84,8 @@ public static class ServiceCollectionExtensions
             new Clients.Jules.Mapping.CompletionActivityMapper(),
             new Clients.Jules.Mapping.FailureActivityMapper(),
             new Clients.Jules.Mapping.UserMessageActivityMapper(),
-            new Clients.Jules.Mapping.AgentMessageActivityMapper(),
-            new Clients.Jules.Mapping.UnknownActivityMapper()
-        }));
-
+            new Clients.Jules.Mapping.AgentMessageActivityMapper()
+            }));
         services.AddTransient<JulesAuthHandler>();
         services.AddTransient<JulesLoggingHandler>();
 
