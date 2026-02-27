@@ -1,37 +1,14 @@
 <Solution>
-  <Project Path="Cleo.Cli.Tests/Cleo.Cli.Tests.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Cli/Cleo.Cli.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Core.Tests/Cleo.Core.Tests.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Core/Cleo.Core.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Infrastructure.Tests/Cleo.Infrastructure.Tests.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Infrastructure/Cleo.Infrastructure.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
-  <Project Path="Cleo.Tests.Common/Cleo.Tests.Common.csproj">
-    <BuildType Solution="Release|*" Project="?" />
-    <Platform Solution="Release|*" Project="?" />
-    <Build Solution="Release|*" Project="false" />
-  </Project>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Configuration Name="Debug" />
+    <Configuration Name="Release" />
+  </Configurations>
+  <Project Path="Cleo.Cli.Tests/Cleo.Cli.Tests.csproj" />
+  <Project Path="Cleo.Cli/Cleo.Cli.csproj" />
+  <Project Path="Cleo.Core.Tests/Cleo.Core.Tests.csproj" />
+  <Project Path="Cleo.Core/Cleo.Core.csproj" />
+  <Project Path="Cleo.Infrastructure.Tests/Cleo.Infrastructure.Tests.csproj" />
+  <Project Path="Cleo.Infrastructure/Cleo.Infrastructure.csproj" />
+  <Project Path="Cleo.Tests.Common/Cleo.Tests.Common.csproj" />
 </Solution>
