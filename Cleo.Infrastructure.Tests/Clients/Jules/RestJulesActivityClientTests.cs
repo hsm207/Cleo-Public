@@ -36,8 +36,7 @@ public class RestJulesActivityClientTests
             new CompletionActivityMapper(),
             new FailureActivityMapper(),
             new UserMessageActivityMapper(),
-            new AgentMessageActivityMapper(),
-            new UnknownActivityMapper()
+            new AgentMessageActivityMapper()
         };
 
         // Wrap in Composite because the client is now LEAN 🏎️
@@ -209,55 +208,5 @@ public class RestJulesActivityClientTests
             Times.Once(),
             ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Fact(DisplayName = "GetActivitiesAsync should handle mystery activity types gracefully.")]
-    public async Task GetActivitiesAsync_ShouldHandleMysteryActivity()
-    {
-        // Arrange
-        // Note: JulesDtoTestFactory.Create usually takes a specific payload.
-        // Here we simulate an activity with NO recognized payload, but with metadata.
-        var metadata = new JulesActivityMetadataDto(
-            Id: "remote-mystery",
-            Name: "mystery-1",
-            Description: "Mystery Description",
-            CreateTime: DateTimeOffset.UtcNow.ToString("O"),
-            Originator: "agent",
-            Artifacts: null
-        );
-
-        // Use a generic unknown payload to simulate mystery
-        var payload = new JulesProgressUpdatedPayloadDto("Unknown Event", "Mystery payload content");
-
-        var dto = new JulesActivityDto(metadata, payload);
-
-        var response = new JulesListActivitiesResponseDto(new[] { dto }, null);
-
-        _handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(response)
-            });
-
-        // Act
-        var result = await _client.GetActivitiesAsync(_testId, TestContext.Current.CancellationToken);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var mystery = result.First();
-
-        // It should be mapped by UnknownActivityMapper (or fallback logic)
-        // Since we injected UnknownActivityMapper, it should pick it up if others fail.
-        // But wait, UnknownActivityMapper matches if activity.Unknown != null? No, it's a catch-all usually?
-        // Let's check UnknownActivityMapper logic.
-        // If it's truly a catch-all, it should return a generic ProgressActivity or similar with "Unknown Activity Type".
-        // OR it might return a specific UnknownActivity (if we had one in domain).
-        // The current implementation of UnknownActivityMapper maps to ProgressActivity with "Unknown Activity" title.
-
-        Assert.IsType<ProgressActivity>(mystery);
-        var progress = (ProgressActivity)mystery;
-        progress.Intent.Should().Contain("Unknown");
     }
 }

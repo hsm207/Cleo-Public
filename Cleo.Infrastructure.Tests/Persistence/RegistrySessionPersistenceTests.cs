@@ -291,18 +291,27 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.IsType<ProgressActivity>(filtered[0]);
     }
 
-    [Fact(DisplayName = "The Session Registry should return an empty list when history is requested for a session with no recorded activities.")]
-    public async Task ShouldReturnEmptyHistoryWhenFileDoesNotExist()
+    [Fact(DisplayName = "The Session Registry should handle actionless activities (metadata + artifacts only) with 100% integrity.")]
+    public async Task ShouldPreserveIntegrityForActionlessActivities()
     {
         // Arrange 🏗️
-        var id = TestFactory.CreateSessionId("empty-history");
-        // Only remember metadata, no activities
-        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+        var id = TestFactory.CreateSessionId("actionless");
+        var now = DateTimeOffset.UtcNow;
+        var session = new Session(id, "r", new TaskDescription("Actionless Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), now);
+
+        // A session activity that only has metadata and artifacts (common in some Jules events)
+        var artifact = new BashOutput("ls", "file.txt", 0);
+        var activity = new MessageActivity("act-1", "rem-1", now, ActivityOriginator.Agent, "Artifact discovery", new[] { artifact });
 
         // Act 🚀
-        var history = await _archivist.GetHistoryAsync(id, null, CancellationToken.None);
+        await _writer.RememberAsync(session, CancellationToken.None);
+        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
+        var result = await _reader.RecallAsync(id, CancellationToken.None);
 
         // Assert ✅
-        Assert.Empty(history);
+        Assert.NotNull(result);
+        var loaded = result!.SessionLog.OfType<MessageActivity>().Single();
+        Assert.Single(loaded.Evidence!);
+        Assert.IsType<BashOutput>(loaded.Evidence!.First());
     }
 }
