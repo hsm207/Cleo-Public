@@ -17,14 +17,16 @@
 ## 🚀 Quick Start
 
 ### Installation
-Clone the mirror and install as a local .NET tool:
+Clone the mirror and install as a global .NET tool:
 
 ```bash
 git clone https://github.com/hsm207/Cleo-Public.git
 cd Cleo-Public
 dotnet pack Cleo.Cli/Cleo.Cli.csproj -c Release -o ./dist
-dotnet tool install --local --add-source ./dist Cleo.Cli --version 0.1.0-alpha
+dotnet tool install --global --add-source ./dist Cleo.Cli --version 0.1.0-alpha
 ```
+
+> **Note**: Ensure your system PATH includes the .NET tools directory (`~/.dotnet/tools` on Linux/macOS or `%USERPROFILE%\.dotnet\tools` on Windows).
 
 ### Basic Workflow
 
@@ -32,55 +34,56 @@ dotnet tool install --local --add-source ./dist Cleo.Cli --version 0.1.0-alpha
 
    Save your Jules API key to the local vault.
 
-   `dotnet tool run cleo -- config auth login <api-key>`
+   `cleo config auth login <api-key>`
 
 2. **Repo Discovery**
 
    Verify that Jules has access to your target repository.
 
-   `dotnet tool run cleo -- config repos`
+   `cleo config repos`
 
 3. **New Session**
 
    Create a task for Jules in a specific repository.
 
-   `dotnet tool run cleo -- session new "Build a Binance listing sniper bot" --repo "sources/github/org/trader"`
+   `cleo session new "Build a Binance listing sniper bot" --repo "sources/github/org/trader"`
 
 4. **View Plan**
 
    Review what the agent intends to do before it starts.
 
-   `dotnet tool run cleo -- plan view <session-id>`
+   `cleo plan view <session-id>`
 
 5. **Approve**
 
    Authorize the agent to begin working on the plan.
 
-   `dotnet tool run cleo -- plan approve <session-id> <plan-id>`
+   `cleo plan approve <session-id> <plan-id>`
 
 6. **Provide Feedback**
 
    Send guidance or context to the active session.
 
-   `dotnet tool run cleo -- talk <session-id> --message "Don't lose money."`
+   `cleo talk <session-id> --message "Don't lose money."`
 
 7. **Check-in**
 
    Refresh the session's pulse and synchronize new activities.
 
-   `dotnet tool run cleo -- session checkin <session-id>`
+   `cleo session checkin <session-id>`
 
 8. **Review the Log**
 
    Inspect the newly synchronized activity history and agent thoughts.
 
-   `dotnet tool run cleo -- log view <session-id>`
+   `cleo log view <session-id>`
 
 9. **Get Result**
 
-   Once the session is complete, the check-in command provides the the link to the Pull Request.
+   Once the session is complete, the check-in command provides the final Pull Request link.
 
-   `dotnet tool run cleo -- session checkin <session-id>`
+   `cleo session checkin <session-id>`
+
 
 ---
 *Built with Clean Architecture and DDD in .NET 10.*
