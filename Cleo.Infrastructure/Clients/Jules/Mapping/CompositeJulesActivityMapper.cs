@@ -41,12 +41,6 @@ public sealed class CompositeJulesActivityMapper : IJulesActivityMapper
             return mapper.Map(dto);
         }
 
-        // Fallback Logic: Clothed inside the Composite! 👚
-        return new MessageActivity(
-            dto.Metadata.Name, // Maps to Domain.Id
-            dto.Metadata.Id,   // Maps to Domain.RemoteId
-            DateTimeOffset.Parse(dto.Metadata.CreateTime, CultureInfo.InvariantCulture),
-            ActivityOriginator.System,
-            $"Unknown activity type '{dto.Metadata.Name}' received.");
+        throw new InvalidOperationException($"Mapping Error: No specific IJulesActivityMapper registered for payload type '{dto.Payload.GetType().Name}'. This indicates an internal configuration error.");
     }
 }

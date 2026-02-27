@@ -46,7 +46,7 @@ public sealed class NarrativeIntelligenceTests
         var files = Enumerable.Range(0, 50).Select(i => $"Cleo.Core/Domain/Entity{i}.cs").ToList();
         var diff = string.Join("\n", files.Select(f => $"+++ b/{f}"));
 
-        var patch = new GitPatch(diff, "base-sha");
+        var patch = GitPatch.FromApi(diff, "base-sha");
         var changeSet = new ChangeSet("repo", patch);
 
         var summary = changeSet.GetSummary();
@@ -59,7 +59,7 @@ public sealed class NarrativeIntelligenceTests
     public void ChangeSetListsSmallChanges()
     {
         var diff = "+++ b/File1.cs\n+++ b/File2.cs";
-        var patch = new GitPatch(diff, "base-sha");
+        var patch = GitPatch.FromApi(diff, "base-sha");
         var changeSet = new ChangeSet("repo", patch);
 
         var summary = changeSet.GetSummary();

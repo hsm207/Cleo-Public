@@ -36,21 +36,30 @@ internal sealed class ChangeSetMapper : IArtifactPersistenceMapper
             changeSet.Source,
             changeSet.Patch.UniDiff,
             changeSet.Patch.BaseCommitId,
-            changeSet.Patch.SuggestedCommitMessage));
+            changeSet.Patch.SuggestedCommitMessage,
+            changeSet.Patch.Fingerprint));
     }
 
     public Artifact Deserialize(string json)
     {
-        var dto = JsonSerializer.Deserialize<ChangeSetPayloadDto>(json);
+        var dto = JsonSerializer.Deserialize<ChangeSetPayloadDto>(json) ?? throw new InvalidOperationException("Failed to deserialize ChangeSet payload.");
+
+        // Strict Mode: Fingerprint MUST be present in persisted data.
+        if (string.IsNullOrWhiteSpace(dto.Fingerprint))
+        {
+             throw new InvalidOperationException("Invalid ChangeSet Artifact: Fingerprint is missing.");
+        }
+
         return new ChangeSet(
-            dto?.Source ?? "unknown",
-            new GitPatch(
-                dto?.UniDiff ?? "",
-                dto?.BaseCommitId ?? "",
-                dto?.SuggestedCommitMessage));
+            dto.Source,
+            GitPatch.Restore(
+                dto.UniDiff,
+                dto.BaseCommitId,
+                dto.Fingerprint,
+                dto.SuggestedCommitMessage));
     }
 
-    private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage);
+    private sealed record ChangeSetPayloadDto(string Source, string UniDiff, string BaseCommitId, string? SuggestedCommitMessage, string? Fingerprint);
 }
 
 internal sealed class MediaMapper : IArtifactPersistenceMapper

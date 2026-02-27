@@ -26,6 +26,7 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 
         return new SessionMetadataDto(
             session.Id.Value,
+            session.RemoteId, // Fidelity!
             (string)session.Task,
             session.Source.Repository,
             session.Source.StartingBranch,
@@ -38,13 +39,29 @@ internal sealed class RegistryTaskMapper : IRegistryTaskMapper
 
     public Session MapFromMetadataDto(SessionMetadataDto dto)
     {
+        // Enforce Fidelity: CreatedAt must be preserved.
+        var createdAt = dto.CreatedAt;
+
+        // Strict Validation: CreatedAt cannot be default.
+        if (createdAt == default)
+        {
+            throw new InvalidOperationException($"Invalid Session Metadata: CreatedAt is missing for session {dto.SessionId}.");
+        }
+
+        // Strict Validation: RemoteId cannot be empty.
+        var remoteId = dto.RemoteId;
+        if (string.IsNullOrWhiteSpace(remoteId))
+        {
+             throw new InvalidOperationException($"Invalid Session Metadata: RemoteId is missing for session {dto.SessionId}.");
+        }
+
         var session = new Session(
             new SessionId(dto.SessionId),
-            dto.SessionId,
+            remoteId,
             (TaskDescription)dto.TaskDescription,
             new SourceContext(dto.Repository, dto.SourceBranch),
             new SessionPulse(dto.PulseStatus),
-            dto.CreatedAt,
+            createdAt,
             dto.UpdatedAt,
             null,
             null,

@@ -28,10 +28,7 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
         ["userMessaged"] = typeof(JulesUserMessagedPayloadDto),
         ["agentMessaged"] = typeof(JulesAgentMessagedPayloadDto),
         ["sessionCompleted"] = typeof(JulesSessionCompletedPayloadDto),
-        ["sessionFailed"] = typeof(JulesSessionFailedPayloadDto),
-        ["codeChanges"] = typeof(JulesCodeChangesPayloadDto),
-        ["bashOutput"] = typeof(JulesBashOutputPayloadDto),
-        ["media"] = typeof(JulesMediaPayloadDto)
+        ["sessionFailed"] = typeof(JulesSessionFailedPayloadDto)
     };
 
     public override JulesActivityDto? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -55,7 +52,10 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
             }
         }
 
-        payload ??= new JulesUnknownPayloadDto("Unknown", node.ToJsonString());
+        if (payload == null)
+        {
+            throw new JsonException($"Jules API Error: Unrecognized activity structure. No known payload keys found in JSON: {node.ToJsonString()}");
+        }
 
         return new JulesActivityDto(metadata, payload);
     }

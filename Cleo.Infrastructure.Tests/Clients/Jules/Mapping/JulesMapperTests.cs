@@ -191,27 +191,6 @@ public class JulesMapperTests
         activity.ExecutiveSummary.Should().Be("Failure Summary");
     }
 
-    [Fact(DisplayName = "Given an unknown activity type, UnknownActivityMapper should map it to a generic ProgressActivity.")]
-    public void UnknownActivityMapper_ShouldMap_Safely()
-    {
-        // Arrange
-        var payload = new JulesUnknownPayloadDto("Weird", "{}");
-        var metadata = new JulesActivityMetadataDto("act-unknown", "rem-unknown", "Strange event", TestTimeStr, "system", null);
-        var dto = new JulesActivityDto(metadata, payload);
-
-        var mapper = new Cleo.Infrastructure.Clients.Jules.Mapping.UnknownActivityMapper();
-
-        // Act
-        var result = mapper.Map(dto);
-
-        // Assert
-        var activity = result.Should().BeOfType<ProgressActivity>().Subject;
-        activity.Intent.Should().Contain("Unknown Activity Type: Weird"); // Mapped from 'Title'
-        activity.Reasoning.Should().Contain("Raw JSON preserved"); // Mapped from 'Description'
-
-        activity.ExecutiveSummary.Should().Be("Strange event");
-    }
-
     [Fact(DisplayName = "Given a planApproved DTO, ApprovalActivityMapper should map it to an ApprovalActivity.")]
     public void ApprovalActivityMapper_ShouldMap_PlanApproved()
     {

@@ -17,7 +17,7 @@ internal static class ArtifactMappingHelper
                 var patch = dto.ChangeSet.GitPatch;
                 artifacts.Add(new ChangeSet(
                     dto.ChangeSet.Source ?? "unknown-source",
-                    new GitPatch(
+                    GitPatch.FromApi(
                         patch.UnidiffPatch ?? string.Empty,
                         patch.BaseCommitId ?? string.Empty,
                         patch.SuggestedCommitMessage)));

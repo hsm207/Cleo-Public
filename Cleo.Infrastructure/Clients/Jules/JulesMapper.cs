@@ -44,7 +44,7 @@ internal static class JulesMapper
         {
             var patch = changeSetOutput.ChangeSet!.GitPatch!;
             var source = changeSetOutput.ChangeSet.Source ?? "remote-source";
-            var evidence = new List<Artifact> { new ChangeSet(source, new GitPatch(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
+            var evidence = new List<Artifact> { new ChangeSet(source, GitPatch.FromApi(patch.UnidiffPatch ?? string.Empty, "remote", null)) };
 
             // Attach the patch to a synthetic completion activity to mark delivery
             session.AddActivity(new CompletionActivity(

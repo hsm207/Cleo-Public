@@ -37,7 +37,11 @@ public record ChangeSet : Artifact
             ? Patch.BaseCommitId[..7]
             : Patch.BaseCommitId;
 
-        return $"ChangeSet [{shortSha}]: {fileSummary}";
+        var shortFingerprint = Patch.Fingerprint.Length >= 7
+            ? Patch.Fingerprint[..7]
+            : Patch.Fingerprint;
+
+        return $"ChangeSet [{shortSha}:{shortFingerprint}]: {fileSummary}";
     }
 
     private static string GetNarrativeFileSummary(IReadOnlyList<string> files)

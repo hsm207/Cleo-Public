@@ -5,7 +5,7 @@ namespace Cleo.Core.Tests.Domain.ValueObjects;
 
 public sealed class ChangeSetTests
 {
-    private static readonly GitPatch Patch = new("diff", "sha");
+    private static readonly GitPatch Patch = GitPatch.FromApi("diff", "sha");
 
     [Fact(DisplayName = "ChangeSet should be created with valid arguments.")]
     public void ShouldCreateWithValidArgs()
@@ -30,7 +30,7 @@ public sealed class ChangeSetTests
         Assert.Throws<ArgumentNullException>(() => new ChangeSet("source", null!));
     }
 
-    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary with file details and short SHA.")]
+    [Fact(DisplayName = "ChangeSet should provide a human-friendly summary with file details, short SHA, and fingerprint.")]
     public void ShouldProvideSummary()
     {
         var diff = @"--- a/file1.cs
@@ -38,8 +38,13 @@ public sealed class ChangeSetTests
 --- a/README.md
 +++ b/README.md
 ";
-        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", new GitPatch(diff, "852ae2160ccaefa8112af65941560654ad32261c"));
-        Assert.Equal("ChangeSet [852ae21]: Updated [file1.cs, README.md]", changeSet.GetSummary());
+        var patch = GitPatch.FromApi(diff, "852ae2160ccaefa8112af65941560654ad32261c");
+        var changeSet = new ChangeSet("sources/github/hsm207/Cleo", patch);
+
+        var expectedFingerprint = patch.Fingerprint[..7];
+        var expectedSha = "852ae21";
+
+        Assert.Equal($"ChangeSet [{expectedSha}:{expectedFingerprint}]: Updated [file1.cs, README.md]", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should summarize impact magnitude when files exceed narrative threshold.")]
@@ -52,12 +57,13 @@ public sealed class ChangeSetTests
             diff += $"+++ b/src/Common/{i}.cs\n";
         }
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
-        // Short sha is 7 chars. "sha1234" is 7 chars.
+        var patch = GitPatch.FromApi(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
         // Common path should be "src/Common"
         var summary = changeSet.GetSummary();
-        Assert.Equal("ChangeSet [sha1234]: 6 src/Common/* modified", summary);
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 src/Common/* modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle no common path when summarizing impact magnitude.")]
@@ -70,25 +76,23 @@ public sealed class ChangeSetTests
             diff += $"+++ b/{i}.cs\n";
         }
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = GitPatch.FromApi(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
         var summary = changeSet.GetSummary();
-        // Common path extract might be empty or "/" depending on implementation.
-        // Implementation logic:
-        // matchingChars starts as "0.cs" (from first file).
-        // Next file "1.cs". Common prefix is empty string.
-        // So commonPath is empty.
-        // If empty, returns "files".
-        Assert.Equal("ChangeSet [sha1234]: 6 files modified", summary);
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 files modified", summary);
     }
 
     [Fact(DisplayName = "ChangeSet should handle empty file list.")]
     public void ShouldHandleEmptyFileList()
     {
         var diff = ""; // Empty diff -> 0 files
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = GitPatch.FromApi(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
-        Assert.Equal("ChangeSet [sha1234]: Produced patch", changeSet.GetSummary());
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: Produced patch", changeSet.GetSummary());
     }
 
     [Fact(DisplayName = "ChangeSet should handle partial common path.")]
@@ -102,8 +106,28 @@ public sealed class ChangeSetTests
         for (int i = 0; i < 3; i++) diff += $"+++ b/src/A/{i}.cs\n";
         for (int i = 3; i < 6; i++) diff += $"+++ b/src/B/{i}.cs\n";
 
-        var changeSet = new ChangeSet("source", new GitPatch(diff, "sha1234"));
+        var patch = GitPatch.FromApi(diff, "sha1234");
+        var changeSet = new ChangeSet("source", patch);
+        var fp = patch.Fingerprint[..7];
 
-        Assert.Equal("ChangeSet [sha1234]: 6 src/* modified", changeSet.GetSummary());
+        Assert.Equal($"ChangeSet [sha1234:{fp}]: 6 src/* modified", changeSet.GetSummary());
+    }
+
+    [Fact(DisplayName = "ChangeSet should provide different summaries for different content even with the same base SHA.")]
+    public void ShouldProduceDifferentSummariesForDifferentContentWithSameBaseSha()
+    {
+        var commonSha = "76d9c23d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t";
+        var patch1 = GitPatch.FromApi("diff content v1", commonSha);
+        var patch2 = GitPatch.FromApi("diff content v2", commonSha);
+
+        var changeSet1 = new ChangeSet("source", patch1);
+        var changeSet2 = new ChangeSet("source", patch2);
+
+        var summary1 = changeSet1.GetSummary();
+        var summary2 = changeSet2.GetSummary();
+
+        Assert.NotEqual(summary1, summary2);
+        Assert.Contains(patch1.Fingerprint[..7], summary1, StringComparison.Ordinal);
+        Assert.Contains(patch2.Fingerprint[..7], summary2, StringComparison.Ordinal);
     }
 }

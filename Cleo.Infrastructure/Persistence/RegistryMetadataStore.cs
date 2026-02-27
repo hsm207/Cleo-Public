@@ -30,34 +30,12 @@ internal sealed class RegistryMetadataStore : IMetadataStore
         }
 
         var json = await _fileSystem.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        try
-        {
-            return JsonSerializer.Deserialize<SessionMetadataDto>(json, Options);
-        }
-        catch (JsonException)
-        {
-            // Corrupt metadata?
-            return null;
-        }
+        return JsonSerializer.Deserialize<SessionMetadataDto>(json, Options);
     }
 
     public async Task SaveAsync(SessionMetadataDto metadata, CancellationToken cancellationToken)
     {
-        // SessionMetadataDto stores ID as string, need to convert back to SessionId to get path.
-        // Assuming metadata.SessionId is valid (it should be "sessions/123" or "123"?).
-        // SessionId constructor requires "sessions/" prefix.
-
-        SessionId sessionId;
-        if (metadata.SessionId.StartsWith("sessions/", StringComparison.OrdinalIgnoreCase))
-        {
-            sessionId = new SessionId(metadata.SessionId);
-        }
-        else
-        {
-             // This case should ideally not happen if we map correctly, but defensively:
-             sessionId = new SessionId($"sessions/{metadata.SessionId}");
-        }
-
+        var sessionId = new SessionId(metadata.SessionId);
         var path = _layout.GetMetadataPath(sessionId);
         _provisioner.EnsureSessionDirectory(sessionId);
 

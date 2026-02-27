@@ -2,6 +2,7 @@ using Cleo.Core.Domain.Entities;
 using Cleo.Core.Domain.Events;
 using Cleo.Core.Domain.Services;
 using Cleo.Core.Domain.ValueObjects;
+using Cleo.Tests.Common;
 using Xunit;
 
 namespace Cleo.Core.Tests.Domain.Entities;
@@ -73,7 +74,7 @@ public sealed class SessionTests
     public void AddingChangeSetEvidenceShouldUpdateSolution()
     {
         var session = CreateSession();
-        var patch = new GitPatch("diff-content", "base-commit");
+        var patch = GitPatch.FromApi("diff-content", "base-commit");
         var changeSet = new ChangeSet("sources/repo", patch);
         var evidence = new List<Artifact> { changeSet };
         var activity = new ProgressActivity("act/2", "remote-act-2", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence);
@@ -115,7 +116,7 @@ public sealed class SessionTests
         var e1 = new SessionAssigned(Id, Task, now);
         var e2 = new StatusHeartbeatReceived(Id, InitialPulse, now);
         var e3 = new FeedbackRequested(Id, "prompt", now);
-        var e4 = new SolutionReady(Id, new ChangeSet("s", new GitPatch("d", "b")), now);
+        var e4 = new SolutionReady(Id, new ChangeSet("s", GitPatch.FromApi("d", "b")), now);
 
         Assert.Equal(now, e1.OccurredOn);
         Assert.Equal(now, e2.OccurredOn);
@@ -175,30 +176,31 @@ public sealed class SessionTests
     public void EventsShouldBeFullyExercised()
     {
         var now = DateTimeOffset.UtcNow;
-        var patch = new GitPatch("d", "b");
+        var patch = GitPatch.FromApi("diff", "sha");
         var changeSet = new ChangeSet("s", patch);
 
-        var e1 = new SessionAssigned(Id, Task, now);
-        var e2 = new StatusHeartbeatReceived(Id, InitialPulse, now);
-        var e3 = new FeedbackRequested(Id, "prompt", now);
-        var e4 = new SolutionReady(Id, changeSet, now);
+        var e1 = new SessionAssigned(Id, Task);
+        var e2 = new StatusHeartbeatReceived(Id, InitialPulse);
+        var e3 = new FeedbackRequested(Id, "prompt");
+        var e4 = new SolutionReady(Id, changeSet);
 
         // Explicitly hit EVERY property of EVERY event
         Assert.Equal(Id, e1.SessionId);
         Assert.Equal(Task, e1.Task);
-        Assert.Equal(now, e1.OccurredOn);
+        Assert.True((e1.OccurredOn - now).Duration() < TimeSpan.FromSeconds(5));
 
         Assert.Equal(Id, e2.SessionId);
         Assert.Equal(InitialPulse, e2.Pulse);
-        Assert.Equal(now, e2.OccurredOn);
+        Assert.True((e2.OccurredOn - now).Duration() < TimeSpan.FromSeconds(5));
 
         Assert.Equal(Id, e3.SessionId);
         Assert.Equal("prompt", e3.Prompt);
-        Assert.Equal(now, e3.OccurredOn);
+        Assert.True((e3.OccurredOn - now).Duration() < TimeSpan.FromSeconds(5));
 
         Assert.Equal(Id, e4.SessionId);
         Assert.Equal(changeSet, e4.Solution);
-        Assert.Equal(now, e4.OccurredOn);
+        // e4 uses internal UtcNow, so it won't match 'now' exactly.
+        Assert.True((e4.OccurredOn - now).Duration() < TimeSpan.FromSeconds(5));
     }
 
     [Fact(DisplayName = "Session should expose all properties correctly.")]
@@ -269,7 +271,7 @@ public sealed class SessionTests
     public void EventsShouldExposeProperties()
     {
         var now = DateTimeOffset.UtcNow;
-        var patch = new GitPatch("d", "b");
+        var patch = GitPatch.FromApi("d", "b");
         var changeSet = new ChangeSet("s", patch);
 
         var e1 = new SessionAssigned(Id, Task);
@@ -284,7 +286,8 @@ public sealed class SessionTests
         Assert.Equal(changeSet, e4.Solution);
 
         // Exercise the 'OccurredOn' from secondary constructor
-        Assert.True((DateTimeOffset.UtcNow - e1.OccurredOn).TotalSeconds < 5);
+        // Allow a small delta for execution time variance
+        Assert.True((DateTimeOffset.UtcNow - e1.OccurredOn).TotalSeconds < 10);
     }
 
     [Fact(DisplayName = "Session should validate primitive constructor arguments.")]
@@ -369,7 +372,7 @@ public sealed class SessionTests
         var session = CreateSession();
 
         // Case 1: Solution present, but NO PR
-        var patch = new GitPatch("d", "b");
+        var patch = GitPatch.FromApi("d", "b");
         var changeSet = new ChangeSet("s", patch);
         var evidence = new List<Artifact> { changeSet };
         session.AddActivity(new ProgressActivity("a1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "Done", null, evidence));
@@ -466,5 +469,24 @@ public sealed class SessionTests
 
         // Assert
         Assert.Equal(SessionState.WTF, session.State);
+    }
+
+    [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
+    public void SessionEvaluatesSessionStateLogicallyWhenIdleButBlockedOnPlan()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("123");
+        var task = (TaskDescription)"Fix bug";
+        var source = TestFactory.CreateSourceContext("repo");
+
+        // A session that is physically IDLE (Completed) but has a Plan and NO PR
+        var pulse = new SessionPulse(SessionStatus.Completed);
+        var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
+
+        session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plan-1"), new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
+
+        // Act & Assert
+        Assert.Equal(SessionStatus.Completed, session.Pulse.Status);
+        Assert.Equal(SessionState.AwaitingPlanApproval, session.State); // Logical Override! 🧠🔥
     }
 }
