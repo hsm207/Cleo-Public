@@ -28,8 +28,7 @@ internal sealed class JulesActivityConverter : JsonConverter<JulesActivityDto>
         ["userMessaged"] = typeof(JulesUserMessagedPayloadDto),
         ["agentMessaged"] = typeof(JulesAgentMessagedPayloadDto),
         ["sessionCompleted"] = typeof(JulesSessionCompletedPayloadDto),
-        ["sessionFailed"] = typeof(JulesSessionFailedPayloadDto),
-        ["artifacts"] = typeof(JulesArtifactsPayloadDto)
+        ["sessionFailed"] = typeof(JulesSessionFailedPayloadDto)
     };
 
     public override JulesActivityDto? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

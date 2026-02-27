@@ -56,7 +56,3 @@ public sealed record JulesMediaPayloadDto(
     [property: JsonPropertyName("data")] string? Data,
     [property: JsonPropertyName("mimeType")] string? MimeType
 ) : JulesActivityPayloadDto;
-
-public sealed record JulesArtifactsPayloadDto(
-    [property: JsonPropertyName("artifacts")] IReadOnlyList<JulesArtifactDto>? Artifacts
-) : JulesActivityPayloadDto;
