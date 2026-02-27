@@ -23,3 +23,4 @@ obj/
 [internal metadata: .gemini scrubbed]/tmp/
 .playwright-mcp/
 [internal metadata: .gemini scrubbed]/private/
+[internal metadata: .env scrubbed]
