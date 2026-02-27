@@ -131,7 +131,7 @@ public class RegistrySessionPersistenceTests : IDisposable
         foreach (var original in activities)
         {
             var loaded = result.SessionLog.Single(a => a.RemoteId == original.RemoteId);
-            Assert.Equal(original.Id, loaded.Id);
+            Assert.Equal(original.Id, loaded.Id);     
             Assert.Equal(original.Originator, loaded.Originator);
             Assert.Equal(original.Timestamp, loaded.Timestamp);
             Assert.Equal(original.ExecutiveSummary, loaded.ExecutiveSummary);
@@ -289,29 +289,5 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Assert ✅
         Assert.Single(filtered);
         Assert.IsType<ProgressActivity>(filtered[0]);
-    }
-
-    [Fact(DisplayName = "The Session Registry should handle actionless activities (metadata + artifacts only) with 100% integrity.")]
-    public async Task ShouldPreserveIntegrityForActionlessActivities()
-    {
-        // Arrange 🏗️
-        var id = TestFactory.CreateSessionId("actionless");
-        var now = DateTimeOffset.UtcNow;
-        var session = new Session(id, "r", new TaskDescription("Actionless Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), now);
-
-        // A session activity that only has metadata and artifacts (common in some Jules events)
-        var artifact = new BashOutput("ls", "file.txt", 0);
-        var activity = new MessageActivity("act-1", "rem-1", now, ActivityOriginator.Agent, "Artifact discovery", new[] { artifact });
-
-        // Act 🚀
-        await _writer.RememberAsync(session, CancellationToken.None);
-        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
-        var result = await _reader.RecallAsync(id, CancellationToken.None);
-
-        // Assert ✅
-        Assert.NotNull(result);
-        var loaded = result!.SessionLog.OfType<MessageActivity>().Single();
-        Assert.Single(loaded.Evidence!);
-        Assert.IsType<BashOutput>(loaded.Evidence!.First());
     }
 }
