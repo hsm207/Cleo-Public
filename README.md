@@ -64,5 +64,23 @@ dotnet tool install --local --add-source ./dist Cleo.Cli --version 0.1.0-alpha
 
    `dotnet tool run cleo -- talk <session-id> --message "Don't lose money."`
 
+7. **Check-in**
+
+   Refresh the session's pulse and synchronize new activities.
+
+   `dotnet tool run cleo -- session checkin <session-id>`
+
+8. **Review the Log**
+
+   Inspect the newly synchronized activity history and agent thoughts.
+
+   `dotnet tool run cleo -- log view <session-id>`
+
+9. **Get Result**
+
+   Once the session is complete, the check-in command provides the the link to the Pull Request.
+
+   `dotnet tool run cleo -- session checkin <session-id>`
+
 ---
 *Built with Clean Architecture and DDD in .NET 10.*
