@@ -14,4 +14,23 @@
 *   **Result-Oriented**: Every session is designed to deliver a Pull Request as the primary deliverable.
 *   **Agent Orchestration**: Optimized for AI-to-AI collaboration with a structured command surface and stateful local Registry.
 
-## 🚀 Installation
+## 🚀 Quick Start
+
+### Installation
+Clone the public mirror and build using the .NET 10 SDK:
+
+```bash
+git clone https://github.com/hsm207/Cleo-Public.git
+cd Cleo-Public
+dotnet build
+```
+
+### Basic Workflow
+1.  **Authenticate**: `cleo auth login <api-key>`
+2.  **Start Task**: `cleo session new "Fix the login bug"`
+3.  **Review Plan**: `cleo plan view <id>`
+4.  **Authorize**: `cleo plan approve <id>`
+5.  **Talk to Jules**: `cleo talk <id> --message "Focus on the UI first"`
+
+---
+*Built with Clean Architecture and DDD in .NET 10.*
