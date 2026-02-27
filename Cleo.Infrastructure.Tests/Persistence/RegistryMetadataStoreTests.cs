@@ -70,8 +70,8 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         Assert.Equal("Test Task", result.TaskDescription);
     }
 
-    [Fact]
-    public async Task LoadAsync_ReturnsNull_WhenJsonIsCorrupt()
+    [Fact(DisplayName = "RegistryMetadataStore should allow deserialization errors to bubble up to expose corruption.")]
+    public async Task LoadAsync_Throws_WhenJsonIsCorrupt()
     {
         // Arrange
         var sessionId = TestFactory.CreateSessionId("123");
@@ -79,11 +79,8 @@ public sealed class RegistryMetadataStoreTests : IDisposable
         _provisioner.EnsureSessionDirectory(sessionId);
         await File.WriteAllTextAsync(path, "{ garbage }");
 
-        // Act
-        var result = await _store.LoadAsync(sessionId, CancellationToken.None);
-
-        // Assert
-        Assert.Null(result);
+        // Act & Assert
+        await Assert.ThrowsAsync<System.Text.Json.JsonException>(() => _store.LoadAsync(sessionId, CancellationToken.None));
     }
 
     [Fact]

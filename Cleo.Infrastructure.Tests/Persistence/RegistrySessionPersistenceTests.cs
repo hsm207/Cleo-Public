@@ -106,7 +106,6 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         // Assert 3 activities (1 auto-generated SessionAssigned + 2 appended)
         Assert.Equal(3, result.SessionLog.Count);
-        
         Assert.Contains(result.SessionLog, a => a is SessionAssignedActivity);
         
         var loadedMsg = result.SessionLog.OfType<MessageActivity>().Single();
@@ -156,11 +155,10 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.False(Directory.Exists(sessionDir));
     }
 
-    [Fact(DisplayName = "The Session Registry should return an empty list when the sessions directory does not exist.")]
+    [Fact(DisplayName = "The Session Registry should handle missing root directories gracefully by returning an empty session list.")]
     public async Task ShouldReturnEmptyListWhenRegistryDirectoryDoesNotExist()
     {
         // Arrange 🏗️
-        // Delete the directory created in constructor
         if (Directory.Exists(_sessionsRoot)) Directory.Delete(_sessionsRoot, true);
 
         // Act 🚀
@@ -170,23 +168,15 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Empty(results);
     }
 
-    [Fact(DisplayName = "The Session Registry should ignore invalid folder names when listing sessions to prevent corruption from external files.")]
-    public async Task ShouldIgnoreInvalidFolderNamesWhenListingSessions()
+    [Fact(DisplayName = "The Session Registry should throw an exception when discovering a session folder that lacks a metadata file, exposing registry corruption.")]
+    public async Task ShouldThrowWhenMetadataIsMissingForDiscoveredSession()
     {
         // Arrange 🏗️
-        // Create a valid session
-        var id = TestFactory.CreateSessionId("valid");
-        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+        var roguePath = Path.Combine(_sessionsRoot, "rogue-session");
+        Directory.CreateDirectory(roguePath);
 
-        // Create an invalid folder (not a SessionId)
-        var invalidPath = Path.Combine(_sessionsRoot, "not-a-session-id");
-        Directory.CreateDirectory(invalidPath);
-
-        // Act 🚀
-        var results = await _reader.ListAsync(CancellationToken.None);
-
-        // Assert ✅
-        Assert.Single(results);
-        Assert.Equal(id, results.First().Id);
+        // Act & Assert ✅
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _reader.ListAsync(CancellationToken.None));
+        Assert.Contains("Registry integrity violation", ex.Message, StringComparison.Ordinal);
     }
 }
