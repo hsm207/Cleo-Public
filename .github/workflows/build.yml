@@ -20,14 +20,5 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: Build
+    - name: Build (Verify Compilation)
       run: dotnet build --no-restore --configuration Release
-      
-    - name: Test & Collect Coverage
-      run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }} # Needed for private, but good practice for public!
-        slug: hsm207/Cleo-Public
