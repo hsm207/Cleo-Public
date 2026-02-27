@@ -3,7 +3,11 @@ using Cleo.Core.Domain.ValueObjects;
 using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Persistence.Mappers;
+using Cleo.Infrastructure.Clients.Jules.Dtos.Responses;
+using Cleo.Infrastructure.Clients.Jules.Mapping;
 using Cleo.Tests.Common;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
 
@@ -15,6 +19,12 @@ public class RegistrySessionPersistenceTests : IDisposable
     private readonly RegistrySessionArchivist _archivist;
     private readonly string _sessionsRoot;
     private readonly PhysicalFileSystem _fileSystem;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     public RegistrySessionPersistenceTests()
     {
@@ -37,13 +47,13 @@ public class RegistrySessionPersistenceTests : IDisposable
 
         var activityMappers = new IActivityPersistenceMapper[]
         {
-            new PlanningActivityMapper(artifactMapperFactory),
-            new MessageActivityMapper(artifactMapperFactory),
-            new ApprovalActivityMapper(artifactMapperFactory),
-            new ProgressActivityMapper(artifactMapperFactory),
-            new CompletionActivityMapper(artifactMapperFactory),
-            new FailureActivityMapper(artifactMapperFactory),
-            new SessionAssignedActivityMapper(artifactMapperFactory)
+            new Cleo.Infrastructure.Persistence.Mappers.PlanningActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.MessageActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ApprovalActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.ProgressActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.CompletionActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.FailureActivityMapper(artifactMapperFactory),
+            new Cleo.Infrastructure.Persistence.Mappers.SessionAssignedActivityMapper(artifactMapperFactory)
         };
         var activityFactory = new ActivityMapperFactory(activityMappers);
         var mapper = new RegistryTaskMapper(activityFactory);
@@ -62,8 +72,8 @@ public class RegistrySessionPersistenceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact(DisplayName = "The Session Registry should preserve session fidelity, ensuring metadata, history, and complex artifacts are recoverable with 100% accuracy.")]
-    public async Task ShouldPreserveSessionFidelityWhenRememberedAndRecalled()
+    [Fact(DisplayName = "The Session Registry should preserve exhaustive session fidelity, ensuring every activity and nested artifact is recoverable with 100% accuracy.")]
+    public async Task ShouldPreserveExhaustiveSessionFidelityWhenRememberedAndRecalled()
     {
         // Arrange 🏗️
         var id = TestFactory.CreateSessionId("fidelity-1");
@@ -74,20 +84,30 @@ public class RegistrySessionPersistenceTests : IDisposable
         var session = new Session(
             id, 
             "remote-1", 
-            new TaskDescription("Fidelity Test"), 
+            new TaskDescription("Exhaustive Fidelity Test"), 
             TestFactory.CreateSourceContext("repo"), 
             new SessionPulse(SessionStatus.InProgress), 
             birthDate,
             updatedAt: activityDate,
             dashboardUri: dashboardUri);
 
-        var patch = GitPatch.FromApi("diff content", "sha123");
-        var changeSet = new ChangeSet("source", patch);
-        var activities = new SessionActivity[]
+        // Load exhaustive activities from [internal metadata: TestData scrubbed] 💎🎁
+        var activitiesPath = Path.Combine("[internal metadata: TestData scrubbed]", "Jules", "activities_list.json");
+        var activitiesJson = File.ReadAllText(activitiesPath);
+        var activitiesDto = JsonSerializer.Deserialize<JulesListActivitiesResponseDto>(activitiesJson, JsonOptions)!;
+        
+        var julesMapper = new CompositeJulesActivityMapper(new IJulesActivityMapper[]
         {
-            new MessageActivity("msg-1", "rem-msg", birthDate.AddMinutes(5), ActivityOriginator.User, "Hello Jules"),
-            new ProgressActivity("act-1", "rem-act", activityDate, ActivityOriginator.Agent, "Thinking...", null, new[] { changeSet })
-        };
+            new Cleo.Infrastructure.Clients.Jules.Mapping.PlanningActivityMapper(), 
+            new Cleo.Infrastructure.Clients.Jules.Mapping.UserMessageActivityMapper(),
+            new Cleo.Infrastructure.Clients.Jules.Mapping.AgentMessageActivityMapper(),
+            new Cleo.Infrastructure.Clients.Jules.Mapping.ProgressActivityMapper(),
+            new Cleo.Infrastructure.Clients.Jules.Mapping.CompletionActivityMapper(),
+            new Cleo.Infrastructure.Clients.Jules.Mapping.FailureActivityMapper(),
+            new Cleo.Infrastructure.Clients.Jules.Mapping.ApprovalActivityMapper()
+        });
+
+        var activities = activitiesDto.Activities.Select(a => julesMapper.Map(a)).ToArray();
 
         // Act 🚀
         await _writer.RememberAsync(session, CancellationToken.None);
@@ -104,18 +124,65 @@ public class RegistrySessionPersistenceTests : IDisposable
         Assert.Equal(session.DashboardUri, result.DashboardUri);
         Assert.Equal(session.Pulse.Status, result.Pulse.Status);
 
-        // Assert 3 activities (1 auto-generated SessionAssigned + 2 appended)
-        Assert.Equal(3, result.SessionLog.Count);
+        // Assert count (1 auto-generated SessionAssigned + loaded rich activities)
+        Assert.Equal(activities.Length + 1, result.SessionLog.Count);
         Assert.Contains(result.SessionLog, a => a is SessionAssignedActivity);
         
-        var loadedMsg = result.SessionLog.OfType<MessageActivity>().Single();
-        Assert.Equal("Hello Jules", loadedMsg.Text);
+        foreach (var original in activities)
+        {
+            var loaded = result.SessionLog.Single(a => a.RemoteId == original.RemoteId);
+            Assert.Equal(original.Id, loaded.Id);
+            Assert.Equal(original.Originator, loaded.Originator);
+            Assert.Equal(original.Timestamp, loaded.Timestamp);
+            Assert.Equal(original.ExecutiveSummary, loaded.ExecutiveSummary);
+            
+            // Nested Fidelity Checks (Elevated from scraps) 🏺📜💎
+            if (original is MessageActivity originalMsg && loaded is MessageActivity loadedMsg)
+            {
+                Assert.Equal(originalMsg.Text, loadedMsg.Text);
+            }
+            
+            if (original is PlanningActivity originalPlan && loaded is PlanningActivity loadedPlan)
+            {
+                Assert.Equal(originalPlan.PlanId, loadedPlan.PlanId);
+                Assert.Equal(originalPlan.Steps.Count, loadedPlan.Steps.Count);
+                for (int i = 0; i < originalPlan.Steps.Count; i++)
+                {
+                    Assert.Equal(originalPlan.Steps.ElementAt(i).Id, loadedPlan.Steps.ElementAt(i).Id);
+                    Assert.Equal(originalPlan.Steps.ElementAt(i).Title, loadedPlan.Steps.ElementAt(i).Title);
+                    Assert.Equal(originalPlan.Steps.ElementAt(i).Description, loadedPlan.Steps.ElementAt(i).Description);
+                }
+            }
 
-        var loadedProgress = result.SessionLog.OfType<ProgressActivity>().Single();
-        var loadedChangeSet = loadedProgress.Evidence?.OfType<ChangeSet>().Single();
-        Assert.NotNull(loadedChangeSet);
-        Assert.Equal(patch.Fingerprint, loadedChangeSet!.Patch.Fingerprint);
-        Assert.Equal(patch.UniDiff, loadedChangeSet.Patch.UniDiff);
+            if (original is ProgressActivity originalProg && loaded is ProgressActivity loadedProg)
+            {
+                Assert.Equal(originalProg.Evidence?.Count ?? 0, loadedProg.Evidence?.Count ?? 0);
+                if (originalProg.Evidence != null)
+                {
+                    foreach (var originalArt in originalProg.Evidence)
+                    {
+                        var loadedArt = loadedProg.Evidence!.Single(a => a.GetType() == originalArt.GetType() && a.GetSummary() == originalArt.GetSummary());
+                        if (originalArt is ChangeSet originalCs && loadedArt is ChangeSet loadedCs)
+                        {
+                            Assert.Equal(originalCs.Patch.Fingerprint, loadedCs.Patch.Fingerprint);
+                            Assert.Equal(originalCs.Patch.UniDiff, loadedCs.Patch.UniDiff);
+                        }
+                        if (originalArt is BashOutput originalBash && loadedArt is BashOutput loadedBash)
+                        {
+                            Assert.Equal(originalBash.Command, loadedBash.Command);
+                            Assert.Equal(originalBash.Output, loadedBash.Output);
+                            Assert.Equal(originalBash.ExitCode, loadedBash.ExitCode);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Discriminator Stability Check 🧱
+        var historyPath = Path.Combine(_sessionsRoot, "fidelity-1", "activities.jsonl");
+        var historyLines = File.ReadAllLines(historyPath);
+        Assert.Contains(historyLines, l => l.Contains("\"Type\":\"PLAN_GENERATED\"", StringComparison.Ordinal));
+        Assert.Contains(historyLines, l => l.Contains("\"Type\":\"PROGRESS\"", StringComparison.Ordinal));
     }
 
     [Fact(DisplayName = "The Session Registry should enumerate all locally remembered sessions to provide a complete overview of the developer's workbench.")]
@@ -178,5 +245,64 @@ public class RegistrySessionPersistenceTests : IDisposable
         // Act & Assert ✅
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _reader.ListAsync(CancellationToken.None));
         Assert.Contains("Registry integrity violation", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "The Session Registry should allow retrieving raw history through the Archivist for high-efficiency audit trails.")]
+    public async Task ShouldRetrieveHistoryUsingTheArchivist()
+    {
+        // Arrange 🏗️
+        var id = TestFactory.CreateSessionId("archivist-1");
+        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+        
+        var activities = new[] { new MessageActivity("1", "r1", DateTimeOffset.UtcNow, ActivityOriginator.User, "Hi") };
+        await _archivist.AppendAsync(id, activities, CancellationToken.None);
+
+        // Act 🚀
+        var history = await _archivist.GetHistoryAsync(id, null, CancellationToken.None);
+
+        // Assert ✅
+        Assert.Single(history);
+        Assert.Equal("Hi", ((MessageActivity)history[0]).Text);
+    }
+
+    [Fact(DisplayName = "The Session Registry should support filtering history through criteria to enable targeted narrative analysis.")]
+    public async Task ShouldFilterHistoryUsingCriteria()
+    {
+        // Arrange 🏗️
+        var id = TestFactory.CreateSessionId("filter-1");
+        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+        
+        var now = DateTimeOffset.UtcNow;
+        var activities = new SessionActivity[] 
+        { 
+            new MessageActivity("1", "r1", now, ActivityOriginator.User, "User said something"),
+            new ProgressActivity("2", "r2", now.AddMinutes(1), ActivityOriginator.Agent, "Agent thinking")
+        };
+        await _archivist.AppendAsync(id, activities, CancellationToken.None);
+
+        // Filter for only Progress activities
+        var criteria = new HistoryCriteria(ActivityTypes: new[] { typeof(ProgressActivity) });
+
+        // Act 🚀
+        var filtered = await _archivist.GetHistoryAsync(id, criteria, CancellationToken.None);
+
+        // Assert ✅
+        Assert.Single(filtered);
+        Assert.IsType<ProgressActivity>(filtered[0]);
+    }
+
+    [Fact(DisplayName = "The Session Registry should return an empty list when history is requested for a session with no recorded activities.")]
+    public async Task ShouldReturnEmptyHistoryWhenFileDoesNotExist()
+    {
+        // Arrange 🏗️
+        var id = TestFactory.CreateSessionId("empty-history");
+        // Only remember metadata, no activities
+        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+
+        // Act 🚀
+        var history = await _archivist.GetHistoryAsync(id, null, CancellationToken.None);
+
+        // Assert ✅
+        Assert.Empty(history);
     }
 }
