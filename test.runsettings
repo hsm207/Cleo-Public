@@ -5,7 +5,8 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura,json,lcov</Format>
-          <Exclude>[xunit.*]*</Exclude>
+          <Include>[Cleo.*]*</Include>
+          <Exclude>[xunit.*]*,[*Tests]*</Exclude>
           <IncludeTestProjects>false</IncludeTestProjects>
         </Configuration>
       </DataCollector>
