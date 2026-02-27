@@ -4,7 +4,6 @@ using Cleo.Infrastructure.Persistence;
 using Cleo.Infrastructure.Persistence.Internal;
 using Cleo.Infrastructure.Persistence.Mappers;
 using Cleo.Tests.Common;
-using Moq;
 
 namespace Cleo.Infrastructure.Tests.Persistence;
 
@@ -14,26 +13,21 @@ public class RegistrySessionPersistenceTests : IDisposable
     private readonly RegistrySessionReader _reader;
     private readonly RegistrySessionWriter _writer;
     private readonly RegistrySessionArchivist _archivist;
-
-    // We retain mocks for things OUTSIDE the scope of persistence (like specific activity mapping logic if needed),
-    // but for the persistence mechanism itself, we use concretions.
-    // However, ActivityMapperFactory is complex, so using the real one is best for "Integration" feel.
-    private readonly ActivityMapperFactory _activityFactory;
+    private readonly string _sessionsRoot;
+    private readonly PhysicalFileSystem _fileSystem;
 
     public RegistrySessionPersistenceTests()
     {
         _fixture = new TemporaryDirectoryFixture();
-        var sessionsRoot = Path.Combine(_fixture.DirectoryPath, "sessions");
-        Directory.CreateDirectory(sessionsRoot);
+        _sessionsRoot = Path.Combine(_fixture.DirectoryPath, "sessions");
+        Directory.CreateDirectory(_sessionsRoot);
 
-        // Real Concretions 🏗️
-        var fileSystem = new PhysicalFileSystem();
-        var pathResolver = new Cleo.Infrastructure.Tests.Persistence.Internal.TestSessionPathResolver(sessionsRoot);
+        _fileSystem = new PhysicalFileSystem();
+        var pathResolver = new Cleo.Infrastructure.Tests.Persistence.Internal.TestSessionPathResolver(_sessionsRoot);
         var layout = new DirectorySessionLayout(pathResolver);
-        var provisioner = new DirectorySessionProvisioner(layout, fileSystem);
-        var metadataStore = new RegistryMetadataStore(layout, fileSystem, provisioner);
+        var provisioner = new DirectorySessionProvisioner(layout, _fileSystem);
+        var metadataStore = new RegistryMetadataStore(layout, _fileSystem, provisioner);
 
-        // Real Mappers 🔌
         var artifactMapperFactory = new ArtifactMapperFactory(new IArtifactPersistenceMapper[]
         {
             new BashOutputMapper(),
@@ -51,14 +45,14 @@ public class RegistrySessionPersistenceTests : IDisposable
             new FailureActivityMapper(artifactMapperFactory),
             new SessionAssignedActivityMapper(artifactMapperFactory)
         };
-        _activityFactory = new ActivityMapperFactory(activityMappers);
-        var mapper = new RegistryTaskMapper(_activityFactory);
+        var activityFactory = new ActivityMapperFactory(activityMappers);
+        var mapper = new RegistryTaskMapper(activityFactory);
 
-        var ndjsonSerializer = new NdjsonActivitySerializer(_activityFactory);
-        var historyStore = new RegistryHistoryStore(layout, fileSystem, provisioner, ndjsonSerializer);
+        var ndjsonSerializer = new NdjsonActivitySerializer(activityFactory);
+        var historyStore = new RegistryHistoryStore(layout, _fileSystem, provisioner, ndjsonSerializer);
 
-        _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, pathResolver, fileSystem);
-        _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, layout, fileSystem);
+        _reader = new RegistrySessionReader(metadataStore, historyStore, mapper, pathResolver, _fileSystem);
+        _writer = new RegistrySessionWriter(metadataStore, historyStore, mapper, layout, _fileSystem);
         _archivist = new RegistrySessionArchivist(_reader, _writer, historyStore);
     }
 
@@ -68,124 +62,131 @@ public class RegistrySessionPersistenceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
-    public async Task Writer_ShouldSave_AndReader_ShouldLoad_Metadata()
+    [Fact(DisplayName = "The Session Registry should preserve session fidelity, ensuring metadata, history, and complex artifacts are recoverable with 100% accuracy.")]
+    public async Task ShouldPreserveSessionFidelityWhenRememberedAndRecalled()
     {
-        // Arrange
-        var id = TestFactory.CreateSessionId("1");
-        var dashboardUri = new Uri("https://jules.ai/sessions/1");
-        var updatedAt = DateTimeOffset.UtcNow.AddMinutes(5);
-        var session = new Session(id, "remote-1", new TaskDescription("Real world testing"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow, updatedAt: updatedAt, dashboardUri: dashboardUri);
+        // Arrange 🏗️
+        var id = TestFactory.CreateSessionId("fidelity-1");
+        var birthDate = DateTimeOffset.Parse("2024-01-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        var activityDate = DateTimeOffset.Parse("2024-01-01T12:30:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        var dashboardUri = new Uri("https://jules.ai/sessions/fidelity-1");
+        
+        var session = new Session(
+            id, 
+            "remote-1", 
+            new TaskDescription("Fidelity Test"), 
+            TestFactory.CreateSourceContext("repo"), 
+            new SessionPulse(SessionStatus.InProgress), 
+            birthDate,
+            updatedAt: activityDate,
+            dashboardUri: dashboardUri);
 
-        // Act
+        var patch = GitPatch.FromApi("diff content", "sha123");
+        var changeSet = new ChangeSet("source", patch);
+        var activities = new SessionActivity[]
+        {
+            new MessageActivity("msg-1", "rem-msg", birthDate.AddMinutes(5), ActivityOriginator.User, "Hello Jules"),
+            new ProgressActivity("act-1", "rem-act", activityDate, ActivityOriginator.Agent, "Thinking...", null, new[] { changeSet })
+        };
+
+        // Act 🚀
         await _writer.RememberAsync(session, CancellationToken.None);
+        await _archivist.AppendAsync(id, activities, CancellationToken.None);
         var result = await _reader.RecallAsync(id, CancellationToken.None);
 
-        // Assert
+        // Assert ✅
         Assert.NotNull(result);
         Assert.Equal(session.Id, result!.Id);
         Assert.Equal(session.Task, result.Task);
-        Assert.Equal(dashboardUri, result.DashboardUri);
-        Assert.Equal(updatedAt, result.UpdatedAt);
-        Assert.Equal(SessionStatus.Planning, result.Pulse.Status);
+        Assert.Equal(session.RemoteId, result.RemoteId);
+        Assert.Equal(session.CreatedAt, result.CreatedAt);
+        Assert.Equal(session.UpdatedAt, result.UpdatedAt);
+        Assert.Equal(session.DashboardUri, result.DashboardUri);
+        Assert.Equal(session.Pulse.Status, result.Pulse.Status);
+
+        // Assert 3 activities (1 auto-generated SessionAssigned + 2 appended)
+        Assert.Equal(3, result.SessionLog.Count);
+        
+        Assert.Contains(result.SessionLog, a => a is SessionAssignedActivity);
+        
+        var loadedMsg = result.SessionLog.OfType<MessageActivity>().Single();
+        Assert.Equal("Hello Jules", loadedMsg.Text);
+
+        var loadedProgress = result.SessionLog.OfType<ProgressActivity>().Single();
+        var loadedChangeSet = loadedProgress.Evidence?.OfType<ChangeSet>().Single();
+        Assert.NotNull(loadedChangeSet);
+        Assert.Equal(patch.Fingerprint, loadedChangeSet!.Patch.Fingerprint);
+        Assert.Equal(patch.UniDiff, loadedChangeSet.Patch.UniDiff);
     }
 
-    [Fact]
-    public async Task ListAsync_ShouldEnumerateSessions()
+    [Fact(DisplayName = "The Session Registry should enumerate all locally remembered sessions to provide a complete overview of the developer's workbench.")]
+    public async Task ShouldEnumerateAllRememberedSessions()
     {
-        // Arrange
+        // Arrange 🏗️
         var id1 = TestFactory.CreateSessionId("1");
         var id2 = TestFactory.CreateSessionId("2");
-        var session1 = new Session(id1, "remote-1", new TaskDescription("Task 1"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow);
-        var session2 = new Session(id2, "remote-2", new TaskDescription("Task 2"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow);
+        await _writer.RememberAsync(new Session(id1, "r1", new TaskDescription("T1"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
+        await _writer.RememberAsync(new Session(id2, "r2", new TaskDescription("T2"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), DateTimeOffset.UtcNow), CancellationToken.None);
 
-        await _writer.RememberAsync(session1, CancellationToken.None);
-        await _writer.RememberAsync(session2, CancellationToken.None);
-
-        // Act
+        // Act 🚀
         var results = await _reader.ListAsync(CancellationToken.None);
 
-        // Assert
+        // Assert ✅
         Assert.Equal(2, results.Count);
         Assert.Contains(results, s => s.Id == id1);
         Assert.Contains(results, s => s.Id == id2);
     }
 
-    [Fact]
-    public async Task ForgetAsync_ShouldRemoveSessionDirectory()
+    [Fact(DisplayName = "The Session Registry should perform a complete local cleanup when a session is forgotten, removing all traces from the file system.")]
+    public async Task ShouldCompletelyForgetSessionDataWhenRequested()
     {
-        // Arrange
-        var id = TestFactory.CreateSessionId("1");
-        var session = new Session(id, "remote-1", new TaskDescription("Task"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow);
+        // Arrange 🏗️
+        var id = TestFactory.CreateSessionId("forgotten");
+        var session = new Session(id, "r1", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow);
         await _writer.RememberAsync(session, CancellationToken.None);
+        await _archivist.AppendAsync(id, new[] { new MessageActivity("1", "r", DateTimeOffset.UtcNow, ActivityOriginator.User, "Hi") }, CancellationToken.None);
 
-        // Act
+        // Act 🚀
         await _writer.ForgetAsync(id, CancellationToken.None);
         var result = await _reader.RecallAsync(id, CancellationToken.None);
 
-        // Assert
+        // Assert ✅
         Assert.Null(result);
-        var sessionDir = Path.Combine(_fixture.DirectoryPath, "sessions", "1");
+        var sessionDir = Path.Combine(_sessionsRoot, "forgotten");
         Assert.False(Directory.Exists(sessionDir));
     }
 
-    [Fact]
-    public async Task Archivist_ShouldAppend_AndReader_ShouldLoad_History()
+    [Fact(DisplayName = "The Session Registry should return an empty list when the sessions directory does not exist.")]
+    public async Task ShouldReturnEmptyListWhenRegistryDirectoryDoesNotExist()
     {
-        // Arrange
-        var id = TestFactory.CreateSessionId("hist-1");
-        var session = new Session(id, "remote-1", new TaskDescription("History Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.StartingUp), DateTimeOffset.UtcNow);
-        var activity = new ProgressActivity("act-1", "rem-1", DateTimeOffset.UtcNow, ActivityOriginator.Agent, "First step");
-        
-        // Initial setup
-        await _writer.RememberAsync(session, CancellationToken.None);
+        // Arrange 🏗️
+        // Delete the directory created in constructor
+        if (Directory.Exists(_sessionsRoot)) Directory.Delete(_sessionsRoot, true);
 
-        // Act
-        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
-        var result = await _reader.RecallAsync(id, CancellationToken.None);
+        // Act 🚀
+        var results = await _reader.ListAsync(CancellationToken.None);
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result!.SessionLog);
-        Assert.Contains(result.SessionLog, a => a.Id == "act-1");
+        // Assert ✅
+        Assert.Empty(results);
     }
 
-    [Fact(DisplayName = "The Session Registry should preserve the content-based fingerprint and precise timing of all recorded activities.")]
-    public async Task ShouldPreserveFingerprintAndTimestampFidelityWhenRecordingChangeSetActivities()
+    [Fact(DisplayName = "The Session Registry should ignore invalid folder names when listing sessions to prevent corruption from external files.")]
+    public async Task ShouldIgnoreInvalidFolderNamesWhenListingSessions()
     {
-        // Arrange
-        var birthDate = DateTimeOffset.Parse("2024-01-01T12:00:00Z");
-        var activityDate = DateTimeOffset.Parse("2024-01-01T12:30:00Z");
+        // Arrange 🏗️
+        // Create a valid session
+        var id = TestFactory.CreateSessionId("valid");
+        await _writer.RememberAsync(new Session(id, "r", new TaskDescription("T"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.Planning), DateTimeOffset.UtcNow), CancellationToken.None);
 
-        var id = TestFactory.CreateSessionId("cs-fp");
-        var session = new Session(id, "remote-fp", new TaskDescription("Fingerprint Test"), TestFactory.CreateSourceContext("repo"), new SessionPulse(SessionStatus.InProgress), birthDate);
-        await _writer.RememberAsync(session, CancellationToken.None);
+        // Create an invalid folder (not a SessionId)
+        var invalidPath = Path.Combine(_sessionsRoot, "not-a-session-id");
+        Directory.CreateDirectory(invalidPath);
 
-        var patch = GitPatch.FromApi("diff content", "sha123");
-        var changeSet = new ChangeSet("source", patch);
-        var activity = new ProgressActivity("act-fp", "rem-fp", activityDate, ActivityOriginator.Agent, "Made changes", null, new[] { changeSet });
+        // Act 🚀
+        var results = await _reader.ListAsync(CancellationToken.None);
 
-        // Act
-        await _archivist.AppendAsync(id, new[] { activity }, CancellationToken.None);
-        var result = await _reader.RecallAsync(id, CancellationToken.None);
-
-        // Assert
-        Assert.NotNull(result);
-
-        // Assert Metadata Fidelity
-        Assert.Equal(birthDate, result!.CreatedAt);
-        Assert.Equal("remote-fp", result.RemoteId);
-
-        // Assert Activity & Fingerprint Fidelity
-        var loadedActivity = result.SessionLog.OfType<ProgressActivity>().FirstOrDefault(a => a.Id == "act-fp");
-        Assert.NotNull(loadedActivity);
-        Assert.Equal(activityDate, loadedActivity!.Timestamp);
-
-        var evidence = loadedActivity.Evidence?.First();
-        Assert.NotNull(evidence);
-
-        Assert.IsType<ChangeSet>(evidence);
-        var loadedChangeSet = (ChangeSet)evidence!;
-        Assert.Equal(patch.Fingerprint, loadedChangeSet.Patch.Fingerprint);
+        // Assert ✅
+        Assert.Single(results);
+        Assert.Equal(id, results.First().Id);
     }
 }
