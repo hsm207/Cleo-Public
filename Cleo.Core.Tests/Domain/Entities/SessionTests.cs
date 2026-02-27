@@ -469,4 +469,23 @@ public sealed class SessionTests
         // Assert
         Assert.Equal(SessionState.WTF, session.State);
     }
+
+    [Fact(DisplayName = "Truth-Sensing: Logical SessionState Override identifies blocked sessions 🧠⚖️")]
+    public void Session_EvaluatesSessionStateLogically_WhenIdleButBlockedOnPlan()
+    {
+        // Arrange
+        var sessionId = TestFactory.CreateSessionId("123");
+        var task = (TaskDescription)"Fix bug";
+        var source = TestFactory.CreateSourceContext("repo");
+
+        // A session that is physically IDLE (Completed) but has a Plan and NO PR
+        var pulse = new SessionPulse(SessionStatus.Completed);
+        var session = new Session(sessionId, "remote-123", task, source, pulse, DateTimeOffset.UtcNow);
+
+        session.AddActivity(new PlanningActivity("act-plan", "remote-plan", DateTimeOffset.UtcNow, ActivityOriginator.Agent, new PlanId("plan-1"), new List<PlanStep> { new("s1", 0, "Do it", "Now") }));
+
+        // Act & Assert
+        Assert.Equal(SessionStatus.Completed, session.Pulse.Status);
+        Assert.Equal(SessionState.AwaitingPlanApproval, session.State); // Logical Override! 🧠🔥
+    }
 }
